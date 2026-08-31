@@ -37,6 +37,10 @@ create table if not exists skills (
   session_id  uuid not null references sessions(id) on delete cascade,
   label       text not null,
   description text not null default '',
+  -- Wat "dit heb ik zelfstandig gedaan" (niveau 3) op déze as concreet
+  -- betekent. Eén anker per as is genoeg: niveau 1 en 2 spreken voor zich en
+  -- niveau 4 is overal hetzelfde (je kunt het overdragen).
+  anchor      text not null default '',
   sort_order  int  not null default 0
 );
 create index if not exists skills_session_idx on skills(session_id, sort_order);
@@ -68,22 +72,43 @@ alter table ratings      enable row level security;
 
 -- ---------------------------------------------------------------- defaults
 
--- De negen assen. Elke as is geformuleerd als iets wat je zelfstandig kunt
+-- De tien assen. Elke as is geformuleerd als iets wat je zelfstandig kunt
 -- opleveren, niet als een vakgebied: "kleur" of "typografie" is geen skill
 -- waarop iemand zichzelf een cijfer kan geven, "een scherm ontwerpen binnen
 -- een designsysteem" wel. Admins kunnen dit per sessie wijzigen.
 create or replace function default_skills() returns jsonb
 language sql immutable as $$
   select jsonb_build_array(
-    jsonb_build_object('label','Kwalitatief onderzoek',    'description','Je zet zelfstandig interviews of een usability test op, voert ze uit en brengt de bevindingen terug.'),
-    jsonb_build_object('label','Kwantitatief onderzoek',   'description','Je zet een vragenlijst of analytics-vraag op en interpreteert de uitkomst juist.'),
-    jsonb_build_object('label','Informatiearchitectuur',   'description','Je ontwerpt structuur en navigatie en toetst die, bijvoorbeeld met een card sort of tree test.'),
-    jsonb_build_object('label','Interactieontwerp',        'description','Je werkt flows, states en randgevallen uit tot een ontwerp dat een developer kan bouwen.'),
-    jsonb_build_object('label','UI Design',                'description','Je ontwerpt schermen binnen een designsysteem: hiërarchie, componentkeuze, states.'),
-    jsonb_build_object('label','Prototyping',              'description','Je maakt een klikbaar prototype op het detailniveau dat de vraag vraagt.'),
-    jsonb_build_object('label','UX Writing',               'description','Je schrijft en scherpt interfaceteksten aan: labels, knoppen, foutmeldingen.'),
-    jsonb_build_object('label','Faciliteren',              'description','Je begeleidt een sessie met stakeholders en haalt er een besluit uit.'),
-    jsonb_build_object('label','Presenteren & overtuigen', 'description','Je brengt onderzoek zo dat er een beslissing uit volgt.')
+    jsonb_build_object('label','Kwalitatief onderzoek',
+      'description','Interviews en usability tests opzetten, uitvoeren en de bevindingen terugbrengen.',
+      'anchor','je hebt een testronde met een handvol deelnemers zelf gedraaid, van opzet tot terugkoppeling'),
+    jsonb_build_object('label','Kwantitatief onderzoek',
+      'description','Een vragenlijst of analytics-vraag opzetten en de uitkomst juist interpreteren.',
+      'anchor','je hebt zelf een vragenlijst uitgezet of een analytics-vraag beantwoord, inclusief de conclusie die je eraan verbond'),
+    jsonb_build_object('label','Informatiearchitectuur',
+      'description','Structuur en navigatie ontwerpen en toetsen.',
+      'anchor','je hebt een navigatiestructuur ontworpen én met gebruikers getoetst, niet alleen bedacht'),
+    jsonb_build_object('label','Interactieontwerp',
+      'description','Flows, states en randgevallen uitwerken tot iets wat een developer kan bouwen.',
+      'anchor','je hebt een flow uitgewerkt inclusief lege, fout- en laadstates, zonder dat een ander de gaten moest invullen'),
+    jsonb_build_object('label','UI Design',
+      'description','Schermen ontwerpen binnen een designsysteem: hiërarchie, componentkeuze, states.',
+      'anchor','je hebt een scherm opgeleverd dat zonder correcties het designsysteem volgde'),
+    jsonb_build_object('label','Prototyping',
+      'description','Een klikbaar prototype maken op het detailniveau dat de vraag vraagt.',
+      'anchor','je hebt een prototype gebouwd waarmee anderen konden testen, zonder hulp bij het bouwen'),
+    jsonb_build_object('label','UX Writing',
+      'description','Interfaceteksten schrijven en aanscherpen: labels, knoppen, foutmeldingen.',
+      'anchor','je hebt de teksten van een hele flow geschreven en die zijn zo live gegaan'),
+    jsonb_build_object('label','Toegankelijkheid (WCAG)',
+      'description','Een ontwerp toetsen aan WCAG 2.2 AA: contrast, focusvolgorde, koppenstructuur, alt-teksten, foutafhandeling.',
+      'anchor','je hebt een ontwerp getoetst en een lijst concrete bevindingen opgeleverd waarmee iemand aan de slag kon'),
+    jsonb_build_object('label','Faciliteren',
+      'description','Een sessie met stakeholders begeleiden en er een besluit uit halen.',
+      'anchor','je hebt een sessie alleen begeleid en er kwam een besluit uit'),
+    jsonb_build_object('label','Presenteren & overtuigen',
+      'description','Onderzoek zo brengen dat er een beslissing uit volgt.',
+      'anchor','je hebt onderzoek gepresenteerd aan mensen die er anders in stonden, en het veranderde iets')
   );
 $$;
 
@@ -121,7 +146,8 @@ $$;
 create or replace function _skills_json(p_session uuid) returns jsonb
 language sql stable security definer set search_path = public, extensions as $$
   select coalesce(jsonb_agg(jsonb_build_object(
-           'id', id, 'label', label, 'description', description, 'sort_order', sort_order
+           'id', id, 'label', label, 'description', description,
+           'anchor', anchor, 'sort_order', sort_order
          ) order by sort_order, label), '[]'::jsonb)
   from skills where session_id = p_session;
 $$;
@@ -160,8 +186,8 @@ begin
 
   sk := default_skills();
   for i in 0 .. jsonb_array_length(sk) - 1 loop
-    insert into skills (session_id, label, description, sort_order)
-    values (s_id, sk->i->>'label', sk->i->>'description', i);
+    insert into skills (session_id, label, description, anchor, sort_order)
+    values (s_id, sk->i->>'label', sk->i->>'description', coalesce(sk->i->>'anchor', ''), i);
   end loop;
 
   return jsonb_build_object('id', s_id, 'code', s_code, 'name', trim(p_name));
@@ -314,6 +340,7 @@ begin
       update skills
          set label = trim(item->>'label'),
              description = coalesce(item->>'description', ''),
+             anchor = coalesce(item->>'anchor', ''),
              sort_order = i
        where id = (item->>'id')::uuid and session_id = s.id
       returning id into new_id;
@@ -321,8 +348,9 @@ begin
         raise exception 'unknown_skill' using errcode = '42501';
       end if;
     else
-      insert into skills (session_id, label, description, sort_order)
-      values (s.id, trim(item->>'label'), coalesce(item->>'description', ''), i)
+      insert into skills (session_id, label, description, anchor, sort_order)
+      values (s.id, trim(item->>'label'), coalesce(item->>'description', ''),
+              coalesce(item->>'anchor', ''), i)
       returning id into new_id;
     end if;
     keep := keep || new_id;

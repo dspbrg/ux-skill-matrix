@@ -203,6 +203,19 @@ label.field > span { display: block; font-size: .82rem; color: var(--text-2); ma
   background: color-mix(in srgb, var(--future) 14%, transparent);
 }
 
+/* Het ankerpunt staat vlak boven de knoppen: het is de maatlat waarlangs je
+   jezelf legt terwijl je klikt, niet inleidende tekst. */
+.anchor {
+  font-size: .82rem;
+  color: var(--text-2);
+  background: var(--surface-2);
+  border-left: 2px solid var(--border-strong);
+  border-radius: 0 6px 6px 0;
+  padding: 7px 11px;
+  margin: 0 0 10px;
+}
+.anchor strong { color: var(--text); font-weight: 600; }
+
 /* ---------------------------------------------------------------- legend & table */
 .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: .84rem; color: var(--text-2); }
 .legend .item { display: inline-flex; align-items: center; gap: 7px; }

@@ -4,6 +4,8 @@ export interface Skill {
   id: string
   label: string
   description: string
+  /** Wat niveau 3 — "dit heb ik zelfstandig gedaan" — op deze as betekent. */
+  anchor: string
   sort_order: number
 }
 

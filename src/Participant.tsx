@@ -154,6 +154,11 @@ export default function Participant({ token }: { token: string }) {
                     )}
                   </div>
                   {skill.description && <p className="skill-desc">{skill.description}</p>}
+                  {skill.anchor && (
+                    <p className="anchor">
+                      <strong>{scale[2]?.label ?? 'Niveau 3'}</strong> is hier: {skill.anchor}.
+                    </p>
+                  )}
                   <div className={`levels ${state === 'future' ? 'future' : ''}`}>
                     {Array.from({ length: max }, (_, i) => i + 1).map((lv) => (
                       <button

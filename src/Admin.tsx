@@ -433,7 +433,7 @@ function Terms({
   const dirtyScale =
     JSON.stringify(scale) !== JSON.stringify(data.session.scale) || sessionName !== data.session.name
 
-  function patch(i: number, field: 'label' | 'description', value: string) {
+  function patch(i: number, field: 'label' | 'description' | 'anchor', value: string) {
     setSkills((s) => s.map((sk, k) => (k === i ? { ...sk, [field]: value } : sk)))
   }
 
@@ -458,7 +458,7 @@ function Terms({
         p_code: code, p_admin_key: adminKey,
         p_skills: skills.map((s, i) => ({
           id: s.id.startsWith('new-') ? null : s.id,
-          label: s.label, description: s.description, sort_order: i,
+          label: s.label, description: s.description, anchor: s.anchor, sort_order: i,
         })),
       })
       await reload()
@@ -513,8 +513,9 @@ function Terms({
           <div>
             <h2>Skills (de assen van de matrix)</h2>
             <p className="muted small" style={{ marginTop: 4 }}>
-              Hernoemen, herordenen, toevoegen of weghalen. Wijzigingen gelden voor alle deelnemers in deze
-              sessie; hernoemen behoudt de al gegeven scores.
+              Per as: de naam, een korte toelichting, en het ankerpunt — wat “dit heb ik zelfstandig
+              gedaan” op déze as concreet betekent. Dat anker is wat voorkomt dat twee mensen iets
+              anders bedoelen met een 3. Hernoemen behoudt de al gegeven scores.
             </p>
           </div>
           <span className="spacer" />
@@ -535,6 +536,9 @@ function Terms({
                 <input type="text" className="small" value={s.description}
                   placeholder="Korte toelichting (optioneel)"
                   onChange={(e) => patch(i, 'description', e.target.value)} />
+                <input type="text" className="small" value={s.anchor}
+                  placeholder="Niveau 3 is hier: … (het ankerpunt voor zelfstandig)"
+                  onChange={(e) => patch(i, 'anchor', e.target.value)} />
               </div>
               <button className="danger sm" style={{ marginTop: 4 }}
                 onClick={() => setSkills((cur) => cur.filter((_, k) => k !== i))}>
@@ -548,7 +552,7 @@ function Terms({
           onClick={() =>
             setSkills((s) => [
               ...s,
-              { id: `new-${Date.now()}`, label: '', description: '', sort_order: s.length },
+              { id: `new-${Date.now()}`, label: '', description: '', anchor: '', sort_order: s.length },
             ])
           }>
           + Skill toevoegen
