@@ -178,6 +178,7 @@ export default function Participant({ token }: { token: string }) {
               <Radar
                 axes={skills.map((s) => s.label)}
                 max={max}
+                exportName={`${data.session.name} — ${data.participant.name}`}
                 series={[
                   {
                     key: 'current',

@@ -40,6 +40,21 @@
   }
 }
 
+/* Alleen gebruikt tijdens het exporteren naar PNG: dwingt het lichte palet af,
+   ongeacht het thema van de kijker. Houd deze waarden gelijk aan :root. */
+.force-light {
+  --surface: #ffffff;
+  --surface-2: #f1f3f6;
+  --border: #e2e5ea;
+  --border-strong: #cdd2da;
+  --text: #16181d;
+  --text-2: #5b616e;
+  --text-3: #878d99;
+  --accent: #2f5df6;
+  --current: #2f5df6;
+  --future: #e2820f;
+}
+
 * { box-sizing: border-box; }
 
 html, body, #root { height: 100%; }

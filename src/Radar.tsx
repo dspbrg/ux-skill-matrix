@@ -1,3 +1,6 @@
+import { useRef, useState } from 'react'
+import { exportSvgAsPng } from './exportPng'
+
 interface Series {
   key: string
   label: string
@@ -13,6 +16,8 @@ interface Props {
   max?: number
   size?: number
   showLegend?: boolean
+  /** Zet een downloadknop onder de radar; wordt de bestandsnaam. */
+  exportName?: string
 }
 
 /** Breekt een aslabel op in regels van maximaal ~15 tekens. */
@@ -32,7 +37,10 @@ function wrap(label: string, limit = 15): string[] {
   return lines.slice(0, 3)
 }
 
-export default function Radar({ axes, series, max = 5, size = 420, showLegend = true }: Props) {
+export default function Radar({ axes, series, max = 5, size = 420, showLegend = true, exportName }: Props) {
+  const svgRef = useRef<SVGSVGElement>(null)
+  const [exporting, setExporting] = useState(false)
+  const [failed, setFailed] = useState('')
   const n = axes.length
   if (n < 3) {
     return (
@@ -67,6 +75,7 @@ export default function Radar({ axes, series, max = 5, size = 420, showLegend = 
   return (
     <div>
       <svg
+        ref={svgRef}
         viewBox={`${-padX} ${-padY} ${size + padX * 2} ${size + padY * 2}`}
         width="100%"
         style={{ maxHeight: size + padY * 2, display: 'block' }}
@@ -114,11 +123,20 @@ export default function Radar({ axes, series, max = 5, size = 420, showLegend = 
           )
         })}
 
-        {/* schaalcijfers op de verticale as */}
+        {/* Schaalcijfers op een straal precies tussen de eerste twee assen in:
+            op een as zelf botsen ze met het aslabel. */}
         {Array.from({ length: max }, (_, k) => k + 1).map((level) => {
-          const [, y] = point(0, level)
+          const a = angle(0) + Math.PI / n
+          const rr = (level / max) * r
           return (
-            <text key={level} x={cx + 5} y={y + 3} fontSize={9.5} fill="var(--text-3)">
+            <text
+              key={level}
+              x={cx + Math.cos(a) * rr}
+              y={cy + Math.sin(a) * rr + 3.5}
+              textAnchor="middle"
+              fontSize={9.5}
+              fill="var(--text-3)"
+            >
               {level}
             </text>
           )
@@ -168,6 +186,36 @@ export default function Radar({ axes, series, max = 5, size = 420, showLegend = 
               {s.label}
             </span>
           ))}
+        </div>
+      )}
+
+      {exportName && (
+        <div style={{ textAlign: 'center', marginTop: 12 }}>
+          <button
+            className="sm"
+            disabled={exporting}
+            title="Witte achtergrond, op dubbele resolutie — geschikt voor een rapport of slide"
+            onClick={async () => {
+              if (!svgRef.current) return
+              setExporting(true)
+              setFailed('')
+              try {
+                await exportSvgAsPng(svgRef.current, exportName, {
+                  title: exportName,
+                  legend: series.map((x) => ({ label: x.label, color: x.color })),
+                })
+              } catch (e) {
+                setFailed((e as Error).message)
+              } finally {
+                setExporting(false)
+              }
+            }}
+          >
+            {exporting ? 'Bezig…' : 'PNG downloaden'}
+          </button>
+          {failed && (
+            <p className="small" style={{ color: 'var(--danger)', marginTop: 8 }}>{failed}</p>
+          )}
         </div>
       )}
     </div>

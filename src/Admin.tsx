@@ -59,7 +59,7 @@ export default function Admin({ initialCode, initialKey }: { initialCode: string
         <div className="tabs">
           <button aria-selected={tab === 'overview'} onClick={() => setTab('overview')}>Overzicht</button>
           <button aria-selected={tab === 'people'} onClick={() => setTab('people')}>Deelnemers</button>
-          <button aria-selected={tab === 'terms'} onClick={() => setTab('terms')}>Skills &amp; schaal</button>
+          <button aria-selected={tab === 'terms'} onClick={() => setTab('terms')}>Instellingen</button>
         </div>
       </header>
 
@@ -175,7 +175,17 @@ function Overview({ data, onAddPeople }: { data: AdminPayload; onAddPeople: () =
               ))}
             </select>
           </div>
-          <Radar axes={skills.map((s) => s.label)} series={series} max={max} size={440} />
+          <Radar
+            axes={skills.map((s) => s.label)}
+            series={series}
+            max={max}
+            size={440}
+            exportName={
+              focus === '__team__'
+                ? `${session.name} — team`
+                : `${session.name} — ${participants.find((p) => p.id === focus)?.name ?? ''}`
+            }
+          />
         </div>
 
         <div className="card">
@@ -411,6 +421,7 @@ function Terms({
   const [sessionName, setSessionName] = useState(data.session.name)
   const [busy, setBusy] = useState(false)
   const [ok, setOk] = useState('')
+  const [confirmCode, setConfirmCode] = useState('')
 
   useEffect(() => {
     setSkills(data.skills)
@@ -476,16 +487,15 @@ function Terms({
   }
 
   async function deleteSession() {
-    const typed = prompt(
-      `Typ de sessiecode ${data.session.code} om te bevestigen. Alle deelnemers en scores gaan verloren.`,
-    )
-    if (typed?.trim().toUpperCase() !== data.session.code) return
+    if (confirmCode.trim().toUpperCase() !== data.session.code) return
+    setBusy(true)
     try {
       await rpc('admin_delete_session', { p_code: code, p_admin_key: adminKey })
       window.location.hash = '/'
       window.location.reload()
     } catch (e) {
       setError((e as Error).message)
+      setBusy(false)
     }
   }
 
@@ -599,13 +609,31 @@ function Terms({
 
       <div className="card" style={{ borderColor: 'color-mix(in srgb, var(--danger) 30%, var(--border))' }}>
         <h2>Sessie verwijderen</h2>
-        <p className="muted small" style={{ margin: '4px 0 14px' }}>
-          Verwijdert deze sessie met alle deelnemers, links en scores. Niet terug te draaien — exporteer
-          eerst de CSV als je de data wilt bewaren.
+        <p className="muted small" style={{ margin: '4px 0 14px', maxWidth: 560 }}>
+          Verwijdert <strong>{data.session.name}</strong> met alle deelnemers, hun links en alle scores.
+          Niet terug te draaien — exporteer eerst de CSV onder Overzicht als je de data wilt bewaren.
         </p>
-        <button className="danger" onClick={deleteSession}>
-          Sessie “{data.session.name}” definitief verwijderen
-        </button>
+        <div className="row" style={{ flexWrap: 'nowrap', alignItems: 'flex-end', maxWidth: 520 }}>
+          <label className="field" style={{ flex: 1 }}>
+            <span>Typ de sessiecode <strong className="mono">{data.session.code}</strong> om te bevestigen</span>
+            <input
+              type="text"
+              className="mono"
+              value={confirmCode}
+              placeholder={data.session.code}
+              onChange={(e) => setConfirmCode(e.target.value.toUpperCase())}
+              onKeyDown={(e) => e.key === 'Enter' && deleteSession()}
+            />
+          </label>
+          <button
+            className="danger"
+            style={{ border: '1px solid color-mix(in srgb, var(--danger) 45%, transparent)' }}
+            disabled={busy || confirmCode.trim().toUpperCase() !== data.session.code}
+            onClick={deleteSession}
+          >
+            Definitief verwijderen
+          </button>
+        </div>
       </div>
     </>
   )
