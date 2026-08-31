@@ -26,7 +26,11 @@ export default function Home() {
   const open = (code: string) => navigate(`/admin?s=${code}&k=${encodeURIComponent(key)}`)
 
   async function unlock() {
-    if (key.length < 8 || busy) return
+    if (busy) return
+    // Niet de knop uitzetten maar zeggen wat er mis is: een grijze knop zonder
+    // uitleg laat je raden waarom er niets gebeurt.
+    if (key.trim().length === 0) return setError('Vul je adminsleutel in.')
+    if (key.length < 8) return setError(`Een adminsleutel is minstens 8 tekens — deze heeft er ${key.length}.`)
     setBusy(true)
     setError('')
     try {
@@ -42,7 +46,8 @@ export default function Home() {
   }
 
   async function create() {
-    if (!name.trim() || busy) return
+    if (busy) return
+    if (!name.trim()) return setError('Geef de sessie een naam.')
     setBusy(true)
     setError('')
     try {
@@ -75,18 +80,17 @@ export default function Home() {
             autoComplete="current-password"
             placeholder="Adminsleutel"
             value={key}
-            onChange={(e) => setKey(e.target.value)}
+            onChange={(e) => { setKey(e.target.value); if (error) setError('') }}
             onKeyDown={(e) => e.key === 'Enter' && unlock()}
           />
           {error && <div className="banner error">{error}</div>}
-          <button className="primary" style={{ justifyContent: 'center' }}
-            onClick={unlock} disabled={key.length < 8 || busy}>
+          <button className="primary" style={{ justifyContent: 'center' }} onClick={unlock} disabled={busy}>
             {busy ? 'Bezig…' : 'Openen'}
           </button>
         </div>
 
         <p className="small muted" style={{ marginTop: 14, textAlign: 'center' }}>
-          Nog geen sessie? Kies gewoon een sleutel — dan maak je er zo een aan.
+          Minstens 8 tekens. Nog geen sessie? Kies gewoon een sleutel — dan maak je er zo een aan.
         </p>
       </Frame>
     )
@@ -107,8 +111,7 @@ export default function Home() {
             value={name} onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && create()} />
           {error && <div className="banner error">{error}</div>}
-          <button className="primary" style={{ justifyContent: 'center' }}
-            onClick={create} disabled={!name.trim() || busy}>
+          <button className="primary" style={{ justifyContent: 'center' }} onClick={create} disabled={busy}>
             {busy ? 'Bezig…' : 'Aanmaken'}
           </button>
         </div>
