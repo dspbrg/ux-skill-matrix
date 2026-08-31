@@ -1,0 +1,10 @@
+node_modules
+dist
+.env
+.env.local
+.DS_Store
+
+# Bronmateriaal, geen onderdeel van de app.
+# NNg_Skill_Mapping_Template.xlsx is © Nielsen Norman Group / Rachel Krause
+# en wordt bewust niet meegepubliceerd.
+Input/
