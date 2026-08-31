@@ -68,30 +68,35 @@ alter table ratings      enable row level security;
 
 -- ---------------------------------------------------------------- defaults
 
--- De acht skills uit het NN/g-template. Admins kunnen dit per sessie wijzigen.
+-- De negen assen. Elke as is geformuleerd als iets wat je zelfstandig kunt
+-- opleveren, niet als een vakgebied: "kleur" of "typografie" is geen skill
+-- waarop iemand zichzelf een cijfer kan geven, "een scherm ontwerpen binnen
+-- een designsysteem" wel. Admins kunnen dit per sessie wijzigen.
 create or replace function default_skills() returns jsonb
 language sql immutable as $$
   select jsonb_build_array(
-    jsonb_build_object('label','Qualitative research',   'description','User interviews, usability testing, field studies, diary studies.'),
-    jsonb_build_object('label','Quantitative research',  'description','Surveys, analytics, A/B testing, statistical analysis.'),
-    jsonb_build_object('label','Visual design',          'description','Layout, typography, colour, iconography, design systems.'),
-    jsonb_build_object('label','Interaction design',     'description','Flows, states, micro-interactions, prototyping.'),
-    jsonb_build_object('label','Facilitation',           'description','Workshops, co-creation, stakeholder alignment.'),
-    jsonb_build_object('label','Presenting',             'description','Storytelling, readouts, persuading an audience.'),
-    jsonb_build_object('label','Writing',                'description','UX writing, microcopy, reports, documentation.'),
-    jsonb_build_object('label','Information architecture','description','Structure, navigation, taxonomy, card sorting.')
+    jsonb_build_object('label','Kwalitatief onderzoek',    'description','Je zet zelfstandig interviews of een usability test op, voert ze uit en brengt de bevindingen terug.'),
+    jsonb_build_object('label','Kwantitatief onderzoek',   'description','Je zet een vragenlijst of analytics-vraag op en interpreteert de uitkomst juist.'),
+    jsonb_build_object('label','Informatiearchitectuur',   'description','Je ontwerpt structuur en navigatie en toetst die, bijvoorbeeld met een card sort of tree test.'),
+    jsonb_build_object('label','Interactieontwerp',        'description','Je werkt flows, states en randgevallen uit tot een ontwerp dat een developer kan bouwen.'),
+    jsonb_build_object('label','UI Design',                'description','Je ontwerpt schermen binnen een designsysteem: hiërarchie, componentkeuze, states.'),
+    jsonb_build_object('label','Prototyping',              'description','Je maakt een klikbaar prototype op het detailniveau dat de vraag vraagt.'),
+    jsonb_build_object('label','UX Writing',               'description','Je schrijft en scherpt interfaceteksten aan: labels, knoppen, foutmeldingen.'),
+    jsonb_build_object('label','Faciliteren',              'description','Je begeleidt een sessie met stakeholders en haalt er een besluit uit.'),
+    jsonb_build_object('label','Presenteren & overtuigen', 'description','Je brengt onderzoek zo dat er een beslissing uit volgt.')
   );
 $$;
 
--- De vijfpuntsschaal uit het NN/g-template. Ook per sessie aanpasbaar.
+-- De vijfpuntsschaal, vertaald uit het NN/g-template. Trede 4 is de grens die
+-- er in de teamanalyse toe doet: pas daar kan iemand een ander coachen.
 create or replace function default_scale() returns jsonb
 language sql immutable as $$
   select jsonb_build_array(
-    jsonb_build_object('level',1,'label','Awareness',                'description','You are aware of the competency but are unable to perform tasks.'),
-    jsonb_build_object('level',2,'label','Novice',                   'description','Limited proficiency. You understand and can discuss terminology.'),
-    jsonb_build_object('level',3,'label','Intermediate proficiency',  'description','You have applied this skill to situations occasionally without needing guidance.'),
-    jsonb_build_object('level',4,'label','Advanced proficiency',      'description','You can coach others in the application by explaining related nuances.'),
-    jsonb_build_object('level',5,'label','Expert',                    'description','You have demonstrated consistent excellence across multiple projects.')
+    jsonb_build_object('level',1,'label','Bekend',   'description','Je weet wat het is, maar kunt het niet zelf uitvoeren.'),
+    jsonb_build_object('level',2,'label','Beginner', 'description','Je begrijpt de begrippen en kunt erover meepraten.'),
+    jsonb_build_object('level',3,'label','Ervaren',  'description','Je hebt dit zelfstandig gedaan, zonder begeleiding.'),
+    jsonb_build_object('level',4,'label','Gevorderd','description','Je kunt anderen hierin coachen en de nuances uitleggen.'),
+    jsonb_build_object('level',5,'label','Expert',   'description','Je levert hier over meerdere projecten consistent uitzonderlijk werk.')
   );
 $$;
 
