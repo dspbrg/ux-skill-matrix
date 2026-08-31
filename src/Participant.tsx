@@ -156,7 +156,7 @@ export default function Participant({ token }: { token: string }) {
                   {skill.description && <p className="skill-desc">{skill.description}</p>}
                   {skill.anchor && (
                     <p className="anchor">
-                      <strong>{scale[2]?.label ?? 'Niveau 3'}</strong> is hier: {skill.anchor}.
+                      <strong>Eén keer dit gedaan</strong> is hier: {skill.anchor}.
                     </p>
                   )}
                   <div className={`levels ${state === 'future' ? 'future' : ''}`}>

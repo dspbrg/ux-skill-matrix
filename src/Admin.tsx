@@ -193,7 +193,7 @@ function Overview({ data, onAddPeople }: { data: AdminPayload; onAddPeople: () =
             <div>
               <h2>Waar zit de kloof?</h2>
               <p className="muted small" style={{ marginTop: 4 }}>
-                Gemiddelden per skill, en hoeveel mensen nu op niveau 4+ zitten.
+                Gemiddelden per skill, en hoeveel mensen dit nu zonder vangnet doen (niveau 4+).
               </p>
             </div>
             <span className="spacer" />
@@ -207,7 +207,7 @@ function Overview({ data, onAddPeople }: { data: AdminPayload; onAddPeople: () =
                   <th className="num">Huidig</th>
                   <th className="num">Gewenst</th>
                   <th className="num">Verschil</th>
-                  <th className="num">4+ nu</th>
+                  <th className="num">Zelfstandig</th>
                 </tr>
               </thead>
               <tbody>
@@ -235,8 +235,9 @@ function Overview({ data, onAddPeople }: { data: AdminPayload; onAddPeople: () =
             </table>
           </div>
           <p className="small muted" style={{ marginTop: 12 }}>
-            Een skill met <strong>0</strong> in de kolom “4+ nu” heeft niemand die anderen kan coachen — dat is
-            meestal urgenter dan een grote gemiddelde kloof.
+            Een skill met <strong>0</strong> onder “Zelfstandig” doet op dit moment niemand zonder vangnet.
+            Bij een jong team is dat normaal — kijk dan vooral naar welke daarvan een groot verschil met
+            de gewenste kolom hebben. Daar zit je eerstvolgende leerdoel.
           </p>
         </div>
       </div>
@@ -513,9 +514,9 @@ function Terms({
           <div>
             <h2>Skills (de assen van de matrix)</h2>
             <p className="muted small" style={{ marginTop: 4 }}>
-              Per as: de naam, een korte toelichting, en het ankerpunt — wat “dit heb ik zelfstandig
-              gedaan” op déze as concreet betekent. Dat anker is wat voorkomt dat twee mensen iets
-              anders bedoelen met een 3. Hernoemen behoudt de al gegeven scores.
+              Per as: de naam, een korte toelichting, en het ankerpunt — wat één keer “dit gedaan
+              hebben” op déze as concreet is. Dat anker voorkomt dat twee mensen een andere eenheid
+              werk voor ogen hebben als ze zichzelf een cijfer geven. Hernoemen behoudt de scores.
             </p>
           </div>
           <span className="spacer" />
@@ -537,7 +538,7 @@ function Terms({
                   placeholder="Korte toelichting (optioneel)"
                   onChange={(e) => patch(i, 'description', e.target.value)} />
                 <input type="text" className="small" value={s.anchor}
-                  placeholder="Niveau 3 is hier: … (het ankerpunt voor zelfstandig)"
+                  placeholder="Eén keer dit gedaan is hier: … (de eenheid werk waarlangs je jezelf legt)"
                   onChange={(e) => patch(i, 'anchor', e.target.value)} />
               </div>
               <button className="danger sm" style={{ marginTop: 4 }}

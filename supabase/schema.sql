@@ -72,56 +72,69 @@ alter table ratings      enable row level security;
 
 -- ---------------------------------------------------------------- defaults
 
--- De tien assen. Elke as is geformuleerd als iets wat je zelfstandig kunt
--- opleveren, niet als een vakgebied: "kleur" of "typografie" is geen skill
--- waarop iemand zichzelf een cijfer kan geven, "een scherm ontwerpen binnen
--- een designsysteem" wel. Admins kunnen dit per sessie wijzigen.
+-- De tien assen. Elke as is geformuleerd als iets wat je kunt opleveren, niet
+-- als een vakgebied: "kleur" of "typografie" is geen skill waarop iemand
+-- zichzelf een cijfer kan geven, "een scherm ontwerpen binnen een
+-- designsysteem" wel.
+--
+-- Het anker beschrijft wat één keer "dit gedaan hebben" op déze as concreet
+-- is. Het hangt bewust niet aan één niveau: het geeft bij elke trede dezelfde
+-- eenheid werk om jezelf langs te leggen.
 create or replace function default_skills() returns jsonb
 language sql immutable as $$
   select jsonb_build_array(
     jsonb_build_object('label','Kwalitatief onderzoek',
       'description','Interviews en usability tests opzetten, uitvoeren en de bevindingen terugbrengen.',
-      'anchor','je hebt een testronde met een handvol deelnemers zelf gedraaid, van opzet tot terugkoppeling'),
+      'anchor','een testronde met een handvol deelnemers, van opzet tot terugkoppeling'),
     jsonb_build_object('label','Kwantitatief onderzoek',
       'description','Een vragenlijst of analytics-vraag opzetten en de uitkomst juist interpreteren.',
-      'anchor','je hebt zelf een vragenlijst uitgezet of een analytics-vraag beantwoord, inclusief de conclusie die je eraan verbond'),
+      'anchor','een vragenlijst of een analytics-vraag, van vraag tot conclusie'),
     jsonb_build_object('label','Informatiearchitectuur',
       'description','Structuur en navigatie ontwerpen en toetsen.',
-      'anchor','je hebt een navigatiestructuur ontworpen én met gebruikers getoetst, niet alleen bedacht'),
+      'anchor','een navigatiestructuur ontwerpen én toetsen, niet alleen bedenken'),
     jsonb_build_object('label','Interactieontwerp',
       'description','Flows, states en randgevallen uitwerken tot iets wat een developer kan bouwen.',
-      'anchor','je hebt een flow uitgewerkt inclusief lege, fout- en laadstates, zonder dat een ander de gaten moest invullen'),
+      'anchor','een flow uitwerken inclusief lege, fout- en laadstates'),
     jsonb_build_object('label','UI Design',
       'description','Schermen ontwerpen binnen een designsysteem: hiërarchie, componentkeuze, states.',
-      'anchor','je hebt een scherm opgeleverd dat zonder correcties het designsysteem volgde'),
+      'anchor','een scherm opleveren dat het designsysteem volgt'),
     jsonb_build_object('label','Prototyping',
       'description','Een klikbaar prototype maken op het detailniveau dat de vraag vraagt.',
-      'anchor','je hebt een prototype gebouwd waarmee anderen konden testen, zonder hulp bij het bouwen'),
+      'anchor','een prototype waarmee iemand anders kon testen'),
     jsonb_build_object('label','UX Writing',
       'description','Interfaceteksten schrijven en aanscherpen: labels, knoppen, foutmeldingen.',
-      'anchor','je hebt de teksten van een hele flow geschreven en die zijn zo live gegaan'),
+      'anchor','de teksten van een hele flow, tot en met de foutmeldingen'),
     jsonb_build_object('label','Toegankelijkheid (WCAG)',
       'description','Een ontwerp toetsen aan WCAG 2.2 AA: contrast, focusvolgorde, koppenstructuur, alt-teksten, foutafhandeling.',
-      'anchor','je hebt een ontwerp getoetst en een lijst concrete bevindingen opgeleverd waarmee iemand aan de slag kon'),
+      'anchor','een ontwerp toetsen en er concrete bevindingen uit opleveren'),
     jsonb_build_object('label','Faciliteren',
       'description','Een sessie met stakeholders begeleiden en er een besluit uit halen.',
-      'anchor','je hebt een sessie alleen begeleid en er kwam een besluit uit'),
+      'anchor','een sessie begeleiden waar een besluit uit komt'),
     jsonb_build_object('label','Presenteren & overtuigen',
       'description','Onderzoek zo brengen dat er een beslissing uit volgt.',
-      'anchor','je hebt onderzoek gepresenteerd aan mensen die er anders in stonden, en het veranderde iets')
+      'anchor','onderzoek presenteren aan mensen die er anders in staan')
   );
 $$;
 
--- De vijfpuntsschaal, vertaald uit het NN/g-template. Trede 4 is de grens die
--- er in de teamanalyse toe doet: pas daar kan iemand een ander coachen.
+-- De schaal meet hoeveel vangnet er onder het werk lag, niet óf je het ooit
+-- hebt gedaan. Bij een team dat nog geen jaar draait is "heb je dit weleens
+-- zelfstandig gedaan" geen onderscheidende vraag — dan is het overal "ja,
+-- soort van" en staat iedereen op 3.
+--
+-- De grens die er wél toe doet ligt tussen 3 en 4: kun je zelf beoordelen of
+-- het goed genoeg was? Dat is het verschil tussen een half jaar en twee jaar.
+--
+-- Het aantal keren zit in de treden zelf verwerkt ("een enkele keer" op 3,
+-- "regelmatig" op 4) in plaats van als aparte vraag. Zo doet de frequentie
+-- mee in het onderscheid zonder dat er per as een tweede invoer bij komt.
 create or replace function default_scale() returns jsonb
 language sql immutable as $$
   select jsonb_build_array(
-    jsonb_build_object('level',1,'label','Bekend',   'description','Je weet wat het is, maar kunt het niet zelf uitvoeren.'),
-    jsonb_build_object('level',2,'label','Beginner', 'description','Je begrijpt de begrippen en kunt erover meepraten.'),
-    jsonb_build_object('level',3,'label','Ervaren',  'description','Je hebt dit zelfstandig gedaan, zonder begeleiding.'),
-    jsonb_build_object('level',4,'label','Gevorderd','description','Je kunt anderen hierin coachen en de nuances uitleggen.'),
-    jsonb_build_object('level',5,'label','Expert',   'description','Je levert hier over meerdere projecten consistent uitzonderlijk werk.')
+    jsonb_build_object('level',1,'label','Nooit gedaan', 'description','Je weet wat het is, maar je hebt het nog niet gedaan.'),
+    jsonb_build_object('level',2,'label','Meegelopen',   'description','Je hebt een keer meegedaan; iemand anders trok het.'),
+    jsonb_build_object('level',3,'label','Met vangnet',  'description','Je hebt dit een enkele keer zelf gedaan, met iemand die meekeek of achteraf corrigeerde.'),
+    jsonb_build_object('level',4,'label','Zelfstandig',  'description','Je doet dit regelmatig alleen én je ziet zelf of het goed genoeg is.'),
+    jsonb_build_object('level',5,'label','Vraagbaak',    'description','Anderen komen bij jou; je kunt het uitleggen en verbeteren.')
   );
 $$;
 
