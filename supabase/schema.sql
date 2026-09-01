@@ -260,24 +260,29 @@ begin
   if p_value is null then
     delete from ratings where participant_id = p.id and skill_id = p_skill and state = p_state;
   else
+    -- Een doel lager dan waar je nu staat is geen ontwikkeldoel. Dat stond
+    -- alleen in de interface, en die is niet de enige weg naar deze functie:
+    -- twee tabbladen naast elkaar, of een half mislukt schrijfpaar, en het
+    -- staat er alsnog.
+    if p_state = 'future' then
+      if exists (
+        select 1 from ratings r
+        where r.participant_id = p.id and r.skill_id = p_skill
+          and r.state = 'current' and r.value > p_value
+      ) then
+        raise exception 'future_below_current' using errcode = '22000';
+      end if;
+    else
+      -- gaat het huidige niveau omhoog, dan schuift een lager doel mee
+      update ratings set value = p_value, updated_at = now()
+       where participant_id = p.id and skill_id = p_skill
+         and state = 'future' and value < p_value;
+    end if;
+
     insert into ratings (participant_id, skill_id, state, value)
     values (p.id, p_skill, p_state, p_value)
     on conflict (participant_id, skill_id, state)
     do update set value = excluded.value, updated_at = now();
-  end if;
-end;
-$$;
-
-create or replace function set_participant_name(p_token text, p_name text, p_role text)
-returns void
-language plpgsql security definer set search_path = public, extensions as $$
-begin
-  update participants
-     set name = coalesce(nullif(trim(p_name), ''), name),
-         role = coalesce(trim(p_role), '')
-   where token = p_token;
-  if not found then
-    raise exception 'invalid_token' using errcode = '42501';
   end if;
 end;
 $$;
@@ -329,6 +334,27 @@ language plpgsql security definer set search_path = public, extensions as $$
 declare s sessions;
 begin
   s := _session_by_admin(p_code, p_admin_key);
+
+  -- Vijf benoemde treden worden negen posities, en negen is wat de
+  -- waardecontrole op ratings aankan. Meer treden liet de interface toe en
+  -- leverde deelnemers een onvertaalde databasefout op zodra ze een hoge
+  -- positie aanklikten; minder treden maakte bestaande scores onbereikbaar.
+  if p_scale is not null then
+    if jsonb_typeof(p_scale) <> 'array'
+       or jsonb_array_length(p_scale) < 2
+       or jsonb_array_length(p_scale) > 5 then
+      raise exception 'scale_out_of_range' using errcode = '22000';
+    end if;
+    if exists (
+      select 1 from ratings r
+      join participants pa on pa.id = r.participant_id
+      where pa.session_id = s.id
+        and r.value > jsonb_array_length(p_scale) * 2 - 1
+    ) then
+      raise exception 'scale_too_small_for_scores' using errcode = '22000';
+    end if;
+  end if;
+
   update sessions
      set name  = coalesce(nullif(trim(p_name), ''), name),
          scale = coalesce(p_scale, scale)
@@ -403,19 +429,6 @@ begin
 end;
 $$;
 
-create or replace function admin_update_participant(p_code text, p_admin_key text, p_id uuid, p_name text, p_role text)
-returns void
-language plpgsql security definer set search_path = public, extensions as $$
-declare s sessions;
-begin
-  s := _session_by_admin(p_code, p_admin_key);
-  update participants
-     set name = coalesce(nullif(trim(p_name), ''), name),
-         role = coalesce(trim(p_role), '')
-   where id = p_id and session_id = s.id;
-end;
-$$;
-
 create or replace function admin_delete_participant(p_code text, p_admin_key text, p_id uuid)
 returns void
 language plpgsql security definer set search_path = public, extensions as $$
@@ -478,13 +491,11 @@ begin
     'create_session(text,text)',
     'get_participant(text)',
     'set_rating(text,uuid,text,int)',
-    'set_participant_name(text,text,text)',
     'set_submitted(text,boolean)',
     'admin_get(text,text)',
     'admin_update_session(text,text,text,jsonb)',
     'admin_set_skills(text,text,jsonb)',
     'admin_add_participant(text,text,text,text)',
-    'admin_update_participant(text,text,uuid,text,text)',
     'admin_delete_participant(text,text,uuid)',
     'admin_delete_session(text,text)',
     'admin_list_sessions(text)'
