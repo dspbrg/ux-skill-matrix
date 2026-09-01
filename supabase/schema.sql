@@ -130,11 +130,11 @@ $$;
 create or replace function default_scale() returns jsonb
 language sql immutable as $$
   select jsonb_build_array(
-    jsonb_build_object('level',1,'label','Nooit gedaan', 'description','Je weet wat het is, maar je hebt het nog niet gedaan.'),
-    jsonb_build_object('level',2,'label','Meegelopen',   'description','Je hebt een keer meegedaan; iemand anders trok het.'),
-    jsonb_build_object('level',3,'label','Met vangnet',  'description','Je hebt dit een enkele keer zelf gedaan, met iemand die meekeek of achteraf corrigeerde.'),
-    jsonb_build_object('level',4,'label','Zelfstandig',  'description','Je doet dit regelmatig alleen én je ziet zelf of het goed genoeg is.'),
-    jsonb_build_object('level',5,'label','Vraagbaak',    'description','Anderen komen bij jou; je kunt het uitleggen en verbeteren.')
+    jsonb_build_object('level',1,'label','Nog niet',       'description','Je weet wat het is, maar je hebt het nog niet gedaan.'),
+    jsonb_build_object('level',2,'label','Meegelopen',     'description','Je hebt een keer meegedaan; iemand anders trok het.'),
+    jsonb_build_object('level',3,'label','Met rugdekking', 'description','Je hebt dit een enkele keer zelf gedaan, met iemand die meekeek of achteraf corrigeerde.'),
+    jsonb_build_object('level',4,'label','Zelfstandig',    'description','Je doet dit regelmatig alleen én je ziet zelf of het goed genoeg is.'),
+    jsonb_build_object('level',5,'label','Vraagbaak',      'description','Anderen komen bij jou; je kunt het uitleggen en verbeteren.')
   );
 $$;
 

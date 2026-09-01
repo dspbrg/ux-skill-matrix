@@ -127,10 +127,10 @@ export default function Participant({ token }: { token: string }) {
             <div className="row" style={{ marginBottom: 14 }}>
               <div className="tabs">
                 <button aria-selected={state === 'current'} onClick={() => setState('current')}>
-                  Huidig <span className="muted small">&nbsp;{filled.current}/{filled.total}</span>
+                  1 · Nu <span className="muted small">&nbsp;{filled.current}/{filled.total}</span>
                 </button>
                 <button aria-selected={state === 'future'} onClick={() => setState('future')}>
-                  Gewenst <span className="muted small">&nbsp;{filled.future}/{filled.total}</span>
+                  2 · Doel <span className="muted small">&nbsp;{filled.future}/{filled.total}</span>
                 </button>
               </div>
             </div>
@@ -204,6 +204,29 @@ export default function Participant({ token }: { token: string }) {
                 </div>
               )
             })}
+
+            {/* De lijst liep dood: na de laatste skill stond niets, en de weg
+                naar stap 2 was helemaal terugscrollen naar boven. */}
+            {state === 'current' && filled.current === filled.total && filled.total > 0 && (
+              <div style={{ borderTop: '1px solid var(--border)', paddingTop: 'var(--space-5)', marginTop: 'var(--space-2)' }}>
+                <button
+                  className="primary"
+                  onClick={() => {
+                    setState('future')
+                    window.scrollTo({ top: 0, behavior: 'smooth' })
+                  }}
+                >
+                  Verder naar stap 2 · Doel
+                </button>
+              </div>
+            )}
+            {state === 'future' && done && (
+              <div style={{ borderTop: '1px solid var(--border)', paddingTop: 'var(--space-5)', marginTop: 'var(--space-2)' }}>
+                <button className={submitted ? '' : 'primary'} onClick={toggleSubmit}>
+                  {submitted ? 'Toch nog iets wijzigen' : 'Invulling indienen'}
+                </button>
+              </div>
+            )}
           </div>
 
           <div style={{ position: 'sticky', top: 78 }}>

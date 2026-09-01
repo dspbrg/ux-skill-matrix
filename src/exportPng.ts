@@ -106,6 +106,11 @@ export async function exportSvgAsPng(
       for (const prop of ['fill', 'stroke'] as const) {
         if (el.getAttribute(prop)?.includes('var(')) el.setAttribute(prop, computed[prop])
       }
+      // De vulling is een gradient; zonder dit blijft var(--current) in de
+      // stops staan en komt de vorm leeg uit de export.
+      if (el.getAttribute('stop-color')?.includes('var(')) {
+        el.setAttribute('stop-color', computed.stopColor)
+      }
     }
 
     const source = new XMLSerializer().serializeToString(clone)
