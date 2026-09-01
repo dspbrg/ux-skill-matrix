@@ -154,14 +154,24 @@ export default function Participant({ token }: { token: string }) {
                   <div className="skill-head">
                     <span className="name">{skill.label}</span>
                     <span className="spacer" />
-                    {/* Niets tonen zolang er niets staat: een lege baan zegt al dat
-                        er nog niets is gekozen, en op deze plek hoort een actie. */}
-                    {value != null && (
-                      <button className="ghost sm" onClick={() => rate(skill.id, null)}>wissen</button>
-                    )}
+                    {/* Altijd in de opmaak aanwezig, alleen onzichtbaar zolang er
+                        niets te wissen valt: anders verspringt het hele blok zodra
+                        je je eerste score zet. */}
+                    <button
+                      className="ghost sm"
+                      style={{ visibility: value == null ? 'hidden' : 'visible' }}
+                      tabIndex={value == null ? -1 : 0}
+                      aria-hidden={value == null}
+                      onClick={() => rate(skill.id, null)}
+                    >
+                      wissen
+                    </button>
                   </div>
-                  {skill.description && <p className="skill-desc">{skill.description}</p>}
-                  {skill.anchor && <p className="anchor">{skill.anchor}</p>}
+                  {/* Eén tekst per as. Er stonden er twee, en die zeiden
+                      vrijwel hetzelfde — tien keer een parafrase onder elkaar. */}
+                  {(skill.anchor || skill.description) && (
+                    <p className="anchor">{skill.anchor || skill.description}</p>
+                  )}
                   <Baan
                     skill={skill}
                     scale={scale}

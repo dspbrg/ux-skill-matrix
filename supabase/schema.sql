@@ -77,42 +77,33 @@ alter table ratings      enable row level security;
 -- zichzelf een cijfer kan geven, "een scherm ontwerpen binnen een
 -- designsysteem" wel.
 --
--- Het anker beschrijft wat één keer "dit gedaan hebben" op déze as concreet
--- is. Het hangt bewust niet aan één niveau: het geeft bij elke trede dezelfde
--- eenheid werk om jezelf langs te leggen.
+-- Eén tekst per as, en dat is het ankerpunt: wat één keer "dit gedaan hebben"
+-- concreet is. Er stond hiervoor ook een omschrijving bij, maar die zei
+-- vrijwel hetzelfde in andere woorden — tien keer een parafrase onder elkaar.
+-- Het ankerpunt heeft nu de concrete details opgenomen die daar stonden.
 create or replace function default_skills() returns jsonb
 language sql immutable as $$
   select jsonb_build_array(
-    jsonb_build_object('label','Kwalitatief onderzoek',
-      'description','Interviews en usability tests opzetten, uitvoeren en de bevindingen terugbrengen.',
-      'anchor','een testronde met een handvol deelnemers, van opzet tot terugkoppeling'),
-    jsonb_build_object('label','Kwantitatief onderzoek',
-      'description','Een vragenlijst of analytics-vraag opzetten en de uitkomst juist interpreteren.',
-      'anchor','een vragenlijst of een analytics-vraag, van vraag tot conclusie'),
-    jsonb_build_object('label','Informatiearchitectuur',
-      'description','Structuur en navigatie ontwerpen en toetsen met een card sort of tree test.',
-      'anchor','een navigatiestructuur ontwerpen én toetsen, niet alleen bedenken'),
-    jsonb_build_object('label','Interaction Design',
-      'description','Flows, states en randgevallen uitwerken tot iets wat een developer kan bouwen.',
-      'anchor','een flow uitwerken inclusief lege, fout- en laadstates'),
-    jsonb_build_object('label','UI Design',
-      'description','Schermen ontwerpen binnen een designsysteem: hiërarchie, componentkeuze, states.',
-      'anchor','een scherm opleveren dat het designsysteem volgt'),
-    jsonb_build_object('label','Prototyping',
-      'description','Een klikbaar prototype maken op het detailniveau dat de vraag vraagt.',
-      'anchor','een prototype waarmee iemand anders kon testen'),
-    jsonb_build_object('label','UX Writing',
-      'description','Interfaceteksten schrijven en aanscherpen: labels, knoppen, foutmeldingen.',
-      'anchor','de teksten van een hele flow, tot en met de foutmeldingen'),
-    jsonb_build_object('label','Toegankelijkheid (WCAG)',
-      'description','Een ontwerp toetsen aan WCAG 2.2 AA: contrast, focusvolgorde, koppenstructuur, alt-teksten, foutafhandeling.',
-      'anchor','een ontwerp toetsen en er concrete bevindingen uit opleveren'),
-    jsonb_build_object('label','Faciliteren',
-      'description','Een sessie met stakeholders begeleiden en er een besluit uit halen.',
-      'anchor','een sessie begeleiden waar een besluit uit komt'),
-    jsonb_build_object('label','Presenteren & overtuigen',
-      'description','Onderzoek zo brengen dat er een beslissing uit volgt.',
-      'anchor','onderzoek presenteren aan mensen die er anders in staan')
+    jsonb_build_object('label','Kwalitatief onderzoek',   'description','',
+      'anchor','een testronde met een handvol deelnemers: opzet, moderatie en terugkoppeling'),
+    jsonb_build_object('label','Kwantitatief onderzoek',  'description','',
+      'anchor','een vragenlijst of analytics-vraag, van vraagstelling tot conclusie'),
+    jsonb_build_object('label','Informatiearchitectuur',  'description','',
+      'anchor','een navigatiestructuur ontwerpen én toetsen met een card sort of tree test'),
+    jsonb_build_object('label','Interaction Design',      'description','',
+      'anchor','een flow uitwerken inclusief lege, fout- en laadstates, klaar om te bouwen'),
+    jsonb_build_object('label','UI Design',               'description','',
+      'anchor','een scherm opleveren binnen het designsysteem: hiërarchie, componenten, states'),
+    jsonb_build_object('label','Prototyping',             'description','',
+      'anchor','een klikbaar prototype waarmee iemand anders kon testen'),
+    jsonb_build_object('label','UX Writing',              'description','',
+      'anchor','de teksten van een hele flow: labels, knoppen, foutmeldingen'),
+    jsonb_build_object('label','Toegankelijkheid (WCAG)', 'description','',
+      'anchor','een ontwerp toetsen op contrast, focusvolgorde, koppen en alt-teksten, met concrete bevindingen'),
+    jsonb_build_object('label','Faciliteren',             'description','',
+      'anchor','een sessie met stakeholders begeleiden waar een besluit uit komt'),
+    jsonb_build_object('label','Presenteren & overtuigen','description','',
+      'anchor','onderzoek presenteren aan mensen die er anders in staan, en het verandert iets')
   );
 $$;
 

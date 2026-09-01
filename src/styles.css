@@ -20,7 +20,9 @@
   --accent: #0b7a57;        /*  5,3:1 */
   --accent-soft: #e2f0ea;
   --current: #0b7a57;
-  --future: #8f5d04;        /*  5,6:1 */
+  /* Amber was te tam voor wat het moet dragen: dit is het doel, niet een
+     waarschuwing. Roze-rood, nagerekend op 6,0:1 tegen wit. */
+  --future: #c1174b;        /*  6,0:1 */
   --on-accent: #ffffff;
   --on-future: #ffffff;
 
@@ -75,7 +77,7 @@
     --accent: #3dffd2;      /* 13,4:1 */
     --accent-soft: #12332b;
     --current: #3dffd2;
-    --future: #e0a83d;      /*  8,0:1 */
+    --future: #ff4e7a;      /*  5,4:1 */
     --on-accent: #0a1512;
     --on-future: #15141a;
 
@@ -105,7 +107,7 @@
   --text-3: #6f6a63;
   --accent: #0b7a57;
   --current: #0b7a57;
-  --future: #8f5d04;
+  --future: #c1174b;
 }
 
 * { box-sizing: border-box; }
@@ -282,17 +284,15 @@ label.field > span { display: block; font-size: var(--fs-2); color: var(--text-2
 .skill-head .spacer { flex: 1; }
 .skill-desc { color: var(--text); font-size: var(--fs-2); margin: 0 0 var(--space-1); max-width: 58ch; }
 
-/* Het ankerpunt is het vóórbeeld, niet de definitie. Als kader met gekleurd
-   streepje links las het harder dan de omschrijving erboven — en dat kader is
-   de meest generieke component die er bestaat. Nu een stille mono-regel. */
+/* Het ankerpunt is nu de enige tekst per as, dus het leest als gewone tekst
+   in plaats van als kleine mono-noot. Het stond eerder in een kader met een
+   gekleurd streepje links — de meest generieke component die er bestaat. */
 .anchor {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: .04em;
-  line-height: 1.5;
-  color: var(--text-3);
+  font-size: var(--fs-2);
+  line-height: 1.55;
+  color: var(--text-2);
   margin: 0 0 var(--space-4);
-  max-width: 62ch;
+  max-width: 58ch;
 }
 
 /* Eén baan per skill, met beide metingen erop. De bol is waar je staat, de
@@ -305,7 +305,7 @@ label.field > span { display: block; font-size: var(--fs-2); color: var(--text-2
 .baan { margin-bottom: var(--space-1); }
 
 .baan-spoor { position: relative; height: 44px; }
-.baan-rail { position: absolute; left: 10px; right: 10px; top: 0; bottom: 0; }
+.baan-rail { position: absolute; left: 34px; right: 34px; top: 0; bottom: 0; }
 .baan-lijn {
   position: absolute; left: 0; right: 0; top: 50%; height: 2px;
   margin-top: -1px; background: var(--border-strong); border-radius: 2px;
@@ -364,7 +364,7 @@ label.field > span { display: block; font-size: var(--fs-2); color: var(--text-2
 .halte-label { display: none; }
 
 .baan-labels {
-  position: relative; height: 15px; margin: 0 10px; overflow: visible;
+  position: relative; height: 15px; margin: 0 34px; overflow: visible;
   font-family: var(--font-mono); font-size: 9.5px;
   letter-spacing: .08em; text-transform: uppercase;
   color: var(--text-3);

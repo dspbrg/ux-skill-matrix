@@ -561,9 +561,9 @@ function Terms({
           <div>
             <h2>Skills (de assen van de matrix)</h2>
             <p className="muted small" style={{ marginTop: 4 }}>
-              Per as: de naam, een korte toelichting, en het ankerpunt — wat één keer “dit gedaan
-              hebben” op déze as concreet is. Dat anker voorkomt dat twee mensen een andere eenheid
-              werk voor ogen hebben als ze zichzelf een cijfer geven. Hernoemen behoudt de scores.
+              Per as de naam en het ankerpunt: wat één keer “dit gedaan hebben” op déze as concreet
+              is. Dat anker voorkomt dat twee mensen een andere eenheid werk voor ogen hebben als ze
+              zichzelf een cijfer geven. Hernoemen behoudt de al gegeven scores.
             </p>
           </div>
           <span className="spacer" />
@@ -581,11 +581,8 @@ function Terms({
               </div>
               <div className="stack" style={{ flex: 1, gap: 6 }}>
                 <input type="text" value={s.label} onChange={(e) => patch(i, 'label', e.target.value)} />
-                <input type="text" className="small" value={s.description}
-                  placeholder="Korte toelichting (optioneel)"
-                  onChange={(e) => patch(i, 'description', e.target.value)} />
                 <input type="text" className="small" value={s.anchor}
-                  placeholder="Eén keer dit gedaan is hier: … (de eenheid werk waarlangs je jezelf legt)"
+                  placeholder="Wat is één keer dit gedaan hebben? Bijv. een testronde met een handvol deelnemers"
                   onChange={(e) => patch(i, 'anchor', e.target.value)} />
               </div>
               <button className="danger sm" style={{ marginTop: 4 }}
