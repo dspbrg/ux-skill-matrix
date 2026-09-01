@@ -104,7 +104,7 @@ export default function Participant({ token }: { token: string }) {
       <div className="center-page">
         <div className="card" style={{ maxWidth: 460 }}>
           <h2>Deze link werkt niet</h2>
-          <p className="muted" style={{ marginTop: 8 }}>{error}</p>
+          <p className="muted" style={{ marginTop: 'var(--space-2)' }}>{error}</p>
         </div>
       </div>
     )
@@ -120,7 +120,7 @@ export default function Participant({ token }: { token: string }) {
         <span className="sep">·</span>
         <span className="muted">{data.participant.name}</span>
         <span className="spacer" />
-        <span className="small muted" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+        <span className="small muted" style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--space-2)' }}>
           <span className="leeft" aria-hidden="true" />
           {saving > 0 ? 'Opslaan…' : savedAt ? `Bewaard om ${savedAt.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}` : 'Automatisch bewaard'}
         </span>
@@ -132,7 +132,7 @@ export default function Participant({ token }: { token: string }) {
             <div className="card-head" style={{ alignItems: 'baseline' }}>
               <div>
                 <h1>Ingediend</h1>
-                <p className="micro" style={{ color: 'var(--text-3)', marginTop: 6 }}>
+                <p className="micro" style={{ color: 'var(--text-3)', marginTop: 'var(--space-2)' }}>
                   {data.participant.name} · {data.session.name}
                 </p>
               </div>
@@ -158,7 +158,7 @@ export default function Participant({ token }: { token: string }) {
       ) : (
       <div className={`shell ${afronden ? 'afronden' : ''}`}>
         {error && (
-          <div className="banner error" style={{ marginBottom: 16 }}>
+          <div className="banner error" style={{ marginBottom: 'var(--space-4)' }}>
             {error} <button className="ghost sm" onClick={() => setError('')}>sluiten</button>
           </div>
         )}
@@ -172,13 +172,13 @@ export default function Participant({ token }: { token: string }) {
               <div>
                 <h1>{state === 'current' ? 'Waar sta je nu?' : 'Waar wil je heen?'}</h1>
                 {state === 'future' && (
-                  <p className="muted small" style={{ marginTop: 6 }}>
+                  <p className="muted small" style={{ marginTop: 'var(--space-2)' }}>
                     Over een jaar. Niet alles hoeft omhoog.
                   </p>
                 )}
               </div>
 
-              <div className="row" style={{ marginTop: 18 }}>
+              <div className="row" style={{ marginTop: 'var(--space-4)' }}>
                 <div className="tabs">
                   <button aria-selected={state === 'current'} onClick={() => setState('current')}>
                     1 · Nu <span className="muted small">&nbsp;{filled.current}/{filled.total}</span>
@@ -190,9 +190,9 @@ export default function Participant({ token }: { token: string }) {
               </div>
             </div>
 
-            <details style={{ marginBottom: 8 }}>
+            <details style={{ marginBottom: 'var(--space-2)' }}>
               <summary className="small muted" style={{ cursor: 'pointer' }}>Wat betekenen de niveaus?</summary>
-              <ol className="small muted" style={{ paddingLeft: 20, marginTop: 8, display: 'grid', gap: 4 }}>
+              <ol className="small muted" style={{ paddingLeft: 'var(--space-5)', marginTop: 'var(--space-2)', display: 'grid', gap: 'var(--space-1)' }}>
                 {scale.map((lv) => (
                   <li key={lv.level} value={lv.level}>
                     <strong style={{ color: 'var(--text)' }}>{lv.label}</strong> — {lv.description}
@@ -270,7 +270,7 @@ export default function Participant({ token }: { token: string }) {
                   te zijn. Voortgang staat hier omdat het bij het profiel hoort
                   en niet in een eigen kaart met een grote ring naast een korte
                   zin — dat stond uit balans in deze kolom. */}
-              <div className="card-head" style={{ alignItems: 'center', marginBottom: 12 }}>
+              <div className="card-head" style={{ alignItems: 'center', marginBottom: 'var(--space-3)' }}>
                 <h2>Je profiel</h2>
                 <span className="spacer" />
                 <span className="voortgang">

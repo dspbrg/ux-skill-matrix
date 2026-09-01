@@ -62,7 +62,7 @@ export default function Home() {
     return (
       <Frame kop={<>Eerst jij, dan het <em>team</em>.</>}>
         {!isConfigured && (
-          <div className="banner error" style={{ marginBottom: 16 }}>
+          <div className="banner error" style={{ marginBottom: 'var(--space-4)' }}>
             Supabase is niet geconfigureerd — zet <code>VITE_SUPABASE_URL</code> en{' '}
             <code>VITE_SUPABASE_ANON_KEY</code> in <code>.env.local</code>.
           </div>

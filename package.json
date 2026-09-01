@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
-    "preview": "vite preview"
+    "build": "node scripts/controleer-maat.mjs && tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "controleer": "node scripts/controleer-maat.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",

@@ -36,8 +36,8 @@ export default function Admin({ initialCode, initialKey }: { initialCode: string
         {error ? (
           <div className="card" style={{ width: 340 }}>
             <h2>Geen toegang</h2>
-            <p className="muted small" style={{ marginTop: 8 }}>{error}</p>
-            <button className="primary" style={{ marginTop: 16, width: '100%', justifyContent: 'center' }}
+            <p className="muted small" style={{ marginTop: 'var(--space-2)' }}>{error}</p>
+            <button className="primary" style={{ marginTop: 'var(--space-4)', width: '100%', justifyContent: 'center' }}
               onClick={() => { window.location.hash = '/' }}>
               Terug naar start
             </button>
@@ -64,7 +64,7 @@ export default function Admin({ initialCode, initialKey }: { initialCode: string
       </header>
 
       <div className="shell">
-        {error && <div className="banner error" style={{ marginBottom: 16 }}>{error}</div>}
+        {error && <div className="banner error" style={{ marginBottom: 'var(--space-4)' }}>{error}</div>}
         {tab === 'overview' && <Overview data={data} onAddPeople={() => setTab('people')} />}
         {tab === 'people' && <People data={data} code={code} adminKey={key} reload={load} setError={setError} />}
         {tab === 'terms' && <Terms data={data} code={code} adminKey={key} reload={load} setError={setError} />}
@@ -185,7 +185,7 @@ function Overview({ data, onAddPeople }: { data: AdminPayload; onAddPeople: () =
 
   if (participants.length === 0) {
     return (
-      <div className="card" style={{ textAlign: 'center', padding: '56px 22px' }}>
+      <div className="card" style={{ textAlign: 'center', padding: 'var(--space-6) var(--space-5)' }}>
         <button className="primary" onClick={onAddPeople}>Deelnemers toevoegen</button>
       </div>
     )
@@ -198,7 +198,7 @@ function Overview({ data, onAddPeople }: { data: AdminPayload; onAddPeople: () =
           <div className="card-head">
             <div>
               <h2>Teamprofiel</h2>
-              <p className="muted small" style={{ marginTop: 4 }}>
+              <p className="muted small" style={{ marginTop: 'var(--space-1)' }}>
                 {submittedCount} van {participants.length} ingediend · gemiddelde over ieders ingevulde scores
               </p>
             </div>
@@ -227,7 +227,7 @@ function Overview({ data, onAddPeople }: { data: AdminPayload; onAddPeople: () =
           <div className="card-head">
             <div>
               <h2>Waar zit de groei?</h2>
-              <p className="muted small" style={{ marginTop: 4 }}>
+              <p className="muted small" style={{ marginTop: 'var(--space-1)' }}>
 Gesorteerd op het grootste verschil tussen waar het team staat en waar het heen wil.
               </p>
             </div>
@@ -275,7 +275,7 @@ Gesorteerd op het grootste verschil tussen waar het team staat en waar het heen 
               </tbody>
             </table>
           </div>
-          <p className="small muted" style={{ marginTop: 12 }}>
+          <p className="small muted" style={{ marginTop: 'var(--space-3)' }}>
             Wat niemand kan overdragen, bouw je op of haal je binnen.
           </p>
         </div>
@@ -283,7 +283,7 @@ Gesorteerd op het grootste verschil tussen waar het team staat en waar het heen 
 
       <div className="card">
         <h2>Iedereen naast elkaar</h2>
-        <p className="muted small" style={{ margin: '4px 0 14px' }}>
+        <p className="muted small" style={{ margin: 'var(--space-1) 0 var(--space-4)' }}>
           Waar iedereen nu staat, met het doel erachter als dat afwijkt.
         </p>
         <div className="table-wrap">
@@ -383,7 +383,7 @@ function People({
     <>
       <div className="card">
         <h2>Deelnemer toevoegen</h2>
-        <p className="muted small" style={{ margin: '4px 0 14px' }}>
+        <p className="muted small" style={{ margin: 'var(--space-1) 0 var(--space-4)' }}>
           Elke deelnemer krijgt een eigen link. Wie die link heeft kan invullen — deel hem dus persoonlijk.
         </p>
         <div className="row" style={{ flexWrap: 'nowrap', alignItems: 'flex-end' }}>
@@ -420,7 +420,7 @@ function People({
               const scores = data.ratings.filter((r) => r.participant_id === p.id).length
               const total = data.skills.length * 2
               return (
-                <div key={p.id} className="row" style={{ flexWrap: 'nowrap', gap: 14, padding: '10px 0', borderTop: '1px solid var(--border)' }}>
+                <div key={p.id} className="row" style={{ flexWrap: 'nowrap', gap: 'var(--space-4)', padding: 'var(--space-3) 0', borderTop: '1px solid var(--border)' }}>
                   <div style={{ minWidth: 170 }}>
                     <div style={{ fontWeight: 600 }}>{p.name}</div>
                     {p.role && <div className="small muted">{p.role}</div>}
@@ -547,13 +547,13 @@ function Terms({
 
   return (
     <>
-      {ok && <div className="banner" style={{ marginBottom: 16 }}>{ok}</div>}
+      {ok && <div className="banner" style={{ marginBottom: 'var(--space-4)' }}>{ok}</div>}
 
       <div className="card">
         <div className="card-head">
           <div>
             <h2>Skills (de assen van de matrix)</h2>
-            <p className="muted small" style={{ marginTop: 4 }}>
+            <p className="muted small" style={{ marginTop: 'var(--space-1)' }}>
               Per as de naam en het ankerpunt: wat één keer “dit gedaan hebben” op déze as concreet
               is. Dat anker voorkomt dat twee mensen een andere eenheid werk voor ogen hebben als ze
               zichzelf een cijfer geven. Hernoemen behoudt de al gegeven scores.
@@ -567,18 +567,18 @@ function Terms({
 
         <div className="stack">
           {skills.map((s, i) => (
-            <div key={s.id} className="row" style={{ flexWrap: 'nowrap', alignItems: 'flex-start', gap: 8 }}>
-              <div className="stack" style={{ gap: 2, paddingTop: 4 }}>
+            <div key={s.id} className="row" style={{ flexWrap: 'nowrap', alignItems: 'flex-start', gap: 'var(--space-2)' }}>
+              <div className="stack" style={{ gap: 'var(--space-1)', paddingTop: 'var(--space-1)' }}>
                 <button className="ghost sm" onClick={() => move(i, -1)} disabled={i === 0} title="Omhoog">↑</button>
                 <button className="ghost sm" onClick={() => move(i, 1)} disabled={i === skills.length - 1} title="Omlaag">↓</button>
               </div>
-              <div className="stack" style={{ flex: 1, gap: 6 }}>
+              <div className="stack" style={{ flex: 1, gap: 'var(--space-2)' }}>
                 <input type="text" value={s.label} onChange={(e) => patch(i, 'label', e.target.value)} />
                 <input type="text" className="small" value={s.anchor}
                   placeholder="Wat is één keer dit gedaan hebben? Bijv. een testronde met een handvol deelnemers"
                   onChange={(e) => patch(i, 'anchor', e.target.value)} />
               </div>
-              <button className="danger sm" style={{ marginTop: 4 }}
+              <button className="danger sm" style={{ marginTop: 'var(--space-1)' }}
                 onClick={() => setSkills((cur) => cur.filter((_, k) => k !== i))}>
                 ✕
               </button>
@@ -586,7 +586,7 @@ function Terms({
           ))}
         </div>
 
-        <button className="sm" style={{ marginTop: 14 }}
+        <button className="sm" style={{ marginTop: 'var(--space-4)' }}
           onClick={() =>
             setSkills((s) => [
               ...s,
@@ -596,7 +596,7 @@ function Terms({
           + Skill toevoegen
         </button>
         {skills.length < 3 && (
-          <p className="small" style={{ color: 'var(--danger)', marginTop: 8 }}>
+          <p className="small" style={{ color: 'var(--danger)', marginTop: 'var(--space-2)' }}>
             Met minder dan drie skills valt er geen radar te tekenen.
           </p>
         )}
@@ -606,7 +606,7 @@ function Terms({
         <div className="card-head">
           <div>
             <h2>Schaal en sessienaam</h2>
-            <p className="muted small" style={{ marginTop: 4 }}>
+            <p className="muted small" style={{ marginTop: 'var(--space-1)' }}>
               De niveaulabels die deelnemers bij elke score zien. Standaard is de vijfpuntsschaal uit het
               NN/g-template.
             </p>
@@ -617,33 +617,33 @@ function Terms({
           </button>
         </div>
 
-        <label className="field" style={{ marginBottom: 18 }}>
+        <label className="field" style={{ marginBottom: 'var(--space-4)' }}>
           <span>Sessienaam</span>
           <input type="text" value={sessionName} onChange={(e) => setSessionName(e.target.value)} />
         </label>
 
         <div className="stack">
           {scale.map((lv, i) => (
-            <div key={i} className="row" style={{ flexWrap: 'nowrap', alignItems: 'flex-start', gap: 10 }}>
-              <span className="pill" style={{ marginTop: 6 }}>{i + 1}</span>
-              <div className="stack" style={{ flex: 1, gap: 6 }}>
+            <div key={i} className="row" style={{ flexWrap: 'nowrap', alignItems: 'flex-start', gap: 'var(--space-3)' }}>
+              <span className="pill" style={{ marginTop: 'var(--space-2)' }}>{i + 1}</span>
+              <div className="stack" style={{ flex: 1, gap: 'var(--space-2)' }}>
                 <input type="text" value={lv.label}
                   onChange={(e) => setScale((s) => s.map((x, k) => (k === i ? { ...x, label: e.target.value } : x)))} />
                 <input type="text" value={lv.description} placeholder="Wanneer zit iemand op dit niveau?"
                   onChange={(e) => setScale((s) => s.map((x, k) => (k === i ? { ...x, description: e.target.value } : x)))} />
               </div>
-              <button className="danger sm" style={{ marginTop: 4 }} disabled={scale.length <= 2}
+              <button className="danger sm" style={{ marginTop: 'var(--space-1)' }} disabled={scale.length <= 2}
                 onClick={() => setScale((s) => s.filter((_, k) => k !== i))}>
                 ✕
               </button>
             </div>
           ))}
         </div>
-        <button className="sm" style={{ marginTop: 14 }} disabled={scale.length >= 7}
+        <button className="sm" style={{ marginTop: 'var(--space-4)' }} disabled={scale.length >= 7}
           onClick={() => setScale((s) => [...s, { level: s.length + 1, label: '', description: '' }])}>
           + Niveau toevoegen
         </button>
-        <p className="small muted" style={{ marginTop: 10 }}>
+        <p className="small muted" style={{ marginTop: 'var(--space-3)' }}>
           Let op: een niveau weghalen verandert de betekenis van scores die al zijn gegeven. Doe dat bij
           voorkeur vóórdat mensen invullen.
         </p>
@@ -651,7 +651,7 @@ function Terms({
 
       <div className="card" style={{ borderColor: 'color-mix(in srgb, var(--danger) 30%, var(--border))' }}>
         <h2>Sessie verwijderen</h2>
-        <p className="muted small" style={{ margin: '4px 0 14px', maxWidth: 560 }}>
+        <p className="muted small" style={{ margin: 'var(--space-1) 0 var(--space-4)', maxWidth: 560 }}>
           Verwijdert <strong>{data.session.name}</strong> met alle deelnemers, hun links en alle scores.
           Niet terug te draaien — exporteer eerst de CSV onder Overzicht als je de data wilt bewaren.
         </p>

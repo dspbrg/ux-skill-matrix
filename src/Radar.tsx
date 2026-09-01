@@ -263,7 +263,7 @@ export default function Radar({ axes, series, max = 5, size = 420, showLegend = 
       </svg>
 
       {showLegend && (
-        <div className="legend" style={{ justifyContent: 'center', marginTop: 4 }}>
+        <div className="legend" style={{ justifyContent: 'center', marginTop: 'var(--space-1)' }}>
           {series.map((s) => (
             <span className="item" key={s.key}>
               <svg width="22" height="10" aria-hidden="true">
@@ -277,7 +277,7 @@ export default function Radar({ axes, series, max = 5, size = 420, showLegend = 
       )}
 
       {exportName && (
-        <div style={{ textAlign: 'center', marginTop: 12 }}>
+        <div style={{ textAlign: 'center', marginTop: 'var(--space-3)' }}>
           <button
             className="sm"
             disabled={exporting}
@@ -306,7 +306,7 @@ export default function Radar({ axes, series, max = 5, size = 420, showLegend = 
             </svg>
             {exporting ? 'Bezig…' : 'PNG downloaden'}
           </button>
-          {failed && <p className="small" style={{ color: 'var(--danger)', marginTop: 8 }}>{failed}</p>}
+          {failed && <p className="small" style={{ color: 'var(--danger)', marginTop: 'var(--space-2)' }}>{failed}</p>}
         </div>
       )}
     </div>
