@@ -81,15 +81,10 @@ alter table ratings      enable row level security;
 
 -- ---------------------------------------------------------------- defaults
 
--- De elf assen. Elke as heeft twee ankers: waar je instapt en waar het heen
+-- De tien assen. Elke as heeft twee ankers: waar je instapt en waar het heen
 -- groeit. Die tweede is per as iets anders -- onderzoek groeit langs
 -- repertoire, toegankelijkheid langs diepte, faciliteren langs schaal,
--- stakeholders langs tegengestelde belangen.
---
--- Stakeholders staat los van faciliteren en presenteren: faciliteren is of je
--- een sessie kunt leiden, presenteren of je het kunt overbrengen, en dit of je
--- met de belangen kunt omgaan. Bij een overheidsorganisatie is dat laatste
--- vaak wat bepaalt of ontwerpwerk ergens landt.
+-- presenteren langs publiek.
 create or replace function default_skills() returns jsonb
 language sql immutable as $$
   select jsonb_build_array(
@@ -120,9 +115,6 @@ language sql immutable as $$
     jsonb_build_object('label','Faciliteren',               'description','',
       'anchor','een sessie met een handjevol mensen begeleiden',
       'anchor_senior','een volle zaal, met werkvormen die je zelf kiest'),
-    jsonb_build_object('label','Stakeholders',              'description','',
-      'anchor','weten wie waarover beslist en wat die nodig heeft',
-      'anchor_senior','tegengestelde belangen bij elkaar brengen tot een besluit dat standhoudt'),
     jsonb_build_object('label','Presenteren & overtuigen',  'description','',
       'anchor','je bevindingen delen in het team',
       'anchor_senior','een zaal met belanghebbenden meekrijgen, met eigen materiaal')
