@@ -44,7 +44,7 @@
   --fs-2: 13px;
   --fs-3: 15px;
   --fs-4: 19px;
-  --fs-5: 27px;
+  --fs-5: 33px;
 
   --space-1: 4px;
   --space-2: 8px;
@@ -199,6 +199,7 @@ a { color: var(--accent); }
 
 .grid-2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-4); }
 .grid-2.wide-right { grid-template-columns: minmax(0, .78fr) minmax(0, 1.22fr); }
+.grid-2 { column-gap: var(--space-6); }
 .stack { display: flex; flex-direction: column; gap: 10px; }
 .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
@@ -274,6 +275,18 @@ label.field > span { display: block; font-size: var(--fs-2); color: var(--text-2
 }
 .banner.error { background: color-mix(in srgb, var(--danger) 12%, transparent);
                 border-color: color-mix(in srgb, var(--danger) 35%, transparent); }
+
+/* De linkerkolom draagt geen eigen oppervlak: het is gereedschap, geen
+   onderwerp. Twee kaarten van bijna dezelfde kleur naast elkaar gaven het oog
+   nergens houvast — nu is de radar het enige vlak dat oplicht. */
+.kolom { min-width: 0; }
+.kolom > .card-head,
+.kolom > h2 { margin-bottom: var(--space-3); }
+.kolom .kop {
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--space-2);
+}
 
 /* ---------------------------------------------------------------- skill */
 .skill { padding: var(--space-5) 0; border-top: 1px solid var(--border); }

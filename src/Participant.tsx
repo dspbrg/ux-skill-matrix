@@ -163,27 +163,30 @@ export default function Participant({ token }: { token: string }) {
           </div>
         )}
 
+        {/* Links het gereedschap, rechts het onderwerp. Twee kaarten van bijna
+            dezelfde kleur lieten het oog nergens naartoe gaan; alleen de radar
+            krijgt nog een eigen oppervlak. */}
         <div className="grid-2" style={{ alignItems: 'start' }}>
-          <div className="card">
-            <div className="card-head">
+          <div className="kolom">
+            <div className="kop">
               <div>
-                <h2>{state === 'current' ? 'Waar sta je nu?' : 'Waar wil je naartoe?'}</h2>
-                <p className="muted small" style={{ marginTop: 4 }}>
+                <h1>{state === 'current' ? 'Waar sta je nu?' : 'Waar wil je naartoe?'}</h1>
+                <p className="muted small" style={{ marginTop: 6 }}>
                   {state === 'current'
                     ? 'Scoor jezelf op je huidige niveau. Eerlijk is nuttiger dan bescheiden of stoer.'
                     : 'Waar wil je over pakweg een jaar staan? Niet alles hoeft omhoog — bewust gelijk blijven mag ook.'}
                 </p>
               </div>
-            </div>
 
-            <div className="row" style={{ marginBottom: 14 }}>
-              <div className="tabs">
-                <button aria-selected={state === 'current'} onClick={() => setState('current')}>
-                  1 · Nu <span className="muted small">&nbsp;{filled.current}/{filled.total}</span>
-                </button>
-                <button aria-selected={state === 'future'} onClick={() => setState('future')}>
-                  2 · Doel <span className="muted small">&nbsp;{filled.future}/{filled.total}</span>
-                </button>
+              <div className="row" style={{ marginTop: 18 }}>
+                <div className="tabs">
+                  <button aria-selected={state === 'current'} onClick={() => setState('current')}>
+                    1 · Nu <span className="muted small">&nbsp;{filled.current}/{filled.total}</span>
+                  </button>
+                  <button aria-selected={state === 'future'} onClick={() => setState('future')}>
+                    2 · Doel <span className="muted small">&nbsp;{filled.future}/{filled.total}</span>
+                  </button>
+                </div>
               </div>
             </div>
 
