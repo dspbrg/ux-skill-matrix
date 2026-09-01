@@ -38,10 +38,16 @@ export default function Participant({ token }: { token: string }) {
     }
   }, [token])
 
-  function rate(skillId: string, next: number) {
-    const previous = values[skillId]?.[state]
-    const value = previous === next ? null : next
+  /**
+   * Klikken zet de score. Wissen gaat via een eigen knop: toen dit een toggle
+   * was, wiste een dubbelklik op een nog niet gekozen knop de score meteen
+   * weer — twee losse events, waarvan het tweede de waarde terugzette op null.
+   */
+  function rate(skillId: string, value: number | null) {
     setValues((v) => ({ ...v, [skillId]: { ...v[skillId], [state]: value ?? undefined } }))
+    // Een ingediende invulling die niet meer compleet is, mag niet stil als
+    // "Ingediend" blijven staan bij de facilitator.
+    if (value === null && submitted) void toggleSubmit()
     setSaving((n) => n + 1)
     // Schrijfacties serialiseren zodat snelle kliks elkaar niet inhalen.
     queue.current = queue.current
@@ -148,7 +154,10 @@ export default function Participant({ token }: { token: string }) {
                     <span className="name">{skill.label}</span>
                     <span className="spacer" />
                     {value ? (
-                      <span className="small muted">{scale[value - 1]?.label ?? value}</span>
+                      <>
+                        <span className="small muted">{scale[value - 1]?.label ?? value}</span>
+                        <button className="ghost sm" onClick={() => rate(skill.id, null)}>wissen</button>
+                      </>
                     ) : (
                       <span className="small" style={{ color: 'var(--text-3)' }}>nog niet ingevuld</span>
                     )}
@@ -159,11 +168,27 @@ export default function Participant({ token }: { token: string }) {
                       <strong>Eén keer dit gedaan</strong> is hier: {skill.anchor}.
                     </p>
                   )}
-                  <div className={`levels ${state === 'future' ? 'future' : ''}`}>
+                  <div
+                    className={`levels ${state === 'future' ? 'future' : ''}`}
+                    role="radiogroup"
+                    aria-label={`${skill.label} — ${state === 'current' ? 'huidig' : 'gewenst'} niveau`}
+                    onKeyDown={(e) => {
+                      const step =
+                        e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1
+                        : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0
+                      if (!step) return
+                      e.preventDefault()
+                      const next = Math.min(max, Math.max(1, (value ?? 0) + step))
+                      rate(skill.id, next)
+                      ;(e.currentTarget.children[next - 1] as HTMLButtonElement).focus()
+                    }}
+                  >
                     {Array.from({ length: max }, (_, i) => i + 1).map((lv) => (
                       <button
                         key={lv}
-                        aria-pressed={value === lv}
+                        role="radio"
+                        aria-checked={value === lv}
+                        tabIndex={value === lv || (value == null && lv === 1) ? 0 : -1}
                         title={scale[lv - 1]?.description ?? ''}
                         onClick={() => rate(skill.id, lv)}
                       >

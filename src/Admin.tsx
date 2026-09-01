@@ -102,6 +102,26 @@ function Overview({ data, onAddPeople }: { data: AdminPayload; onAddPeople: () =
     [participants, lookup],
   )
 
+  /**
+   * Het verschil per persoon nemen en dán middelen. Los gemiddelde-van-gewenst
+   * min gemiddelde-van-huidig rekent over twee verschillende groepen zodra
+   * iemand het ene wel en het andere nog niet heeft ingevuld — de normale
+   * tussentoestand tijdens een live sessie.
+   */
+  const paired = useCallback(
+    (skillId: string) => {
+      const diffs = participants
+        .map((p) => {
+          const v = lookup.get(p.id)?.get(skillId)
+          return v?.current != null && v?.future != null ? v.future - v.current : null
+        })
+        .filter((d): d is number => d != null)
+      if (!diffs.length) return null
+      return { mean: diffs.reduce((a, b) => a + b, 0) / diffs.length, n: diffs.length }
+    },
+    [participants, lookup],
+  )
+
   const coverage = useCallback(
     (skillId: string, state: State, level: number) =>
       participants.filter((p) => (lookup.get(p.id)?.get(skillId)?.[state] ?? 0) >= level).length,
@@ -212,22 +232,24 @@ function Overview({ data, onAddPeople }: { data: AdminPayload; onAddPeople: () =
               </thead>
               <tbody>
                 {[...skills]
-                  .map((s) => ({ s, c: avg(s.id, 'current'), f: avg(s.id, 'future') }))
-                  .sort((a, b) => ((b.f ?? 0) - (b.c ?? 0)) - ((a.f ?? 0) - (a.c ?? 0)))
-                  .map(({ s, c, f }) => {
-                    const gap = c != null && f != null ? f - c : null
+                  .map((s) => ({ s, c: avg(s.id, 'current'), f: avg(s.id, 'future'), g: paired(s.id) }))
+                  // Assen zonder gepaard verschil horen onderaan als onbekend,
+                  // niet bovenaan met een verzonnen groot negatief getal.
+                  .sort((a, b) => (b.g?.mean ?? -Infinity) - (a.g?.mean ?? -Infinity))
+                  .map(({ s, c, f, g }) => {
                     const strong = coverage(s.id, 'current', 4)
                     return (
                       <tr key={s.id}>
                         <td>{s.label}</td>
                         <td className="num">{c?.toFixed(1) ?? '–'}</td>
                         <td className="num">{f?.toFixed(1) ?? '–'}</td>
-                        <td className="num" style={{ color: gap && gap >= 1 ? 'var(--future)' : 'var(--text-2)' }}>
-                          {gap == null ? '–' : gap > 0 ? `+${gap.toFixed(1)}` : gap.toFixed(1)}
+                        <td className="num" style={{ color: g && g.mean >= 1 ? 'var(--future)' : 'var(--text-2)' }}>
+                          {g == null ? '–' : g.mean > 0 ? `+${g.mean.toFixed(1)}` : g.mean.toFixed(1)}
+                          {g != null && g.n < participants.length && (
+                            <span className="small muted"> ({g.n}/{participants.length})</span>
+                          )}
                         </td>
-                        <td className="num" style={{ color: c != null && strong === 0 ? 'var(--danger)' : undefined }}>
-                          {strong}
-                        </td>
+                        <td className="num">{strong}</td>
                       </tr>
                     )
                   })}
@@ -245,7 +267,8 @@ function Overview({ data, onAddPeople }: { data: AdminPayload; onAddPeople: () =
       <div className="card">
         <h2>Iedereen naast elkaar</h2>
         <p className="muted small" style={{ margin: '4px 0 14px' }}>
-          Huidig niveau, met het gewenste niveau erachter wanneer dat hoger ligt.
+          Huidig niveau, met het gewenste niveau erachter als dat afwijkt. Lager mag: niet elke skill
+          hoeft omhoog.
         </p>
         <div className="table-wrap">
           <table>
@@ -266,12 +289,14 @@ function Overview({ data, onAddPeople }: { data: AdminPayload; onAddPeople: () =
                     const v = lookup.get(p.id)?.get(s.id)
                     return (
                       <td key={p.id} className="num">
-                        <span className="heat" style={{ background: heat(v?.current, max), color: v?.current && v.current >= 4 ? '#fff' : undefined }}>
-                          {v?.current ?? '–'}
+                        <span className="cell">
+                          <span className="heat" style={{ background: v?.current ? `var(--heat-${v.current})` : 'transparent' }}>
+                            {v?.current ?? '–'}
+                          </span>
+                          <span className="to">
+                            {v?.future != null && v.future !== v.current ? `→${v.future}` : ''}
+                          </span>
                         </span>
-                        {v?.future != null && v.future !== v.current && (
-                          <span className="small" style={{ color: 'var(--future)' }}> →{v.future}</span>
-                        )}
                       </td>
                     )
                   })}
@@ -284,12 +309,6 @@ function Overview({ data, onAddPeople }: { data: AdminPayload; onAddPeople: () =
       </div>
     </>
   )
-}
-
-function heat(value: number | undefined, max: number) {
-  if (!value) return 'transparent'
-  const pct = Math.round((value / max) * 78)
-  return `color-mix(in srgb, var(--accent) ${pct}%, transparent)`
 }
 
 /* ------------------------------------------------------------------ deelnemers */
@@ -396,8 +415,13 @@ function People({
                       {copied === p.token ? 'Gekopieerd' : 'Kopiëren'}
                     </button>
                   </div>
-                  <span className={`pill ${p.submitted_at ? 'ok' : ''}`} style={{ whiteSpace: 'nowrap' }}>
-                    {p.submitted_at ? 'Ingediend' : `${scores}/${total}`}
+                  <span
+                    className={`pill ${p.submitted_at && scores === total ? 'ok' : ''}`}
+                    style={{ whiteSpace: 'nowrap', ...(p.submitted_at && scores !== total ? { color: 'var(--future)' } : {}) }}
+                  >
+                    {p.submitted_at
+                      ? scores === total ? 'Ingediend' : `Ingediend · ${scores}/${total}`
+                      : `${scores}/${total}`}
                   </span>
                   <button className="danger sm" onClick={() => remove(p.id, p.name)}>Verwijderen</button>
                 </div>

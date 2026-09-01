@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { exportSvgAsPng } from './exportPng'
 
 interface Series {
@@ -41,6 +41,7 @@ export default function Radar({ axes, series, max = 5, size = 420, showLegend = 
   const svgRef = useRef<SVGSVGElement>(null)
   const [exporting, setExporting] = useState(false)
   const [failed, setFailed] = useState('')
+  const [fitted, setFitted] = useState<string>()
   const n = axes.length
   if (n < 3) {
     return (
@@ -57,6 +58,18 @@ export default function Radar({ axes, series, max = 5, size = 420, showLegend = 
   const cx = size / 2
   const cy = size / 2
   const r = size / 2 - padX / 2
+
+  // De marges rond de tekening waren geschat en zaten er ruim naast: gemeten
+  // bleef ruim een derde van de hoogte leeg. Dat is zichtbaar op de beamer en
+  // in elke geëxporteerde PNG, dus meet na render de werkelijke inkt.
+  useLayoutEffect(() => {
+    const el = svgRef.current
+    if (!el) return
+    const b = el.getBBox()
+    if (!b.width || !b.height) return
+    const pad = 6
+    setFitted(`${b.x - pad} ${b.y - pad} ${b.width + pad * 2} ${b.height + pad * 2}`)
+  }, [axes.join('|'), max, size, JSON.stringify(series.map((x) => x.values))])
 
   const angle = (i: number) => (Math.PI * 2 * i) / n - Math.PI / 2
   const point = (i: number, v: number) => {
@@ -76,9 +89,9 @@ export default function Radar({ axes, series, max = 5, size = 420, showLegend = 
     <div>
       <svg
         ref={svgRef}
-        viewBox={`${-padX} ${-padY} ${size + padX * 2} ${size + padY * 2}`}
+        viewBox={fitted ?? `${-padX} ${-padY} ${size + padX * 2} ${size + padY * 2}`}
         width="100%"
-        style={{ maxHeight: size + padY * 2, display: 'block' }}
+        style={{ display: 'block' }}
         role="img"
         aria-label={`Radardiagram met ${n} skills`}
       >
@@ -88,8 +101,8 @@ export default function Radar({ axes, series, max = 5, size = 420, showLegend = 
             key={level}
             d={ringPath(level)}
             fill={level === max ? 'var(--surface-2)' : 'none'}
-            stroke="var(--border)"
-            strokeWidth={1}
+            stroke={level === max ? 'var(--border-strong)' : 'var(--border)'}
+            strokeWidth={level === max ? 1.5 : 1}
           />
         ))}
 
@@ -134,8 +147,11 @@ export default function Radar({ axes, series, max = 5, size = 420, showLegend = 
               x={cx + Math.cos(a) * rr}
               y={cy + Math.sin(a) * rr + 3.5}
               textAnchor="middle"
-              fontSize={9.5}
+              fontSize={10.5}
               fill="var(--text-3)"
+              stroke="var(--surface)"
+              strokeWidth={3}
+              style={{ paintOrder: 'stroke' }}
             >
               {level}
             </text>
@@ -162,10 +178,10 @@ export default function Radar({ axes, series, max = 5, size = 420, showLegend = 
               {d && (
                 <path
                   d={d}
-                  fill={pts.length >= 3 ? s.color : 'none'}
-                  fillOpacity={partial ? 0.07 : 0.13}
+                  fill={pts.length >= 3 && !s.dashed ? s.color : 'none'}
+                  fillOpacity={partial ? 0.10 : 0.16}
                   stroke={s.color}
-                  strokeWidth={2}
+                  strokeWidth={s.dashed ? 2.5 : 2}
                   strokeDasharray={s.dashed ? '6 4' : undefined}
                   strokeLinejoin="round"
                 />
@@ -182,7 +198,10 @@ export default function Radar({ axes, series, max = 5, size = 420, showLegend = 
         <div className="legend" style={{ justifyContent: 'center', marginTop: 4 }}>
           {series.map((s) => (
             <span className="item" key={s.key}>
-              <span className="dot" style={{ background: s.color }} />
+              <svg width="22" height="8" aria-hidden="true">
+                <line x1="1" y1="4" x2="21" y2="4" stroke={s.color} strokeWidth="3"
+                  strokeDasharray={s.dashed ? '5 3' : undefined} strokeLinecap="round" />
+              </svg>
               {s.label}
             </span>
           ))}
@@ -202,7 +221,7 @@ export default function Radar({ axes, series, max = 5, size = 420, showLegend = 
               try {
                 await exportSvgAsPng(svgRef.current, exportName, {
                   title: exportName,
-                  legend: series.map((x) => ({ label: x.label, color: x.color })),
+                  legend: series.map((x) => ({ label: x.label, color: x.color, dashed: x.dashed })),
                 })
               } catch (e) {
                 setFailed((e as Error).message)

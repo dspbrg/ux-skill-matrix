@@ -13,7 +13,7 @@
  */
 interface ExportOptions {
   title?: string
-  legend?: { label: string; color: string }[]
+  legend?: { label: string; color: string; dashed?: boolean }[]
   scale?: number
 }
 
@@ -72,18 +72,24 @@ export async function exportSvgAsPng(
 
     if (legend.length) {
       // eerst de breedte schatten om het geheel te kunnen centreren
-      const itemW = legend.map((l) => 20 + l.label.length * 7.4)
+    const itemW = legend.map((l) => 31 + l.label.length * 7.4)
       const total = itemW.reduce((a, b) => a + b, 0) + (legend.length - 1) * 22
       let x = cx - total / 2
       const y = vy0 + vh0 + legendH - 16
       legend.forEach((l, i) => {
-        const dot = document.createElementNS(NS, 'circle')
-        dot.setAttribute('cx', String(x + 5))
-        dot.setAttribute('cy', String(y - 4))
-        dot.setAttribute('r', '5')
-        dot.setAttribute('fill', l.color)
-        clone.appendChild(dot)
-        clone.appendChild(svgText(l.label, x + 16, y, 13, 'var(--text-2)', 'start'))
+        // Een stip verzwijgt dat de tweede reeks gestreept is; in een grijs
+        // afgedrukt rapport zijn de twee dan niet uit elkaar te houden.
+        const line = document.createElementNS(NS, 'line')
+        line.setAttribute('x1', String(x))
+        line.setAttribute('y1', String(y - 4))
+        line.setAttribute('x2', String(x + 20))
+        line.setAttribute('y2', String(y - 4))
+        line.setAttribute('stroke', l.color)
+        line.setAttribute('stroke-width', '3')
+        line.setAttribute('stroke-linecap', 'round')
+        if (l.dashed) line.setAttribute('stroke-dasharray', '5 3')
+        clone.appendChild(line)
+        clone.appendChild(svgText(l.label, x + 27, y, 13, 'var(--text-2)', 'start'))
         x += itemW[i] + 22
       })
     }

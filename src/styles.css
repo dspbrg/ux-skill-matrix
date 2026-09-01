@@ -6,14 +6,46 @@
   --border: #e2e5ea;
   --border-strong: #cdd2da;
   --text: #16181d;
-  --text-2: #5b616e;
-  --text-3: #878d99;
+  /* Nagerekend tegen wit: 4,72:1 en 4,57:1. De oude waarden (#5b616e, #878d99)
+     haalden 4,3:1 en 3,34:1 en zakten dus door AA — juist op de tekstjes waarop
+     iemand beslist of hij nog iets vergeten is. */
+  --text-2: #535966;
+  --text-3: #6f7686;
   --accent: #2f5df6;
   --accent-soft: #e8edfe;
   --current: #2f5df6;
   --future: #e2820f;
   --danger: #cf3b3b;
   --ok: #1f9254;
+  /* Typografische schaal. Zonder stappen is alles "een beetje klein" en zegt
+     typografie nergens dat iets belangrijker is. */
+  --fs-1: 11px;
+  --fs-2: 13px;
+  --fs-3: 15px;
+  --fs-4: 19px;
+  --fs-5: 26px;
+
+  /* Ruimtemaat, zodat het verticale ritme één eenheid heeft. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  /* Heatmap: vijf discrete stappen die de middenzone vermijden, met één
+     tekstkleur die op alle vijf boven 6:1 zit. Het oude verloop mengde
+     --accent en klapte bij 4 om naar wit, wat 2,64:1 opleverde. */
+  --heat-1: #edf1fe;
+  --heat-2: #d2dffd;
+  --heat-3: #b3c7fb;
+  --heat-4: #93aef9;
+  --heat-5: #6f90f6;
+  --heat-fg: #16181d;
+
+  --on-accent: #ffffff;
+  --on-future: #16181d;
+
   --radius: 10px;
   --radius-lg: 16px;
   --shadow: 0 1px 2px rgba(16, 20, 30, .05), 0 8px 24px -12px rgba(16, 20, 30, .18);
@@ -29,7 +61,7 @@
     --border-strong: #3a4150;
     --text: #eef0f4;
     --text-2: #a5acba;
-    --text-3: #767d8b;
+    --text-3: #8b93a3;
     --accent: #6b8dff;
     --accent-soft: #1c2540;
     --current: #6b8dff;
@@ -37,6 +69,14 @@
     --danger: #ef6b6b;
     --ok: #45c07d;
     --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 30px -14px rgba(0, 0, 0, .7);
+    --heat-1: #1b2130;
+    --heat-2: #23304d;
+    --heat-3: #2c3f6d;
+    --heat-4: #364e8f;
+    --heat-5: #3f5cb0;
+    --heat-fg: #e8edf8;
+    /* wit op #6b8dff is 3,06:1 en zakt door AA; donkere tekst haalt 6,2:1 */
+    --on-accent: #0f1115;
   }
 }
 
@@ -48,8 +88,11 @@
   --border: #e2e5ea;
   --border-strong: #cdd2da;
   --text: #16181d;
-  --text-2: #5b616e;
-  --text-3: #878d99;
+  /* Nagerekend tegen wit: 4,72:1 en 4,57:1. De oude waarden (#5b616e, #878d99)
+     haalden 4,3:1 en 3,34:1 en zakten dus door AA — juist op de tekstjes waarop
+     iemand beslist of hij nog iets vergeten is. */
+  --text-2: #535966;
+  --text-3: #6f7686;
   --accent: #2f5df6;
   --current: #2f5df6;
   --future: #e2820f;
@@ -64,20 +107,20 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  font-size: 15px;
+  font-size: var(--fs-3);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
 
 h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -.015em; }
-h1 { font-size: 1.6rem; }
-h2 { font-size: 1.15rem; }
-h3 { font-size: .95rem; }
+h1 { font-size: var(--fs-5); line-height: 1.2; }
+h2 { font-size: var(--fs-4); line-height: 1.3; }
+h3 { font-size: var(--fs-3); line-height: 1.3; }
 p { margin: 0; }
 a { color: var(--accent); }
 
 /* ---------------------------------------------------------------- layout */
-.shell { max-width: 1180px; margin: 0 auto; padding: 28px 22px 96px; }
+.shell { max-width: 1180px; margin: 0 auto; padding: var(--space-6) var(--space-5) 96px; }
 .shell.narrow { max-width: 760px; }
 
 .topbar {
@@ -96,18 +139,18 @@ a { color: var(--accent); }
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
-  padding: 22px;
+  padding: var(--space-5);
 }
-.card + .card { margin-top: 18px; }
-.card-head { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 16px; }
+.card + .card { margin-top: var(--space-4); }
+.card-head { display: flex; align-items: flex-start; gap: var(--space-3); margin-bottom: var(--space-4); }
 .card-head .spacer { flex: 1; }
 
-.grid-2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; }
+.grid-2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-4); }
 .stack { display: flex; flex-direction: column; gap: 10px; }
 .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
 .muted { color: var(--text-2); }
-.small { font-size: .82rem; }
+.small { font-size: var(--fs-2); }
 .mono { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace; }
 
 /* ---------------------------------------------------------------- controls */
@@ -119,7 +162,7 @@ button, .btn {
   color: var(--text);
   padding: 8px 14px;
   cursor: pointer;
-  transition: background .12s, border-color .12s, transform .04s;
+  transition: background .12s, border-color .12s, color .12s, transform .04s;
   text-decoration: none;
   display: inline-flex; align-items: center; gap: 7px;
 }
@@ -148,22 +191,35 @@ input[type="text"], input[type="password"], textarea, select {
 input:focus, textarea:focus, select:focus {
   outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent;
 }
+
+/* Neutraal en met offset, zodat "gefocust" niet lijkt op "geselecteerd". */
+:where(button, .btn, summary, a, [tabindex]):focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
 /* wint van `font: inherit` in de input-regel hierboven */
-input[type="text"].small { font-size: .85rem; color: var(--text-2); }
+input[type="text"].small { font-size: var(--fs-2); color: var(--text-2); }
 
 label.field { display: block; }
 label.field > span { display: block; font-size: .82rem; color: var(--text-2); margin-bottom: 5px; }
 
-.tabs { display: inline-flex; padding: 3px; gap: 3px; background: var(--surface-2); border-radius: 12px; }
+.tabs { display: inline-flex; padding: 3px; gap: 3px; background: var(--surface-2);
+        border: 1px solid var(--border); border-radius: 12px; }
 .tabs button {
   border: none; background: transparent; color: var(--text-2);
   border-radius: 9px; padding: 7px 15px;
 }
-.tabs button[aria-selected="true"] { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
+/* De slagschaduw draagt het in licht, de ring in donker. */
+.tabs button[aria-selected="true"] {
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(16, 20, 30, .10), 0 0 0 1px var(--border-strong);
+}
 
 .pill {
   display: inline-flex; align-items: center; gap: 6px;
-  font-size: .78rem; padding: 3px 9px; border-radius: 999px;
+  font-size: var(--fs-1); padding: 3px 9px; border-radius: 999px;
   background: var(--surface-2); color: var(--text-2); border: 1px solid var(--border);
 }
 .pill.ok { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 35%, transparent); background: color-mix(in srgb, var(--ok) 10%, transparent); }
@@ -177,56 +233,81 @@ label.field > span { display: block; font-size: .82rem; color: var(--text-2); ma
 .banner.error { background: color-mix(in srgb, var(--danger) 12%, transparent); border-color: color-mix(in srgb, var(--danger) 35%, transparent); }
 
 /* ---------------------------------------------------------------- skill rating */
-.skill { padding: 16px 0; border-top: 1px solid var(--border); }
-.skill:first-child { border-top: none; padding-top: 4px; }
-.skill-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+.skill { padding: var(--space-5) 0; border-top: 1px solid var(--border); }
+.skill:first-child { border-top: none; padding-top: var(--space-1); }
+.skill-head { display: flex; align-items: baseline; gap: var(--space-3); margin-bottom: var(--space-2); }
 .skill-head .name { font-weight: 600; }
 .skill-head .spacer { flex: 1; }
-.skill-desc { color: var(--text-2); font-size: .85rem; margin-top: -6px; margin-bottom: 10px; }
+/* Stond op margin-top: -6px om een gat te compenseren dat .skill-head maakte.
+   Dat gat is nu weg, dus de negatieve marge ook. */
+.skill-desc { color: var(--text-2); font-size: var(--fs-2); margin: 0 0 var(--space-3); }
 
-.levels { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.levels { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--space-2); }
 .levels button {
   flex-direction: column; align-items: flex-start; gap: 2px;
   padding: 9px 10px; min-height: 62px; text-align: left;
   background: var(--surface-2); border-color: transparent;
 }
-.levels button .lv { font-size: 1rem; font-weight: 600; line-height: 1.1; }
-.levels button .lb { font-size: .7rem; color: var(--text-2); line-height: 1.2; }
-.levels button[aria-pressed="true"] {
-  background: var(--accent-soft);
+.levels button .lv { font-size: var(--fs-3); font-weight: 600; line-height: 1.1; }
+.levels button .lb { font-size: var(--fs-1); color: var(--text-2); line-height: 1.2; }
+/* Deze regel moet ná .levels button staan: bij gelijke specificiteit wint de
+   laatste, en daardoor had de meest aangeklikte knop van de app geen hover. */
+.levels button:hover:not([aria-checked="true"]) {
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface-2));
+  border-color: var(--border-strong);
+}
+
+/* Gevuld in plaats van omrand, zodat selectie over tien rijen te scannen is en
+   niet te verwarren met de focusring. De kleur volgt de radar: blauw = huidig,
+   oranje = gewenst. */
+.levels button[aria-checked="true"] {
+  background: var(--accent);
   border-color: var(--accent);
-  color: var(--text);
+  color: var(--on-accent);
 }
-.levels button[aria-pressed="true"] .lb { color: var(--text); }
-.levels.future button[aria-pressed="true"] {
+.levels button[aria-checked="true"] .lb { color: color-mix(in srgb, var(--on-accent) 90%, transparent); }
+.levels.future button[aria-checked="true"] {
+  background: var(--future);
   border-color: var(--future);
-  background: color-mix(in srgb, var(--future) 14%, transparent);
+  color: var(--on-future);
 }
+.levels.future button[aria-checked="true"] .lb { color: color-mix(in srgb, var(--on-future) 75%, transparent); }
 
 /* Het ankerpunt staat vlak boven de knoppen: het is de maatlat waarlangs je
    jezelf legt terwijl je klikt, niet inleidende tekst. */
 .anchor {
-  font-size: .82rem;
+  font-size: var(--fs-2);
   color: var(--text-2);
   background: var(--surface-2);
   border-left: 2px solid var(--border-strong);
   border-radius: 0 6px 6px 0;
   padding: 7px 11px;
-  margin: 0 0 10px;
+  margin: 0 0 var(--space-3);
 }
 .anchor strong { color: var(--text); font-weight: 600; }
 
 /* ---------------------------------------------------------------- legend & table */
-.legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: .84rem; color: var(--text-2); }
+.legend { display: flex; gap: var(--space-4); flex-wrap: wrap; font-size: var(--fs-2); color: var(--text-2); }
 .legend .item { display: inline-flex; align-items: center; gap: 7px; }
 
-table { width: 100%; border-collapse: collapse; font-size: .87rem; }
-th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
-th { font-weight: 600; color: var(--text-2); font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; }
+table { width: 100%; border-collapse: collapse; font-size: var(--fs-2); }
+th, td { text-align: left; padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border); }
+th { font-weight: 600; color: var(--text-2); font-size: var(--fs-1); text-transform: uppercase; letter-spacing: .04em; }
+thead th { border-bottom: 1px solid var(--border-strong); }
+tbody tr:hover { background: var(--surface-2); }
 td.num, th.num { text-align: center; font-variant-numeric: tabular-nums; }
 .table-wrap { overflow-x: auto; }
 
-.heat { display: inline-block; min-width: 26px; padding: 2px 6px; border-radius: 6px; font-variant-numeric: tabular-nums; }
+.heat {
+  display: inline-block; min-width: 26px; padding: 2px 6px; border-radius: 6px;
+  font-variant-numeric: tabular-nums;
+  color: var(--heat-fg);
+}
+/* Chip en pijl in een vast raster, anders schuift de chip per rij op als er
+   wel of geen gewenst niveau achter staat. */
+td.num .cell { display: grid; grid-template-columns: 26px 26px; align-items: center;
+               justify-content: center; gap: var(--space-1); }
+td.num .cell .to { text-align: left; font-size: var(--fs-1); color: var(--text-2); }
 
 /* ---------------------------------------------------------------- misc */
 .token-link {
