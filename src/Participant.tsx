@@ -154,10 +154,10 @@ export default function Participant({ token }: { token: string }) {
                   <div className="skill-head">
                     <span className="name">{skill.label}</span>
                     <span className="spacer" />
-                    {value ? (
+                    {/* Niets tonen zolang er niets staat: een lege baan zegt al dat
+                        er nog niets is gekozen, en op deze plek hoort een actie. */}
+                    {value != null && (
                       <button className="ghost sm" onClick={() => rate(skill.id, null)}>wissen</button>
-                    ) : (
-                      <span className="small" style={{ color: 'var(--text-3)' }}>nog niet ingevuld</span>
                     )}
                   </div>
                   {skill.description && <p className="skill-desc">{skill.description}</p>}
@@ -201,7 +201,23 @@ export default function Participant({ token }: { token: string }) {
 
           <div style={{ position: 'sticky', top: 78 }}>
             <div className="card">
-              <h3 style={{ marginBottom: 10 }}>Jouw profiel</h3>
+              {/* "Jouw profiel" en "Teamprofiel" in het adminscherm staan op
+                  dezelfde plek in de opbouw; dan hoort het ook dezelfde rang
+                  te zijn. Voortgang staat hier omdat het bij het profiel hoort
+                  en niet in een eigen kaart met een grote ring naast een korte
+                  zin — dat stond uit balans in deze kolom. */}
+              <div className="card-head" style={{ alignItems: 'center', marginBottom: 12 }}>
+                <h2>Jouw profiel</h2>
+                <span className="spacer" />
+                <span className="voortgang">
+                  <span className="balk">
+                    <span style={{ width: `${((filled.current + filled.future) / (filled.total * 2 || 1)) * 100}%` }} />
+                  </span>
+                  <span className="telling">
+                    {filled.current + filled.future}/{filled.total * 2}
+                  </span>
+                </span>
+              </div>
               <Radar
                 axes={skills.map((s) => s.label)}
                 max={max}
@@ -224,25 +240,7 @@ export default function Participant({ token }: { token: string }) {
               />
             </div>
 
-            <div className={done ? 'card opkomen' : 'card'}>
-              <div className="voortgang">
-                <Ring gedaan={filled.current + filled.future} totaal={filled.total * 2} />
-                <div>
-                  {done ? (
-                    <>
-                      <p className="small" style={{ marginBottom: 10 }}>
-                        {submitted ? 'Ingediend.' : 'Alles ingevuld.'}
-                      </p>
-                      <button className={submitted ? '' : 'primary'} onClick={toggleSubmit}>
-                        {submitted ? 'Toch nog iets wijzigen' : 'Invulling indienen'}
-                      </button>
-                    </>
-                  ) : (
-                    <p className="small muted">Alles wordt automatisch bewaard.</p>
-                  )}
-                </div>
-              </div>
-            </div>
+
           </div>
         </div>
       </div>
@@ -335,46 +333,15 @@ function Baan({
           <span
             key={lv}
             className={nu === lv ? 'is-nu' : doel === lv ? 'is-doel' : ''}
-            style={{
-              left: `${pct(lv)}%`,
-              transform: lv === 1 ? 'none' : lv === max ? 'translateX(-100%)' : 'translateX(-50%)',
-            }}
+            // Alle vijf optisch op hun eigen punt. Het eerste en laatste label
+            // tegen de rand duwen scheelde maar 13px met de buurman, terwijl de
+            // rest er 60 had; de kaartmarge vangt het overschot ruim op.
+            style={{ left: `${pct(lv)}%`, transform: 'translateX(-50%)' }}
           >
             {scale[lv - 1]?.label ?? lv}
           </span>
         ))}
       </div>
-    </div>
-  )
-}
-
-/** Voortgang als ring: de boog loopt vol en het getal telt mee. */
-function Ring({ gedaan, totaal }: { gedaan: number; totaal: number }) {
-  const straal = 26
-  const omtrek = 2 * Math.PI * straal
-  const deel = totaal ? gedaan / totaal : 0
-  return (
-    <div className="voortgang" style={{ position: 'relative', width: 64, height: 64 }}>
-      <svg width="64" height="64" viewBox="0 0 64 64" aria-hidden="true">
-        <circle className="ring-baan" cx="32" cy="32" r={straal} fill="none" strokeWidth="4" />
-        <circle
-          className="ring-vul"
-          cx="32" cy="32" r={straal} fill="none" strokeWidth="4"
-          strokeDasharray={omtrek}
-          strokeDashoffset={omtrek * (1 - deel)}
-          transform="rotate(-90 32 32)"
-        />
-      </svg>
-      <span
-        className="telling"
-        style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center' }}
-      >
-        {gedaan}
-      </span>
-      <span className="micro" style={{ position: 'absolute', bottom: -14, left: 0, right: 0,
-        textAlign: 'center', color: 'var(--text-3)' }}>
-        /{totaal}
-      </span>
     </div>
   )
 }

@@ -163,15 +163,6 @@ export default function Radar({ axes, series, max = 5, size = 420, showLegend = 
         role="img"
         aria-label={`Radardiagram met ${n} skills`}
       >
-        <defs>
-          {series.map((s) => (
-            <radialGradient key={s.key} id={`vulling-${s.key}`} cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor={s.color} stopOpacity={0.16} />
-              <stop offset="100%" stopColor={s.color} stopOpacity={0.46} />
-            </radialGradient>
-          ))}
-        </defs>
-
         {Array.from({ length: max }, (_, k) => k + 1).map((level) => (
           <path
             key={level}
@@ -302,7 +293,12 @@ function Shape({
           /* Twee gevulde vlakken over elkaar geven een modderige mengkleur die in
              geen van beide paletten bestaat, precies in het brandpunt. Dus: waar
              je staat is gevuld, waar je heen wil is alleen lijn. */
-          fill={pts.length >= 3 && !series.dashed ? `url(#vulling-${series.key})` : 'none'}
+          /* Plat in plaats van een verloop: de gradient maakte de vulling vuil,
+             en twee gevulde vlakken over elkaar gaven een mengkleur die in geen
+             van beide paletten bestaat. Waar je staat is gevuld, waar je heen
+             wil is alleen lijn. */
+          fill={pts.length >= 3 && !series.dashed ? series.color : 'none'}
+          fillOpacity={0.2}
           stroke={series.color}
           strokeOpacity={series.dashed ? 1 : 0.65}
           strokeWidth={series.dashed ? 2.25 : 1.25}
