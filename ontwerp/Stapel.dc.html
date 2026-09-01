@@ -1,0 +1,110 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&family=Space+Mono:wght@400;700&display=swap">
+  <style>
+    body { margin: 0; font-family: Inter, system-ui, sans-serif; }
+    a { color: #3DFFD2; } a:hover { color: #ECE6DF; }
+    .keuze { cursor: pointer; transition: transform .18s cubic-bezier(.34,1.56,.64,1), background .18s; }
+    .keuze:hover { transform: translateY(-3px); }
+  </style>
+</helmet>
+
+<div style="width: 1000px; height: 800px; background: #15141A; color: #ECE6DF; display: flex; flex-direction: column; overflow: hidden; position: relative;">
+
+  <div style="display: flex; align-items: center; gap: 14px; padding: 14px 32px;">
+    <span style="font-family: 'Space Grotesk', sans-serif; font-weight: 700; letter-spacing: -.02em;">COA · UX-team</span>
+    <span style="color: #837E76;">·</span>
+    <span style="color: #9A958E;">Sanne</span>
+    <span style="flex: 1;"></span>
+    <span style="font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #837E76;">NOG {{resterend}} TE GAAN</span>
+  </div>
+
+  <div style="flex: 1; display: grid; place-items: center; padding: 0 32px 40px; min-height: 0;">
+    <div style="position: relative; width: 620px;">
+
+      <div style="position: absolute; inset: 0; transform: translate(14px, 16px) scale(.97); background: #1C1B22; border: 1px solid #232229; border-radius: 20px; opacity: .5;"></div>
+      <div style="position: absolute; inset: 0; transform: translate(7px, 8px) scale(.985); background: #1C1B22; border: 1px solid #2E2C36; border-radius: 20px; opacity: .75;"></div>
+
+      <div style="position: relative; background: #1C1B22; border: 1px solid #2E2C36; border-radius: 20px; padding: 34px 34px 28px;">
+        <div style="font-family: 'Space Mono', monospace; font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: #837E76; margin-bottom: 16px;">AS {{nummer}} VAN 10 &middot; STAP 1</div>
+
+        <h1 style="margin: 0 0 10px; font-family: 'Space Grotesk', sans-serif; font-size: 34px; font-weight: 700; letter-spacing: -.025em; line-height: 1.1;">{{naam}}</h1>
+        <p style="margin: 0 0 6px; font-size: 15px; color: #9A958E; line-height: 1.5;">{{omschrijving}}</p>
+        <p style="margin: 0 0 26px; font-size: 14px; color: #ECE6DF; border-left: 2px solid #3DFFD2; padding: 6px 0 6px 12px; background: #232229; border-radius: 0 6px 6px 0;">{{anker}}</p>
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <sc-for list="{{keuzes}}" as="k" hint-placeholder-count="5">
+            <div class="keuze" onClick="{{k.kies}}" style="display: flex; align-items: center; gap: 16px; padding: 14px 18px; border-radius: 12px; background: {{k.bg}}; border: 1px solid {{k.rand}};">
+              <span style="font-family: 'Space Grotesk', sans-serif; font-size: 21px; font-weight: 700; width: 20px; color: {{k.fg}};">{{k.n}}</span>
+              <span style="display: flex; flex-direction: column; gap: 2px;">
+                <span style="font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: {{k.fg}};">{{k.label}}</span>
+                <span style="font-size: 13px; color: {{k.fg2}};">{{k.uitleg}}</span>
+              </span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 10px; margin-top: 22px;">
+        <sc-for list="{{pips}}" as="p" hint-placeholder-count="10">
+          <span style="flex: 1; height: 3px; border-radius: 2px; background: {{p.kleur}};"></span>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { index: 2, gekozen: 3 };
+  }
+  renderVals() {
+    const assen = [
+      ['Kwalitatief onderzoek', 'Interviews en usability tests opzetten, uitvoeren en de bevindingen terugbrengen.', 'een testronde met een handvol deelnemers, van opzet tot terugkoppeling'],
+      ['Kwantitatief onderzoek', 'Een vragenlijst of analytics-vraag opzetten en de uitkomst juist interpreteren.', 'een vragenlijst of een analytics-vraag, van vraag tot conclusie'],
+      ['Informatiearchitectuur', 'Structuur en navigatie ontwerpen en toetsen met een card sort of tree test.', 'een navigatiestructuur ontwerpen én toetsen, niet alleen bedenken'],
+    ];
+    const niveaus = [
+      ['Nog niet', 'Je weet wat het is, maar je hebt het nog niet gedaan.'],
+      ['Meegelopen', 'Je hebt een keer meegedaan; iemand anders trok het.'],
+      ['Met rugdekking', 'Een enkele keer zelf gedaan, met iemand die meekeek.'],
+      ['Zelfstandig', 'Je doet dit regelmatig alleen én ziet zelf of het goed is.'],
+      ['Vraagbaak', 'Anderen komen bij jou; je kunt het uitleggen.'],
+    ];
+    const i = Math.min(this.state.index, assen.length - 1);
+    const [naam, omschrijving, anker] = assen[i];
+
+    return {
+      naam, omschrijving, anker,
+      nummer: this.state.index + 1,
+      resterend: 20 - this.state.index - 1,
+      keuzes: niveaus.map(([label, uitleg], k) => {
+        const aan = this.state.gekozen === k + 1;
+        return {
+          n: k + 1, label, uitleg,
+          bg: aan ? '#3DFFD2' : '#232229',
+          rand: aan ? '#3DFFD2' : '#2E2C36',
+          fg: aan ? '#0A1512' : '#ECE6DF',
+          fg2: aan ? '#0A1512' : '#837E76',
+          kies: () => this.setState({ gekozen: k + 1 }),
+        };
+      }),
+      pips: Array.from({ length: 10 }, (_, k) => ({
+        kleur: k < this.state.index ? '#3DFFD2' : k === this.state.index ? '#E0A83D' : '#2E2C36',
+      })),
+    };
+  }
+}
+</script>
+</body>
+</html>

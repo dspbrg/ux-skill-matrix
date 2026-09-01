@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Radar from './Radar'
 import { rpc } from './supabase'
-import type { ParticipantPayload, Rating, State } from './types'
+import type { ParticipantPayload, Rating, ScaleLevel, Skill, State } from './types'
 
 type Values = Record<string, { current?: number; future?: number }>
 
@@ -155,53 +155,22 @@ export default function Participant({ token }: { token: string }) {
                     <span className="name">{skill.label}</span>
                     <span className="spacer" />
                     {value ? (
-                      <>
-                        <span className="small muted">{scale[value - 1]?.label ?? value}</span>
-                        <button className="ghost sm" onClick={() => rate(skill.id, null)}>wissen</button>
-                      </>
+                      <button className="ghost sm" onClick={() => rate(skill.id, null)}>wissen</button>
                     ) : (
                       <span className="small" style={{ color: 'var(--text-3)' }}>nog niet ingevuld</span>
                     )}
                   </div>
                   {skill.description && <p className="skill-desc">{skill.description}</p>}
-                  {skill.anchor && (
-                    <p className="anchor">{skill.anchor}.</p>
-                  )}
-                  <div
-                    className={`levels ${state === 'future' ? 'future' : ''}`}
-                    role="radiogroup"
-                    aria-label={`${skill.label} — ${state === 'current' ? 'huidig' : 'gewenst'} niveau`}
-                    onKeyDown={(e) => {
-                      const step =
-                        e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1
-                        : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0
-                      if (!step) return
-                      e.preventDefault()
-                      const next = Math.min(max, Math.max(1, (value ?? 0) + step))
-                      rate(skill.id, next)
-                      ;(e.currentTarget.children[next - 1] as HTMLButtonElement).focus()
-                    }}
-                  >
-                    {Array.from({ length: max }, (_, i) => i + 1).map((lv) => (
-                      <button
-                        key={lv}
-                        role="radio"
-                        aria-checked={value === lv}
-                        tabIndex={value === lv || (value == null && lv === 1) ? 0 : -1}
-                        title={scale[lv - 1]?.description ?? ''}
-                        onClick={() => rate(skill.id, lv)}
-                      >
-                        {/* Ronde twee is een vergelijkend oordeel. Zonder je huidige
-                            score in beeld moet je tien getallen uit je hoofd ophalen,
-                            en dan wordt het verschil — precies waar het om gaat — gok. */}
-                        {state === 'future' && values[skill.id]?.current === lv && (
-                          <span className="now" aria-label="je huidige niveau">nu</span>
-                        )}
-                        <span className="lv">{lv}</span>
-                        <span className="lb">{scale[lv - 1]?.label ?? ''}</span>
-                      </button>
-                    ))}
-                  </div>
+                  {skill.anchor && <p className="anchor">{skill.anchor}</p>}
+                  <Baan
+                    skill={skill}
+                    scale={scale}
+                    max={max}
+                    nu={values[skill.id]?.current}
+                    doel={values[skill.id]?.future}
+                    state={state}
+                    onKies={(lv) => rate(skill.id, lv)}
+                  />
                 </div>
               )
             })}
@@ -269,10 +238,7 @@ export default function Participant({ token }: { token: string }) {
                       </button>
                     </>
                   ) : (
-                    <p className="small muted">
-                      Nog {filled.total * 2 - filled.current - filled.future} te gaan. Alles wordt
-                      automatisch bewaard.
-                    </p>
+                    <p className="small muted">Alles wordt automatisch bewaard.</p>
                   )}
                 </div>
               </div>
@@ -284,6 +250,103 @@ export default function Participant({ token }: { token: string }) {
   )
 }
 
+
+/**
+ * Eén baan per skill, met beide metingen erop: een bol voor waar je staat en
+ * een ring voor waar je heen wil. Het gat is daardoor een zichtbare afstand
+ * in plaats van twee losse getallen.
+ *
+ * De twee stappen blijven wel gescheiden. Als je per skill direct achter
+ * elkaar allebei zou invullen, wordt het antwoord bij vrijwel iedereen
+ * reflexmatig "eentje hoger" — en juist dat verschil is wat we willen weten.
+ */
+function Baan({
+  skill, scale, max, nu, doel, state, onKies,
+}: {
+  skill: Skill
+  scale: ScaleLevel[]
+  max: number
+  nu?: number
+  doel?: number
+  state: State
+  onKies: (lv: number) => void
+}) {
+  const actief = state === 'current' ? nu : doel
+  const gat = nu != null && doel != null && doel !== nu
+  const van = gat ? Math.min(nu!, doel!) : 0
+  const tot = gat ? Math.max(nu!, doel!) : 0
+  const pct = (n: number) => ((n - 1) / (max - 1)) * 100
+
+  return (
+    <div className={`baan ${state === 'future' ? 'doelstap' : ''}`}>
+      <div
+        className="baan-spoor"
+        role="radiogroup"
+        aria-label={`${skill.label} — ${state === 'current' ? 'waar je nu staat' : 'waar je heen wil'}`}
+        onKeyDown={(e) => {
+          const stap =
+            e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1
+            : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0
+          if (!stap) return
+          e.preventDefault()
+          const volgende = Math.min(max, Math.max(1, (actief ?? 0) + stap))
+          onKies(volgende)
+          ;(e.currentTarget.querySelectorAll('button')[volgende - 1] as HTMLButtonElement)?.focus()
+        }}
+      >
+        {/* De rail loopt van de eerste tot de laatste halte; het spoor eromheen
+            begint op dezelfde kantlijn als de tekst erboven. */}
+        <span className="baan-rail" aria-hidden="true">
+          <span className="baan-lijn" />
+          {gat && (
+            <span
+              className="baan-gat"
+              style={{ left: `${pct(van)}%`, width: `${pct(tot) - pct(van)}%` }}
+            />
+          )}
+        </span>
+        {Array.from({ length: max }, (_, i) => i + 1).map((lv) => {
+          const isNu = nu === lv
+          const isDoel = doel === lv
+          return (
+            <button
+              key={lv}
+              role="radio"
+              aria-checked={actief === lv}
+              tabIndex={actief === lv || (actief == null && lv === 1) ? 0 : -1}
+              title={scale[lv - 1]?.description ?? ''}
+              onClick={() => onKies(lv)}
+              className="halte"
+              style={{ left: `${pct(lv)}%` }}
+            >
+              <span
+                className={`merk ${isNu ? 'is-nu' : ''} ${isDoel ? 'is-doel' : ''}`}
+                aria-hidden="true"
+              />
+              {/* Op een smal scherm vervalt de labelrij en staat het label hier. */}
+              <span className="halte-label">{scale[lv - 1]?.label ?? lv}</span>
+            </button>
+          )
+        })}
+      </div>
+
+      <div className="baan-labels" aria-hidden="true">
+        {Array.from({ length: max }, (_, i) => i + 1).map((lv) => (
+          <span
+            key={lv}
+            className={nu === lv ? 'is-nu' : doel === lv ? 'is-doel' : ''}
+            style={{
+              left: `${pct(lv)}%`,
+              transform: lv === 1 ? 'none' : lv === max ? 'translateX(-100%)' : 'translateX(-50%)',
+            }}
+          >
+            {scale[lv - 1]?.label ?? lv}
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 /** Voortgang als ring: de boog loopt vol en het getal telt mee. */
 function Ring({ gedaan, totaal }: { gedaan: number; totaal: number }) {

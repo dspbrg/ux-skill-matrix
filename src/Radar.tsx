@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useReducer, useRef, useState } from 'react'
 import { exportSvgAsPng } from './exportPng'
 
 interface Series {
@@ -24,49 +24,69 @@ interface Props {
  * Veert de getoonde waarden naar hun doel toe. De demping ligt bewust onder
  * kritiek (bij deze stijfheid is 26 kritiek, wij nemen 15), zodat de vorm
  * doorschiet en terugkomt: hij landt in plaats van te schuiven.
+ *
+ * De lus hangt niet aan een afhankelijkheidslijst maar controleert na elke
+ * render of hij nog moet lopen. Een eerdere versie startte de animatie in een
+ * effect met [signature] als dep; als die vergelijking één keer niet aansloeg
+ * bleef de vorm voorgoed op de oude waarde staan terwijl de knoppen al lang
+ * de nieuwe toonden — en niets bracht hem terug. Zo herstelt hij zichzelf.
  */
 function useSpring(target: (number | null)[]): (number | null)[] {
-  const [shown, setShown] = useState(target)
-  const motion = useRef({ x: [] as number[], v: [] as number[] })
-  const signature = target.map((v) => v ?? 'x').join(',')
+  const [, herteken] = useReducer((n: number) => n + 1, 0)
+  const st = useRef({ x: [] as number[], v: [] as number[], frame: 0, last: 0, gestart: false })
+
+  // Bij de eerste render meteen op de juiste waarde gaan staan. Eerder begon
+  // de vorm in het middelpunt en moest de animatie hem naar buiten brengen —
+  // maar requestAnimationFrame staat stil in een achtergrondtab, dus wie even
+  // wegklikte kwam terug bij een lege radar. De animatie is een verfraaiing;
+  // een kloppend beeld mag er nooit van afhangen.
+  if (!st.current.gestart) {
+    st.current.gestart = true
+    target.forEach((t, i) => { st.current.x[i] = t ?? 0; st.current.v[i] = 0 })
+  }
+  st.current.x.length = target.length
+  st.current.v.length = target.length
+
+  const rustig = () =>
+    target.every((t, i) => {
+      const doel = t ?? 0
+      return Math.abs((st.current.x[i] ?? 0) - doel) <= 0.002 && Math.abs(st.current.v[i] ?? 0) <= 0.002
+    })
 
   useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      setShown(target)
+    const s = st.current
+    if (s.frame || rustig()) return
+
+    // Zonder zichtbare tab lopen er geen frames: dan direct op de waarde.
+    if (document.hidden || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      target.forEach((t, i) => { s.x[i] = t ?? 0; s.v[i] = 0 })
+      herteken()
       return
     }
-    const m = motion.current
-    target.forEach((_, i) => {
-      // Bij het openen vanuit het midden beginnen: de vorm groeit naar buiten
-      // in plaats van er ineens te staan.
-      if (m.x[i] == null) m.x[i] = 0
-      if (m.v[i] == null) m.v[i] = 0
-    })
-    m.x.length = target.length
-    m.v.length = target.length
 
-    let frame = 0
-    let last = performance.now()
-    const tick = (now: number) => {
-      const dt = Math.min((now - last) / 1000, 1 / 30)
-      last = now
-      let moving = false
+    s.last = performance.now()
+    const stap = (nu: number) => {
+      const dt = Math.min((nu - s.last) / 1000, 1 / 30)
+      s.last = nu
+      let bewegend = false
       target.forEach((t, i) => {
-        const goal = t ?? 0
-        const acceleration = -170 * (m.x[i] - goal) - 15 * m.v[i]
-        m.v[i] += acceleration * dt
-        m.x[i] += m.v[i] * dt
-        if (Math.abs(m.x[i] - goal) > 0.002 || Math.abs(m.v[i]) > 0.002) moving = true
+        const doel = t ?? 0
+        if (s.x[i] == null) { s.x[i] = 0; s.v[i] = 0 }
+        s.v[i] += (-170 * (s.x[i] - doel) - 15 * s.v[i]) * dt
+        s.x[i] += s.v[i] * dt
+        if (Math.abs(s.x[i] - doel) > 0.002 || Math.abs(s.v[i]) > 0.002) bewegend = true
       })
-      setShown(target.map((t, i) => (t == null ? null : m.x[i])))
-      if (moving) frame = requestAnimationFrame(tick)
+      s.frame = bewegend ? requestAnimationFrame(stap) : 0
+      herteken()
     }
-    frame = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(frame)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [signature])
+    s.frame = requestAnimationFrame(stap)
+  })
 
-  return shown
+  useEffect(() => () => {
+    if (st.current.frame) cancelAnimationFrame(st.current.frame)
+  }, [])
+
+  return target.map((t, i) => (t == null ? null : st.current.x[i] ?? 0))
 }
 
 /** Breekt een aslabel op in regels van maximaal ~15 tekens. */
@@ -146,8 +166,8 @@ export default function Radar({ axes, series, max = 5, size = 420, showLegend = 
         <defs>
           {series.map((s) => (
             <radialGradient key={s.key} id={`vulling-${s.key}`} cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor={s.color} stopOpacity={s.dashed ? 0.04 : 0.14} />
-              <stop offset="100%" stopColor={s.color} stopOpacity={s.dashed ? 0.13 : 0.42} />
+              <stop offset="0%" stopColor={s.color} stopOpacity={0.16} />
+              <stop offset="100%" stopColor={s.color} stopOpacity={0.46} />
             </radialGradient>
           ))}
         </defs>
@@ -186,28 +206,6 @@ export default function Radar({ axes, series, max = 5, size = 420, showLegend = 
                 ))}
               </text>
             </g>
-          )
-        })}
-
-        {/* Schaalcijfers op een straal tussen twee assen in: op een as zelf
-            botsen ze met het aslabel. */}
-        {Array.from({ length: max }, (_, k) => k + 1).map((level) => {
-          const a = angle(0) + Math.PI / n
-          const rr = (level / max) * r
-          return (
-            <text
-              key={level}
-              x={cx + Math.cos(a) * rr}
-              y={cy + Math.sin(a) * rr + 3.5}
-              textAnchor="middle"
-              fontSize={10.5}
-              fill="var(--text-3)"
-              stroke="var(--surface)"
-              strokeWidth={3}
-              style={{ paintOrder: 'stroke' }}
-            >
-              {level}
-            </text>
           )
         })}
 
@@ -301,7 +299,10 @@ function Shape({
       {d && (
         <path
           d={d}
-          fill={pts.length >= 3 ? `url(#vulling-${series.key})` : 'none'}
+          /* Twee gevulde vlakken over elkaar geven een modderige mengkleur die in
+             geen van beide paletten bestaat, precies in het brandpunt. Dus: waar
+             je staat is gevuld, waar je heen wil is alleen lijn. */
+          fill={pts.length >= 3 && !series.dashed ? `url(#vulling-${series.key})` : 'none'}
           stroke={series.color}
           strokeOpacity={series.dashed ? 1 : 0.65}
           strokeWidth={series.dashed ? 2.25 : 1.25}

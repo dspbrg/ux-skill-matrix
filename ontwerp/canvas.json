@@ -1,0 +1,15 @@
+{
+  "artboards": [
+    { "file": "Terminal.dc.html", "x": 0,    "y": 0,    "w": 1000, "h": 800, "title": "A · Terminal" },
+    { "file": "Main.dc.html",     "x": 1120, "y": 0,    "w": 1000, "h": 800, "title": "B · Diptiek" },
+    { "file": "Stapel.dc.html",   "x": 0,    "y": 960,  "w": 1000, "h": 800, "title": "C · Stapel" },
+    { "file": "Ladder.dc.html",   "x": 1120, "y": 960,  "w": 1000, "h": 800, "title": "D · Ladder" }
+  ],
+  "annotations": [
+    { "id": "a-terminal", "x": 0,    "y": -150, "w": 1000, "text": "A · TERMINAL — alle tien assen tegelijk in beeld, als machineleesbare uitdraai.\nVoor: je overziet je hele profiel terwijl je invult, en het is razendsnel: tien rijen, één klik per rij.\nTegen: dicht en technisch. Een junior die op 1 en 2 zit ziet dat in één oogopslag, en de collega ernaast ook." },
+    { "id": "a-diptiek",  "x": 1120, "y": -150, "w": 1000, "text": "B · DIPTIEK — nu en doel op dezelfde baan, dus het gat is een zichtbare afstand.\nVoor: lost op dat je in ronde 2 je huidige score niet ziet. Twintig beslissingen worden tien vergelijkingen.\nTegen: twee betekenissen op één rij vraagt uitleg, en \"welke klik telt nu?\" is een echt risico." },
+    { "id": "a-stapel",   "x": 0,    "y": 810,  "w": 1000, "text": "C · STAPEL — één as tegelijk, groot, met de stapel die achter je dunner wordt.\nVoor: alle aandacht bij één vraag; het anker wordt eindelijk gelezen. Voelt als een spel, geen formulier.\nTegen: twintig schermen achter elkaar, en je kunt niet terugbladeren zonder je plek kwijt te raken." },
+    { "id": "a-ladder",   "x": 1120, "y": 810,  "w": 1000, "text": "D · LADDER — niveau als hoogte. Je bouwt een skyline in plaats van vakjes aan te vinken.\nVoor: het invullen ís de visualisatie, dus de radar kan weg. Fysiek en direct.\nTegen: tien smalle kolommen betekent afgekorte namen, en \"hoog is goed\" maakt een lage kolom een oordeel." }
+  ],
+  "launch": { "view": "canvas" }
+}

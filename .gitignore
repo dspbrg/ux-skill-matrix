@@ -8,3 +8,8 @@ dist
 # NNg_Skill_Mapping_Template.xlsx is © Nielsen Norman Group / Rachel Krause
 # en wordt bewust niet meegepubliceerd.
 Input/
+
+# Het gezaaide canvasbestand is ~2 MB aan editor-code; de artboards eronder
+# zijn de bron en die horen er wel in.
+ontwerp/*.html
+!ontwerp/*.dc.html

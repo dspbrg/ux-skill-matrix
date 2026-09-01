@@ -1,0 +1,103 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&family=Space+Mono:wght@400;700&display=swap">
+  <style>
+    body { margin: 0; font-family: Inter, system-ui, sans-serif; }
+    a { color: #3DFFD2; } a:hover { color: #ECE6DF; }
+    .rung { cursor: pointer; transition: background .2s cubic-bezier(.34,1.56,.64,1); }
+  </style>
+</helmet>
+
+<div style="width: 1000px; height: 800px; background: #15141A; color: #ECE6DF; display: flex; flex-direction: column; overflow: hidden;">
+
+  <div style="display: flex; align-items: center; gap: 14px; padding: 14px 32px; border-bottom: 1px solid #2E2C36;">
+    <span style="font-family: 'Space Grotesk', sans-serif; font-weight: 700; letter-spacing: -.02em;">COA · UX-team</span>
+    <span style="color: #837E76;">·</span>
+    <span style="color: #9A958E;">Sanne</span>
+    <span style="flex: 1;"></span>
+    <span style="font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #837E76;">STAP 1 &middot; 6/10</span>
+  </div>
+
+  <div style="padding: 24px 32px 10px;">
+    <h1 style="margin: 0 0 6px; font-family: 'Space Grotesk', sans-serif; font-size: 27px; font-weight: 700; letter-spacing: -.02em;">Bouw je profiel</h1>
+    <p style="margin: 0; font-size: 14px; color: #9A958E;">Klik op de hoogte waar je staat. Je skyline is je profiel.</p>
+  </div>
+
+  <div style="flex: 1; display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: 0; padding: 0 32px 20px; min-height: 0;">
+
+    <div style="display: flex; flex-direction: column-reverse; justify-content: space-between; padding: 0 12px 44px 0; text-align: right;">
+      <sc-for list="{{treden}}" as="t" hint-placeholder-count="5">
+        <div style="height: 20%; display: flex; flex-direction: column; justify-content: center; border-bottom: 1px solid #232229;">
+          <span style="font-family: 'Space Grotesk', sans-serif; font-size: 17px; font-weight: 700; color: {{t.kleur}};">{{t.n}}</span>
+          <span style="font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: #615D66;">{{t.label}}</span>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 7px; align-items: end; padding-bottom: 44px; position: relative;">
+      <sc-for list="{{kolommen}}" as="k" hint-placeholder-count="10">
+        <div style="display: flex; flex-direction: column; justify-content: flex-end; height: 100%; position: relative;">
+          <div style="position: absolute; left: 0; right: 0; bottom: -40px; height: 36px; display: flex; align-items: flex-start; justify-content: center;">
+            <span style="font-family: 'Space Mono', monospace; font-size: 8.5px; letter-spacing: .06em; text-transform: uppercase; color: {{k.naamKleur}}; writing-mode: vertical-rl; transform: rotate(180deg); white-space: nowrap; overflow: hidden; max-height: 36px;">{{k.code}}</span>
+          </div>
+          <sc-for list="{{k.sporten}}" as="s" hint-placeholder-count="5">
+            <div class="rung" onClick="{{s.kies}}" style="height: 20%; margin-bottom: 3px; border-radius: 4px; background: {{s.bg}}; border: 1px solid {{s.rand}}; box-sizing: border-box;"></div>
+          </sc-for>
+        </div>
+      </sc-for>
+      <div style="position: absolute; left: 0; right: 0; bottom: 44px; height: 0; border-top: 1px dashed #E0A83D; opacity: .45;"></div>
+    </div>
+  </div>
+
+  <div style="display: flex; align-items: center; gap: 16px; padding: 0 32px 24px;">
+    <div style="display: flex; align-items: center; gap: 8px; font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: #837E76;">
+      <span style="width: 14px; height: 10px; border-radius: 3px; background: #3DFFD2;"></span> GEBOUWD
+      <span style="width: 14px; height: 0; border-top: 1px dashed #E0A83D; margin-left: 12px;"></span> DOELLIJN
+    </div>
+    <span style="flex: 1;"></span>
+    <span style="background: #3DFFD2; color: #0A1512; padding: 9px 18px; border-radius: 10px; font-weight: 600; font-size: 14px;">Verder naar stap 2</span>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { hoogte: { 0: 2, 1: 3, 2: 1, 3: 3, 4: 4, 5: 2 } };
+  }
+  renderVals() {
+    const codes = ['KWAL', 'KWAN', 'INFA', 'IXDE', 'UIDE', 'PROT', 'UXWR', 'WCAG', 'FACI', 'PRES'];
+    const labels = ['Nog niet', 'Meegelopen', 'Rugdekking', 'Zelfstandig', 'Vraagbaak'];
+
+    return {
+      treden: [1, 2, 3, 4, 5].map((n) => ({ n, label: labels[n - 1], kleur: n >= 4 ? '#3DFFD2' : '#837E76' })),
+      kolommen: codes.map((code, i) => {
+        const h = this.state.hoogte[i];
+        return {
+          code,
+          naamKleur: h ? '#9A958E' : '#615D66',
+          // van boven naar beneden getekend, dus spoort 5 staat eerst
+          sporten: [5, 4, 3, 2, 1].map((n) => {
+            const gevuld = h && n <= h;
+            return {
+              bg: gevuld ? (n >= 4 ? '#3DFFD2' : '#2A6E5C') : 'transparent',
+              rand: gevuld ? 'transparent' : '#232229',
+              kies: () => this.setState({ hoogte: { ...this.state.hoogte, [i]: n } }),
+            };
+          }),
+        };
+      }),
+    };
+  }
+}
+</script>
+</body>
+</html>
