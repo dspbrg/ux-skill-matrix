@@ -52,23 +52,25 @@ export default function Admin({ initialCode, initialKey }: { initialCode: string
   return (
     <>
       <header className="topbar">
-        <span className="brand">{data.session.name}</span>
+        <h1 className="brand" style={{ fontSize: 'inherit' }}>{data.session.name}</h1>
         <span className="sep">·</span>
         <span className="mono small muted">{data.session.code}</span>
         <span className="spacer" />
-        <div className="tabs">
-          <button aria-selected={tab === 'overview'} onClick={() => setTab('overview')}>Overzicht</button>
-          <button aria-selected={tab === 'people'} onClick={() => setTab('people')}>Deelnemers</button>
-          <button aria-selected={tab === 'terms'} onClick={() => setTab('terms')}>Instellingen</button>
-        </div>
+        <nav aria-label="Secties">
+          <div className="tabs">
+            <button aria-current={tab === 'overview' ? 'page' : undefined} onClick={() => setTab('overview')}>Overzicht</button>
+            <button aria-current={tab === 'people' ? 'page' : undefined} onClick={() => setTab('people')}>Deelnemers</button>
+            <button aria-current={tab === 'terms' ? 'page' : undefined} onClick={() => setTab('terms')}>Instellingen</button>
+          </div>
+        </nav>
       </header>
 
-      <div className="shell">
-        {error && <div className="banner error" style={{ marginBottom: 'var(--space-4)' }}>{error}</div>}
+      <main id="hoofd" tabIndex={-1} className="shell">
+        {error && <div className="banner error" role="alert" style={{ marginBottom: 'var(--space-4)' }}>{error}</div>}
         {tab === 'overview' && <Overview data={data} onAddPeople={() => setTab('people')} />}
         {tab === 'people' && <People data={data} code={code} adminKey={key} reload={load} setError={setError} />}
         {tab === 'terms' && <Terms data={data} code={code} adminKey={key} reload={load} setError={setError} />}
-      </div>
+      </main>
     </>
   )
 }
@@ -205,7 +207,8 @@ function Overview({ data, onAddPeople }: { data: AdminPayload; onAddPeople: () =
               </p>
             </div>
             <span className="spacer" />
-            <select value={focus} onChange={(e) => setFocus(e.target.value)} style={{ width: 'auto' }}>
+            <select value={focus} aria-label="Wiens profiel tonen"
+              onChange={(e) => setFocus(e.target.value)} style={{ width: 'auto' }}>
               <option value="__team__">Hele team</option>
               {participants.map((p) => (
                 <option key={p.id} value={p.id}>{p.name}</option>
@@ -238,14 +241,15 @@ Gesorteerd op het grootste verschil tussen waar het team staat en waar het heen 
           </div>
           <div className="table-wrap">
             <table>
+              <caption className="vh">Gemiddelde score per skill, met het verschil tussen nu en doel</caption>
               <thead>
                 <tr>
-                  <th>Skill</th>
-                  <th className="num">Nu</th>
-                  <th className="num">Doel</th>
-                  <th className="num">Verschil</th>
-                  <th>Overdragen</th>
-                  <th className="num">Wil omhoog</th>
+                  <th scope="col">Skill</th>
+                  <th scope="col" className="num">Nu</th>
+                  <th scope="col" className="num">Doel</th>
+                  <th scope="col" className="num">Verschil</th>
+                  <th scope="col">Overdragen</th>
+                  <th scope="col" className="num">Wil omhoog</th>
                 </tr>
               </thead>
               <tbody>
@@ -253,15 +257,26 @@ Gesorteerd op het grootste verschil tussen waar het team staat en waar het heen 
                   .map((s) => ({ s, c: avg(s.id, 'current'), f: avg(s.id, 'future'), g: paired(s.id) }))
                   // Assen zonder gepaard verschil horen onderaan als onbekend,
                   // niet bovenaan met een verzonnen groot negatief getal.
-                  .sort((a, b) => (b.g?.mean ?? -Infinity) - (a.g?.mean ?? -Infinity))
+                  // -Infinity minus -Infinity is NaN, en een comparator die NaN
+                  // teruggeeft heeft geen gedefinieerde volgorde. Dat is precies
+                  // de toestand aan het begin van elke sessie.
+                  .sort((a, b) => {
+                    if (a.g == null && b.g == null) return 0
+                    if (a.g == null) return 1
+                    if (b.g == null) return -1
+                    return b.g.mean - a.g.mean
+                  })
                   .map(({ s, c, f, g }) => {
                     const carry = carriers(s.id)
                     return (
                       <tr key={s.id}>
-                        <td>{s.label}</td>
+                        <th scope="row" style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>
+                          {s.label}
+                        </th>
                         <td className="num">{c?.toFixed(1) ?? '–'}</td>
                         <td className="num">{f?.toFixed(1) ?? '–'}</td>
-                        <td className="num" style={{ color: g && g.mean >= 1 ? 'var(--future)' : 'var(--text-2)' }}>
+                        <td className="num" // op negen posities is één positie een halve benoemde trede
+                        style={{ color: g && g.mean >= 2 ? 'var(--future)' : 'var(--text-2)' }}>
                           {g == null ? '–' : g.mean > 0 ? `+${g.mean.toFixed(1)}` : g.mean.toFixed(1)}
                           {g != null && g.n < participants.length && (
                             <span className="small muted"> ({g.n}/{participants.length})</span>
@@ -290,19 +305,21 @@ Gesorteerd op het grootste verschil tussen waar het team staat en waar het heen 
         </p>
         <div className="table-wrap">
           <table>
+            <caption className="vh">Score per deelnemer per skill, nu met het doel erachter</caption>
             <thead>
               <tr>
-                <th>Skill</th>
+                <th scope="col">Skill</th>
                 {participants.map((p) => (
-                  <th key={p.id} className="num" title={p.role}>{p.name}</th>
+                  <th key={p.id} scope="col" className="num" title={p.role}>{p.name}</th>
                 ))}
-                <th className="num">Gem.</th>
+                <th scope="col" className="num">Gem.</th>
               </tr>
             </thead>
             <tbody>
               {skills.map((s) => (
                 <tr key={s.id}>
-                  <td style={{ whiteSpace: 'nowrap' }}>{s.label}</td>
+                  <th scope="row" style={{ whiteSpace: 'nowrap', fontWeight: 400,
+                    textTransform: 'none', letterSpacing: 0 }}>{s.label}</th>
                   {participants.map((p) => {
                     const v = lookup.get(p.id)?.get(s.id)
                     return (
@@ -312,7 +329,12 @@ Gesorteerd op het grootste verschil tussen waar het team staat en waar het heen 
                             {v?.current ?? '–'}
                           </span>
                           <span className="to">
-                            {v?.future != null && v.future !== v.current ? `→${v.future}` : ''}
+                            {v?.future != null && v.future !== v.current ? (
+                              <>
+                                <span className="vh">, doel {v.future}</span>
+                                <span aria-hidden="true">→{v.future}</span>
+                              </>
+                            ) : ''}
                           </span>
                         </span>
                       </td>
@@ -550,7 +572,7 @@ function Terms({
 
   return (
     <>
-      {ok && <div className="banner" style={{ marginBottom: 'var(--space-4)' }}>{ok}</div>}
+      {ok && <div className="banner" role="status" style={{ marginBottom: 'var(--space-4)' }}>{ok}</div>}
 
       <div className="card">
         <div className="card-head">
@@ -572,21 +594,31 @@ function Terms({
           {skills.map((s, i) => (
             <div key={s.id} className="row" style={{ flexWrap: 'nowrap', alignItems: 'flex-start', gap: 'var(--space-2)' }}>
               <div className="stack" style={{ gap: 'var(--space-1)', paddingTop: 'var(--space-1)' }}>
-                <button className="ghost sm" onClick={() => move(i, -1)} disabled={i === 0} title="Omhoog">↑</button>
-                <button className="ghost sm" onClick={() => move(i, 1)} disabled={i === skills.length - 1} title="Omlaag">↓</button>
+                <button className="ghost sm" onClick={() => move(i, -1)} disabled={i === 0}
+                  aria-label={`${s.label || `Skill ${i + 1}`} omhoog verplaatsen`}>
+                  <span aria-hidden="true">↑</span>
+                </button>
+                <button className="ghost sm" onClick={() => move(i, 1)} disabled={i === skills.length - 1}
+                  aria-label={`${s.label || `Skill ${i + 1}`} omlaag verplaatsen`}>
+                  <span aria-hidden="true">↓</span>
+                </button>
               </div>
               <div className="stack" style={{ flex: 1, gap: 'var(--space-2)' }}>
-                <input type="text" value={s.label} onChange={(e) => patch(i, 'label', e.target.value)} />
+                <input type="text" aria-label={`Naam van skill ${i + 1}`}
+                  value={s.label} onChange={(e) => patch(i, 'label', e.target.value)} />
                 <input type="text" className="small" value={s.anchor}
+                  aria-label={`Instapanker voor ${s.label || `skill ${i + 1}`}`}
                   placeholder="Instap — waar begin je op deze as?"
                   onChange={(e) => patch(i, 'anchor', e.target.value)} />
                 <input type="text" className="small" value={s.anchor_senior}
+                  aria-label={`Seniorenanker voor ${s.label || `skill ${i + 1}`}`}
                   placeholder="Senior — waar groeit deze as heen?"
                   onChange={(e) => patch(i, 'anchor_senior', e.target.value)} />
               </div>
               <button className="danger sm" style={{ marginTop: 'var(--space-1)' }}
+                aria-label={`Skill ${s.label || i + 1} verwijderen`}
                 onClick={() => setSkills((cur) => cur.filter((_, k) => k !== i))}>
-                ✕
+                <span aria-hidden="true">✕</span>
               </button>
             </div>
           ))}
@@ -633,19 +665,23 @@ function Terms({
             <div key={i} className="row" style={{ flexWrap: 'nowrap', alignItems: 'flex-start', gap: 'var(--space-3)' }}>
               <span className="pill" style={{ marginTop: 'var(--space-2)' }}>{i + 1}</span>
               <div className="stack" style={{ flex: 1, gap: 'var(--space-2)' }}>
-                <input type="text" value={lv.label}
+                <input type="text" aria-label={`Naam van niveau ${i + 1}`} value={lv.label}
                   onChange={(e) => setScale((s) => s.map((x, k) => (k === i ? { ...x, label: e.target.value } : x)))} />
-                <input type="text" value={lv.description} placeholder="Wanneer zit iemand op dit niveau?"
+                <input type="text" aria-label={`Omschrijving van niveau ${i + 1}`}
+                  value={lv.description} placeholder="Wanneer zit iemand op dit niveau?"
                   onChange={(e) => setScale((s) => s.map((x, k) => (k === i ? { ...x, description: e.target.value } : x)))} />
               </div>
               <button className="danger sm" style={{ marginTop: 'var(--space-1)' }} disabled={scale.length <= 2}
+                aria-label={`Niveau ${i + 1} verwijderen`}
                 onClick={() => setScale((s) => s.filter((_, k) => k !== i))}>
-                ✕
+                <span aria-hidden="true">✕</span>
               </button>
             </div>
           ))}
         </div>
-        <button className="sm" style={{ marginTop: 'var(--space-4)' }} disabled={scale.length >= 7}
+        {/* Vijf treden worden negen posities, en negen is wat de database
+            aankan. Meer liet de deelnemer op een databasefout lopen. */}
+        <button className="sm" style={{ marginTop: 'var(--space-4)' }} disabled={scale.length >= 5}
           onClick={() => setScale((s) => [...s, { level: s.length + 1, label: '', description: '' }])}>
           + Niveau toevoegen
         </button>

@@ -25,6 +25,10 @@ export default function Participant({ token }: { token: string }) {
   // 'afronden' is het korte moment waarin de assen uitfaden.
   const [afronden, setAfronden] = useState(false)
   const [klaar, setKlaar] = useState(false)
+  // Na indienen of een stapwissel unmount de knop waar de focus op stond en
+  // valt die terug op body. Dan sta je opnieuw bovenaan zonder te weten dat er
+  // iets gebeurd is.
+  const kopRef = useRef<HTMLHeadingElement>(null)
   const queue = useRef<Promise<unknown>>(Promise.resolve())
 
   useEffect(() => {
@@ -49,6 +53,7 @@ export default function Participant({ token }: { token: string }) {
    * weer — twee losse events, waarvan het tweede de waarde terugzette op null.
    */
   function rate(skillId: string, value: number | null) {
+    const vorige = values[skillId]
     setValues((v) => ({ ...v, [skillId]: { ...v[skillId], [state]: value ?? undefined } }))
     // Een ingediende invulling die niet meer compleet is, mag niet stil als
     // "Ingediend" blijven staan bij de facilitator.
@@ -67,28 +72,42 @@ export default function Participant({ token }: { token: string }) {
       .then(() => doelMee
         ? rpc('set_rating', { p_token: token, p_skill: skillId, p_state: 'future', p_value: value })
         : undefined)
-      .then(() => setSavedAt(new Date()))
-      .catch((e) => setError((e as Error).message))
+      .then(() => { setSavedAt(new Date()); setError('') })
+      .catch((e) => {
+        // Terugdraaien naar wat er stond. Zonder dit bleef een mislukte
+        // schrijfactie zichtbaar als gelukt: de teller zei 20/20 en de kop zei
+        // "bewaard", terwijl er in de database een score ontbrak.
+        setValues((v) => ({ ...v, [skillId]: vorige }))
+        setSavedAt(null)
+        setError((e as Error).message)
+      })
       .finally(() => setSaving((n) => n - 1))
   }
 
   async function toggleSubmit() {
     const next = !submitted
-    if (next) {
-      setAfronden(true)
-      window.setTimeout(() => { setKlaar(true); setAfronden(false) }, 320)
-    } else {
-      setKlaar(false)
-    }
     setSubmitted(next)
     try {
       await rpc('set_submitted', { p_token: token, p_submitted: next })
       setSavedAt(new Date())
+      // Pas ná het antwoord van de server naar het eindscherm. Eerder ging dat
+      // via een timer die vóór het antwoord vuurde: viel de verbinding weg, dan
+      // stond er "Ingediend" terwijl er niets was ingediend, en de foutmelding
+      // stond in de tak die je op dat moment niet meer zag.
+      if (next) {
+        setAfronden(true)
+        window.setTimeout(() => { setKlaar(true); setAfronden(false) }, 320)
+      } else {
+        setKlaar(false)
+      }
     } catch (e) {
       setSubmitted(!next)
+      setAfronden(false)
       setError((e as Error).message)
     }
   }
+
+  useEffect(() => { kopRef.current?.focus() }, [state, klaar])
 
   const skills = data?.skills ?? []
   const scale = data?.session.scale ?? []
@@ -122,18 +141,22 @@ export default function Participant({ token }: { token: string }) {
         <span className="sep">·</span>
         <span className="muted">{data.participant.name}</span>
         <span className="spacer" />
-        <span className="small muted" style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+        {/* Dit formulier heeft geen opslaanknop, dus deze regel is het enige
+            signaal dat er iets bewaard is. Het element staat er altijd, want een
+            live-gebied dat pas verschijnt wordt niet voorgelezen. */}
+        <span className="small muted" role="status" aria-live="polite" aria-atomic="true"
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--space-2)' }}>
           <span className="leeft" aria-hidden="true" />
           {saving > 0 ? 'Opslaan…' : savedAt ? `Bewaard om ${savedAt.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}` : 'Automatisch bewaard'}
         </span>
       </header>
 
       {klaar ? (
-        <div className="shell afgerond">
+        <main id="hoofd" tabIndex={-1} className="shell afgerond">
           <div className="card">
             <div className="card-head" style={{ alignItems: 'baseline' }}>
               <div>
-                <h1>Ingediend</h1>
+                <h1 ref={kopRef} tabIndex={-1}>Ingediend</h1>
                 <p className="micro" style={{ color: 'var(--text-3)', marginTop: 'var(--space-2)' }}>
                   {data.participant.name} · {data.session.name}
                 </p>
@@ -154,11 +177,11 @@ export default function Participant({ token }: { token: string }) {
               ]}
             />
           </div>
-        </div>
+        </main>
       ) : (
-      <div className={`shell ${afronden ? 'afronden' : ''}`}>
+      <main id="hoofd" tabIndex={-1} className={`shell ${afronden ? 'afronden' : ''}`}>
         {error && (
-          <div className="banner error" style={{ marginBottom: 'var(--space-4)' }}>
+          <div className="banner error" role="alert" style={{ marginBottom: 'var(--space-4)' }}>
             {error} <button className="ghost sm" onClick={() => setError('')}>sluiten</button>
           </div>
         )}
@@ -172,15 +195,21 @@ export default function Participant({ token }: { token: string }) {
               <div>
                 {/* Beide koppen zijn één regel. Stap 2 had een zin eronder die
                     stap 1 niet had, waardoor de tabs versprongen bij het wisselen. */}
-                <h1>{state === 'current' ? 'Waar sta je nu?' : 'Waar wil je over een jaar staan?'}</h1>
+                <h1 ref={kopRef} tabIndex={-1}>
+                  {state === 'current' ? 'Waar sta je nu?' : 'Waar wil je over een jaar staan?'}
+                </h1>
               </div>
 
               <div className="row" style={{ marginTop: 'var(--space-4)' }}>
-                <div className="tabs">
-                  <button aria-selected={state === 'current'} onClick={() => setState('current')}>
+                {/* aria-selected hoort bij role=tab en wordt op een knop genegeerd;
+                    aria-current is hier het juiste woord. */}
+                <div className="tabs" role="group" aria-label="Stap">
+                  <button aria-current={state === 'current' ? 'step' : undefined}
+                    onClick={() => setState('current')}>
                     1 · Nu <span className="muted small">&nbsp;{filled.current}/{filled.total}</span>
                   </button>
-                  <button aria-selected={state === 'future'} onClick={() => setState('future')}>
+                  <button aria-current={state === 'future' ? 'step' : undefined}
+                    onClick={() => setState('future')}>
                     2 · Doel <span className="muted small">&nbsp;{filled.future}/{filled.total}</span>
                   </button>
                 </div>
@@ -299,7 +328,7 @@ export default function Participant({ token }: { token: string }) {
 
           </div>
         </div>
-      </div>
+      </main>
       )}
     </>
   )
@@ -330,6 +359,7 @@ function Baan({
   // Je doel kan niet lager liggen dan waar je nu staat: achteruitgang plannen
   // is geen ontwikkeldoel. Gelijk blijven mag wel — dat staat ook in de kop.
   const bodem = state === 'future' ? nu ?? 1 : 1
+  const anker = actief != null && actief >= bodem ? actief : bodem
   const gat = nu != null && doel != null && doel !== nu
   const van = gat ? Math.min(nu!, doel!) : 0
   const tot = gat ? Math.max(nu!, doel!) : 0
@@ -348,6 +378,7 @@ function Baan({
           if (!stap) return
           e.preventDefault()
           const volgende = Math.min(max, Math.max(bodem, (actief ?? bodem) + stap))
+          if (volgende === actief) return
           onKies(volgende)
           ;(e.currentTarget.querySelectorAll('button')[volgende - 1] as HTMLButtonElement)?.focus()
         }}
@@ -381,8 +412,15 @@ function Baan({
               aria-checked={actief === lv}
               aria-disabled={geblokkeerd}
               disabled={geblokkeerd}
-              aria-label={benoemd ? trede?.label ?? String(lv) : omschrijving}
-              tabIndex={actief === lv || (actief == null && lv === bodem) ? 0 : -1}
+              aria-label={
+                geblokkeerd
+                  ? `${benoemd ? trede?.label ?? lv : omschrijving} — niet beschikbaar, lager dan waar je nu staat`
+                  : benoemd ? trede?.label ?? String(lv) : omschrijving
+              }
+              aria-describedby={benoemd && !geblokkeerd ? `${skill.id}-lv${lv}` : undefined}
+              // De focus mag nooit op een geblokkeerde halte landen: die is niet
+              // focusbaar, en dan is de hele rij onbereikbaar met het toetsenbord.
+              tabIndex={lv === anker ? 0 : -1}
               title={geblokkeerd ? 'Lager dan waar je nu staat' : omschrijving}
               onClick={() => onKies(lv)}
               className={`halte ${benoemd ? '' : 'tussen'}`}
@@ -394,6 +432,11 @@ function Baan({
               />
               {/* Op een smal scherm vervalt de labelrij en staat het label hier. */}
               <span className="halte-label">{benoemd ? trede?.label ?? lv : omschrijving}</span>
+              {/* De niveaubeschrijving zat alleen in title, en dat wordt op een
+                  knop door de meeste schermlezers niet uitgesproken. */}
+              {benoemd && !geblokkeerd && (
+                <span id={`${skill.id}-lv${lv}`} className="vh">{trede?.description}</span>
+              )}
             </button>
           )
         })}

@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useReducer, useRef, useState } from 'react'
+import { useEffect, useId, useLayoutEffect, useReducer, useRef, useState } from 'react'
 import { exportSvgAsPng } from './exportPng'
 
 interface Series {
@@ -13,7 +13,7 @@ interface Series {
 interface Props {
   axes: string[]
   series: Series[]
-  max?: number
+  max: number
   size?: number
   showLegend?: boolean
   /** Zet een downloadknop onder de radar; wordt de bestandsnaam. */
@@ -106,11 +106,12 @@ function wrap(label: string, limit = 15): string[] {
   return lines.slice(0, 3)
 }
 
-export default function Radar({ axes, series, max = 5, size = 420, showLegend = true, exportName }: Props) {
+export default function Radar({ axes, series, max, size = 420, showLegend = true, exportName }: Props) {
   const svgRef = useRef<SVGSVGElement>(null)
   const [exporting, setExporting] = useState(false)
   const [failed, setFailed] = useState('')
   const [fitted, setFitted] = useState<string>()
+  const tabelId = useId()
   const n = axes.length
 
   const padX = 92
@@ -123,6 +124,7 @@ export default function Radar({ axes, series, max = 5, size = 420, showLegend = 
   // bleef ruim een derde van de hoogte leeg. De buitenste ring en de labels
   // bepalen de omvang, niet de data, dus één meting per opzet volstaat.
   useLayoutEffect(() => {
+    const meet = () => {
     const el = svgRef.current
     if (!el) return
     const b = el.getBBox()
@@ -136,6 +138,14 @@ export default function Radar({ axes, series, max = 5, size = 420, showLegend = 
     const halfX = Math.max(cx - b.x, b.x + b.width - cx) + pad
     const halfY = Math.max(cy - b.y, b.y + b.height - cy) + pad
     setFitted(`${cx - halfX} ${cy - halfY} ${halfX * 2} ${halfY * 2}`)
+    }
+    meet()
+    // De aslabels staan in Space Mono, dat via display=swap ná de eerste
+    // layout binnenkomt. Zonder hermeting valt het kader te krap uit bij een
+    // koude cache — en dat merk je dus nooit als je pagina al eens geladen is.
+    let levend = true
+    document.fonts?.ready.then(() => { if (levend) meet() })
+    return () => { levend = false }
   }, [axes.join('|'), max, size])
 
   // Alle reeksen in één veer: zo staan beide vormen in dezelfde render tot mijn
@@ -183,6 +193,7 @@ export default function Radar({ axes, series, max = 5, size = 420, showLegend = 
         style={{ display: 'block' }}
         role="img"
         aria-label={`Radardiagram met ${n} skills`}
+        aria-describedby={tabelId}
       >
         {/* Bij negen posities zijn negen ringen ruis: alleen de benoemde treden
             krijgen een ring, plus altijd de buitenste. */}
@@ -271,9 +282,31 @@ export default function Radar({ axes, series, max = 5, size = 420, showLegend = 
               {/* Het gebied tussen nu en doel als eigen vorm. Twee vormen over
                   elkaar heen laten je niet zien wie boven wie ligt; het verschil
                   is juist waar het gesprek over gaat, dus dat krijgt de vulling. */}
-              {nu?.d && doel?.d && (
-                <path d={`${nu.d} ${doel.d}`} fillRule="evenodd" fill={doel.serie.color} fillOpacity={0.16} />
-              )}
+              {(() => {
+                // Alleen assen waar béide reeksen iets hebben tellen mee. Anders
+                // loopt de sluitlijn van de kleinste veelhoek dwars door het
+                // midden en kleurt het verschilvlak bijna de hele vorm — terwijl
+                // die assen simpelweg nog leeg zijn.
+                const beide = perSerie[0]
+                  ?.map((v, i) => (v != null && perSerie[1]?.[i] != null ? i : -1))
+                  .filter((i) => i >= 0) ?? []
+                if (beide.length < 3 || !nu || !doel) return null
+                const band = (waarden: (number | null)[]) =>
+                  beide
+                    .map((i, j) => {
+                      const [x, y] = point(i, waarden[i] as number)
+                      return `${j === 0 ? 'M' : 'L'}${x.toFixed(2)},${y.toFixed(2)}`
+                    })
+                    .join(' ') + ' Z'
+                return (
+                  <path
+                    d={`${band(perSerie[0])} ${band(perSerie[1])}`}
+                    fillRule="evenodd"
+                    fill={doel.serie.color}
+                    fillOpacity={0.16}
+                  />
+                )
+              })()}
 
               {nu?.d && (
                 <path d={nu.d} fill={nu.serie.color} fillOpacity={0.18}
@@ -298,6 +331,29 @@ export default function Radar({ axes, series, max = 5, size = 420, showLegend = 
         })()}
 
       </svg>
+
+      {/* De radar is het enige resultaat dat een deelnemer overhoudt, en
+          role="img" snoeit alle aslabels uit de toegankelijkheidsboom. Deze
+          tabel zegt hetzelfde in tekst. */}
+      <table id={tabelId} className="vh">
+        <caption>{exportName ?? 'Scores per skill'}</caption>
+        <thead>
+          <tr>
+            <th scope="col">Skill</th>
+            {series.map((x) => <th scope="col" key={x.key}>{x.label}</th>)}
+          </tr>
+        </thead>
+        <tbody>
+          {axes.map((as, i) => (
+            <tr key={as}>
+              <th scope="row">{as}</th>
+              {series.map((x) => (
+                <td key={x.key}>{x.values[i] ?? 'niet ingevuld'}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
 
       {showLegend && (
         <div className="legend" style={{ justifyContent: 'center', marginTop: 'var(--space-1)' }}>

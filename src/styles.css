@@ -11,15 +11,15 @@
   --surface: #ffffff;
   --surface-2: #f2ede6;
   --border: #dcd5cc;
-  --border-strong: #c4bcb1;
+  --border-strong: #888075;  /* 3,1:1 op papier — het is de rail zelf */
   --text: #15141a;          /* 18,3:1 */
   --text-2: #5c5851;        /*  7,1:1 */
-  --text-3: #6f6a63;        /*  5,4:1 */
+  --text-3: #635e57;        /*  5,1:1 op papier, 6,4:1 op wit */
 
   /* Mint is op papier onbruikbaar helder (1,3:1), dus verdiept. */
-  --accent: #0b7a57;        /*  5,3:1 */
+  --accent: #0a6b4c;        /*  5,2:1 op papier, 6,5:1 op wit */
   --accent-soft: #e2f0ea;
-  --current: #0b7a57;
+  --current: #0a6b4c;
   /* Amber was te tam voor wat het moet dragen: dit is het doel, niet een
      waarschuwing. Roze-rood, nagerekend op 6,0:1 tegen wit. */
   --future: #c1174b;        /*  6,0:1 */
@@ -27,7 +27,7 @@
   --on-future: #ffffff;
 
   --danger: #a3311f;
-  --ok: #0b7a57;
+  --ok: #0a6b4c;
 
   --heat-1: #e6efe9;
   --heat-2: #c8e0d4;
@@ -69,10 +69,10 @@
     --surface: #1c1b22;
     --surface-2: #232229;
     --border: #2e2c36;
-    --border-strong: #423f4b;
+    --border-strong: #6a6773;  /* 3,1:1 op de kaart */
     --text: #ece6df;        /* 13,8:1 */
     --text-2: #9a958e;      /*  5,8:1 */
-    --text-3: #837e76;      /*  4,2:1 */
+    --text-3: #948f86;      /*  5,3:1 op de kaart, 4,9:1 op surface-2 */
 
     --accent: #3dffd2;      /* 13,4:1 */
     --accent-soft: #12332b;
@@ -87,8 +87,8 @@
     --heat-1: #1e2a27;
     --heat-2: #23423a;
     --heat-3: #295b4d;
-    --heat-4: #2f7563;
-    --heat-5: #35917a;
+    --heat-4: #245b4d;
+    --heat-5: #29715f;
     --heat-fg: #ece6df;
 
     --shadow: 0 1px 2px rgba(0, 0, 0, .5), 0 10px 30px -16px rgba(0, 0, 0, .8);
@@ -101,12 +101,12 @@
   --surface: #ffffff;
   --surface-2: #f2ede6;
   --border: #dcd5cc;
-  --border-strong: #c4bcb1;
+  --border-strong: #888075;  /* 3,1:1 op papier — het is de rail zelf */
   --text: #15141a;
   --text-2: #5c5851;
-  --text-3: #6f6a63;
-  --accent: #0b7a57;
-  --current: #0b7a57;
+  --text-3: #635e57;
+  --accent: #0a6b4c;
+  --current: #0a6b4c;
   --future: #c1174b;
 }
 
@@ -258,7 +258,7 @@ label.field > span { display: block; font-size: var(--fs-2); color: var(--text-2
 
 .tabs { display: inline-flex; padding: 3px; gap: 3px; background: var(--surface-2); border-radius: 11px; }
 .tabs button { border: none; background: transparent; color: var(--text-2); border-radius: 8px; padding: 7px 15px; }
-.tabs button[aria-selected="true"] {
+.tabs button[aria-current] {
   background: var(--surface); color: var(--text); font-weight: 600;
   box-shadow: 0 1px 2px rgba(21, 20, 26, .14);
 }
@@ -378,9 +378,12 @@ label.field > span { display: block; font-size: var(--fs-2); color: var(--text-2
   background: var(--current); border-color: var(--future);
   box-shadow: inset 0 0 0 2px var(--surface);
 }
-.baan .merk.is-doel:not(.is-nu) { opacity: .5; }
+/* Dimmen met opacity liet de ring op 2,3:1 zakken — onder de grens voor
+   bedieningselementen. Mengen met de achtergrond houdt hem zichtbaar. */
+.baan .merk.is-doel:not(.is-nu) { border-color: color-mix(in srgb, var(--future) 72%, var(--bg)); }
 .baan.doelstap .merk.is-doel { opacity: 1; }
-.baan.doelstap .merk.is-nu:not(.is-doel) { opacity: .45; }
+.baan.doelstap .merk.is-nu:not(.is-doel) { background: color-mix(in srgb, var(--current) 60%, var(--bg));
+  border-color: color-mix(in srgb, var(--current) 60%, var(--bg)); }
 
 /* Een positie tussen twee benoemde treden: kleiner, zonder eigen label. */
 .halte.tussen .merk { width: 6px; height: 6px; border-width: 1px; }
@@ -436,6 +439,19 @@ th.num { text-align: center; }
 td.num .cell { display: grid; grid-template-columns: 26px 26px; align-items: center;
                justify-content: center; gap: var(--space-1); }
 td.num .cell .to { text-align: left; font-size: var(--fs-1); color: var(--text-2); font-family: var(--font-mono); }
+
+/* Alleen voor schermlezers: niet display:none, want dan wordt het ook niet
+   voorgelezen. */
+.vh {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
+}
+.skip { position: absolute; left: -9999px; }
+.skip:focus {
+  left: var(--space-5); top: var(--space-3); z-index: 30;
+  background: var(--surface); color: var(--text);
+  padding: 8px 14px; border-radius: var(--radius); outline: 2px solid var(--text);
+}
 
 /* ---------------------------------------------------------------- overig */
 .token-link {
