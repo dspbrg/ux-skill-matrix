@@ -277,28 +277,6 @@ label.field > span { display: block; font-size: var(--fs-2); color: var(--text-2
 
 /* ---------------------------------------------------------------- skill */
 .skill { padding: var(--space-5) 0; border-top: 1px solid var(--border); }
-
-/* Ingevuld en niet in beeld: één regel met de gekozen waarde. Tien even zware
-   blokken onder elkaar geven het oog nergens houvast, en na tien beslissingen
-   leest niemand ze nog. */
-button.skill.dicht {
-  display: flex; align-items: baseline; gap: var(--space-3);
-  width: 100%; text-align: left;
-  background: none; border: none; border-top: 1px solid var(--border);
-  border-radius: 0; padding: var(--space-3) 0;
-  color: var(--text-2);
-  transition: color .14s;
-}
-button.skill.dicht:hover { background: none; color: var(--text); }
-button.skill.dicht .name {
-  font-family: var(--font-display); font-weight: 500; font-size: var(--fs-3);
-  letter-spacing: -.01em; color: var(--text);
-}
-button.skill.dicht .waarde {
-  font-family: var(--font-mono); font-size: var(--fs-1);
-  letter-spacing: .1em; text-transform: uppercase; color: var(--current);
-}
-button.skill.dicht .waarde.doel { color: var(--future); }
 .skill:first-child { border-top: none; padding-top: var(--space-1); }
 .skill-head { display: flex; align-items: baseline; gap: var(--space-3); margin-bottom: var(--space-2); }
 .skill-head .name { font-family: var(--font-display); font-weight: 500; font-size: var(--fs-3);
@@ -349,6 +327,10 @@ button.skill.dicht .waarde.doel { color: var(--future); }
    blok om een rond merkteken. Het raakvlak blijft groot, maar wat je ziet is
    rond. */
 .halte:hover, .halte:active { background: none; transform: none; }
+.halte:disabled { cursor: not-allowed; opacity: .45; }
+.halte:disabled:hover::before { opacity: 0; }
+.halte:disabled .merk { border-style: dashed; }
+.baan-labels .uit { opacity: .4; }
 .halte::before {
   content: ''; position: absolute; width: 30px; height: 30px; border-radius: 50%;
   background: color-mix(in srgb, var(--accent) 14%, transparent);
@@ -425,6 +407,84 @@ td.num .cell .to { text-align: left; font-size: var(--fs-1); color: var(--text-2
                    font-family: var(--font-mono); }
 
 .center-page { min-height: 100%; display: grid; place-items: center; padding: 40px 20px; }
+
+/* Indienen: de assen vallen weg en de radar wordt het onderwerp. */
+.shell.afronden { animation: wegvallen .32s ease forwards; }
+@keyframes wegvallen {
+  to { opacity: 0; transform: translateY(-10px) scale(.985); }
+}
+
+.shell.afgerond { max-width: 780px; animation: opkomen .45s var(--spring) both; }
+.shell.afgerond .card { padding: var(--space-6); }
+.shell.afgerond h1 { font-size: var(--fs-5); }
+
+/* ---------------------------------------------------------------- entree */
+/* Links uitgelijnd met een grote kop en rechts een aangesneden spinnenweb,
+   in plaats van een gecentreerd doosje op een leeg vlak. */
+.entree {
+  position: relative;
+  min-height: 100%;
+  display: flex; align-items: center;
+  padding: 0 clamp(24px, 7vw, 96px);
+  overflow: hidden;
+}
+.entree-web {
+  position: absolute;
+  right: -14vw; top: 50%; transform: translateY(-50%);
+  width: min(82vh, 760px); height: min(82vh, 760px);
+  color: var(--border-strong);
+  opacity: .5;
+  pointer-events: none;
+}
+.entree-inhoud { position: relative; z-index: 1; width: 100%; max-width: 560px; }
+
+.entree .merk {
+  display: flex; align-items: center; gap: var(--space-2);
+  white-space: nowrap;
+  color: var(--text-3); margin-bottom: var(--space-5);
+}
+.entree h1 {
+  font-size: clamp(30px, 4.4vw, 46px);
+  line-height: 1.08;
+  max-width: 15ch;
+  margin-bottom: var(--space-6);
+}
+.entree h1 em { font-style: normal; color: var(--accent); }
+
+.entree-vorm { display: flex; flex-direction: column; gap: var(--space-3); max-width: 340px; }
+.entree-vorm.breed { max-width: 520px; }
+.entree-vorm .field > span { margin-bottom: var(--space-2); color: var(--text-3); }
+.entree-vorm .voet { color: var(--text-3); margin-top: var(--space-1); }
+.entree-vorm .voet-knop { align-self: flex-start; margin-top: var(--space-1); }
+button.groot { justify-content: center; padding: 11px 18px; }
+
+/* De hoekmarkeringen van de site: twee lijntjes die het vlak vasthouden. */
+.entree::before, .entree::after {
+  content: ''; position: absolute; width: 16px; height: 16px;
+  border: 1px solid var(--border-strong); opacity: .8; pointer-events: none;
+}
+.entree::before { top: 22px; left: 22px; border-right: 0; border-bottom: 0; }
+.entree::after { bottom: 22px; right: 22px; border-left: 0; border-top: 0; }
+
+.sessielijst { display: flex; flex-direction: column; gap: 1px; }
+.sessielijst button {
+  display: flex; align-items: baseline; gap: var(--space-3);
+  width: 100%; text-align: left;
+  background: none; border: none; border-top: 1px solid var(--border);
+  border-radius: 0; padding: var(--space-3) 0;
+}
+.sessielijst button:hover { background: none; }
+.sessielijst button:hover .naam { color: var(--accent); }
+.sessielijst .naam {
+  font-family: var(--font-display); font-weight: 500; font-size: var(--fs-3);
+  letter-spacing: -.01em; transition: color .14s;
+}
+.sessielijst .micro { color: var(--text-3); }
+.sessielijst .code { color: var(--text-2); }
+
+@media (max-width: 700px) {
+  .entree-web { display: none; }
+}
 .skeleton { color: var(--text-3); padding: 60px 0; text-align: center; }
 
 @media (max-width: 820px) {

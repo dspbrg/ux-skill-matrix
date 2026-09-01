@@ -87,7 +87,6 @@ export async function exportSvgAsPng(
         line.setAttribute('stroke', l.color)
         line.setAttribute('stroke-width', '3')
         line.setAttribute('stroke-linecap', 'round')
-        if (l.dashed) line.setAttribute('stroke-dasharray', '5 3')
         clone.appendChild(line)
         clone.appendChild(svgText(l.label, x + 27, y, 13, 'var(--text-2)', 'start'))
         x += itemW[i] + 22

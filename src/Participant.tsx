@@ -21,9 +21,10 @@ export default function Participant({ token }: { token: string }) {
   const [saving, setSaving] = useState(0)
   const [savedAt, setSavedAt] = useState<Date | null>(null)
   const [submitted, setSubmitted] = useState(false)
-  // Welke skill staat uitgeklapt. Tien even zware blokken onder elkaar geven het
-  // oog nergens houvast; ingevuld klapt dicht tot één regel.
-  const [open, setOpen] = useState<string | null>(null)
+  // Na indienen valt het formulier weg en wordt de radar het onderwerp.
+  // 'afronden' is het korte moment waarin de assen uitfaden.
+  const [afronden, setAfronden] = useState(false)
+  const [klaar, setKlaar] = useState(false)
   const queue = useRef<Promise<unknown>>(Promise.resolve())
 
   useEffect(() => {
@@ -34,6 +35,7 @@ export default function Participant({ token }: { token: string }) {
         setData(d)
         setValues(toValues(d.ratings))
         setSubmitted(Boolean(d.participant.submitted_at))
+        setKlaar(Boolean(d.participant.submitted_at))
       })
       .catch((e) => alive && setError((e as Error).message))
     return () => {
@@ -46,25 +48,25 @@ export default function Participant({ token }: { token: string }) {
    * was, wiste een dubbelklik op een nog niet gekozen knop de score meteen
    * weer — twee losse events, waarvan het tweede de waarde terugzette op null.
    */
-  /** De eerstvolgende skill die in deze stap nog geen score heeft. */
-  function volgendeLege(naId?: string): string | null {
-    const lijst = data?.skills ?? []
-    const start = naId ? lijst.findIndex((s) => s.id === naId) + 1 : 0
-    const zoek = (van: number, tot: number) =>
-      lijst.slice(van, tot).find((s) => values[s.id]?.[state] == null)?.id ?? null
-    return zoek(start, lijst.length) ?? zoek(0, start)
-  }
-
   function rate(skillId: string, value: number | null) {
     setValues((v) => ({ ...v, [skillId]: { ...v[skillId], [state]: value ?? undefined } }))
     // Een ingediende invulling die niet meer compleet is, mag niet stil als
     // "Ingediend" blijven staan bij de facilitator.
     if (value === null && submitted) void toggleSubmit()
-    if (value !== null) setOpen(volgendeLege(skillId))
     setSaving((n) => n + 1)
     // Schrijfacties serialiseren zodat snelle kliks elkaar niet inhalen.
+    // Zet je je huidige niveau boven een al gekozen doel, dan zou het doel
+    // ineens lager liggen dan waar je staat; dan schuift het mee omhoog.
+    const doelMee =
+      state === 'current' && value != null &&
+      values[skillId]?.future != null && values[skillId]!.future! < value
+    if (doelMee) setValues((v) => ({ ...v, [skillId]: { ...v[skillId], future: value } }))
+
     queue.current = queue.current
       .then(() => rpc('set_rating', { p_token: token, p_skill: skillId, p_state: state, p_value: value }))
+      .then(() => doelMee
+        ? rpc('set_rating', { p_token: token, p_skill: skillId, p_state: 'future', p_value: value })
+        : undefined)
       .then(() => setSavedAt(new Date()))
       .catch((e) => setError((e as Error).message))
       .finally(() => setSaving((n) => n - 1))
@@ -72,6 +74,12 @@ export default function Participant({ token }: { token: string }) {
 
   async function toggleSubmit() {
     const next = !submitted
+    if (next) {
+      setAfronden(true)
+      window.setTimeout(() => { setKlaar(true); setAfronden(false) }, 320)
+    } else {
+      setKlaar(false)
+    }
     setSubmitted(next)
     try {
       await rpc('set_submitted', { p_token: token, p_submitted: next })
@@ -90,8 +98,6 @@ export default function Participant({ token }: { token: string }) {
     const count = (s: State) => skills.filter((sk) => values[sk.id]?.[s] != null).length
     return { current: count('current'), future: count('future'), total: skills.length }
   }, [skills, values])
-
-  const actief = open ?? volgendeLege()
 
   if (error && !data) {
     return (
@@ -120,7 +126,37 @@ export default function Participant({ token }: { token: string }) {
         </span>
       </header>
 
-      <div className="shell">
+      {klaar ? (
+        <div className="shell afgerond">
+          <div className="card">
+            <div className="card-head" style={{ alignItems: 'baseline' }}>
+              <div>
+                <h1>Ingediend</h1>
+                <p className="micro" style={{ color: 'var(--text-3)', marginTop: 6 }}>
+                  {data.participant.name} · {data.session.name}
+                </p>
+              </div>
+              <span className="spacer" />
+              <button onClick={toggleSubmit}>Toch nog iets wijzigen</button>
+            </div>
+            <div style={{ maxWidth: 520, margin: '0 auto' }}>
+            <Radar
+              axes={skills.map((s) => s.label)}
+              max={max}
+              size={520}
+              exportName={`${data.session.name} — ${data.participant.name}`}
+              series={[
+                { key: 'current', label: 'Nu', color: 'var(--current)',
+                  values: skills.map((s) => values[s.id]?.current ?? null) },
+                { key: 'future', label: 'Doel', color: 'var(--future)', dashed: true,
+                  values: skills.map((s) => values[s.id]?.future ?? null) },
+              ]}
+            />
+            </div>
+          </div>
+        </div>
+      ) : (
+      <div className={`shell ${afronden ? 'afronden' : ''}`}>
         {error && (
           <div className="banner error" style={{ marginBottom: 16 }}>
             {error} <button className="ghost sm" onClick={() => setError('')}>sluiten</button>
@@ -142,10 +178,10 @@ export default function Participant({ token }: { token: string }) {
 
             <div className="row" style={{ marginBottom: 14 }}>
               <div className="tabs">
-                <button aria-selected={state === 'current'} onClick={() => { setState('current'); setOpen(null) }}>
+                <button aria-selected={state === 'current'} onClick={() => setState('current')}>
                   1 · Nu <span className="muted small">&nbsp;{filled.current}/{filled.total}</span>
                 </button>
-                <button aria-selected={state === 'future'} onClick={() => { setState('future'); setOpen(null) }}>
+                <button aria-selected={state === 'future'} onClick={() => setState('future')}>
                   2 · Doel <span className="muted small">&nbsp;{filled.future}/{filled.total}</span>
                 </button>
               </div>
@@ -162,27 +198,8 @@ export default function Participant({ token }: { token: string }) {
               </ol>
             </details>
 
-            {/* Zonder eigen keuze staat de eerstvolgende lege open; is alles
-                ingevuld, dan staat alles dicht. */}
             {skills.map((skill) => {
               const value = values[skill.id]?.[state]
-              const uitgeklapt = actief === skill.id
-              if (!uitgeklapt) {
-                return (
-                  <button
-                    key={skill.id}
-                    className="skill dicht"
-                    onClick={() => setOpen(skill.id)}
-                    aria-expanded={false}
-                  >
-                    <span className="name">{skill.label}</span>
-                    <span className="spacer" />
-                    <span className={`waarde ${state === 'future' ? 'doel' : ''}`}>
-                      {value ? scale[value - 1]?.label ?? value : 'nog leeg'}
-                    </span>
-                  </button>
-                )
-              }
               return (
                 <div className="skill" key={skill.id}>
                   <div className="skill-head">
@@ -288,6 +305,7 @@ export default function Participant({ token }: { token: string }) {
           </div>
         </div>
       </div>
+      )}
     </>
   )
 }
@@ -314,6 +332,9 @@ function Baan({
   onKies: (lv: number) => void
 }) {
   const actief = state === 'current' ? nu : doel
+  // Je doel kan niet lager liggen dan waar je nu staat: achteruitgang plannen
+  // is geen ontwikkeldoel. Gelijk blijven mag wel — dat staat ook in de kop.
+  const bodem = state === 'future' ? nu ?? 1 : 1
   const gat = nu != null && doel != null && doel !== nu
   const van = gat ? Math.min(nu!, doel!) : 0
   const tot = gat ? Math.max(nu!, doel!) : 0
@@ -331,7 +352,7 @@ function Baan({
             : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0
           if (!stap) return
           e.preventDefault()
-          const volgende = Math.min(max, Math.max(1, (actief ?? 0) + stap))
+          const volgende = Math.min(max, Math.max(bodem, (actief ?? bodem) + stap))
           onKies(volgende)
           ;(e.currentTarget.querySelectorAll('button')[volgende - 1] as HTMLButtonElement)?.focus()
         }}
@@ -352,13 +373,16 @@ function Baan({
         {Array.from({ length: max }, (_, i) => i + 1).map((lv) => {
           const isNu = nu === lv
           const isDoel = doel === lv
+          const geblokkeerd = lv < bodem
           return (
             <button
               key={lv}
               role="radio"
               aria-checked={actief === lv}
-              tabIndex={actief === lv || (actief == null && lv === 1) ? 0 : -1}
-              title={scale[lv - 1]?.description ?? ''}
+              aria-disabled={geblokkeerd}
+              disabled={geblokkeerd}
+              tabIndex={actief === lv || (actief == null && lv === bodem) ? 0 : -1}
+              title={geblokkeerd ? 'Lager dan waar je nu staat' : scale[lv - 1]?.description ?? ''}
               onClick={() => onKies(lv)}
               className="halte"
               style={{ left: `${pct(lv)}%` }}
@@ -379,7 +403,7 @@ function Baan({
         {Array.from({ length: max }, (_, i) => i + 1).map((lv) => (
           <span
             key={lv}
-            className={nu === lv ? 'is-nu' : doel === lv ? 'is-doel' : ''}
+            className={`${nu === lv ? 'is-nu' : doel === lv ? 'is-doel' : ''} ${lv < bodem ? 'uit' : ''}`}
             // Alle vijf optisch op hun eigen punt. Het eerste en laatste label
             // tegen de rand duwen scheelde maar 13px met de buurman, terwijl de
             // rest er 60 had; de kaartmarge vangt het overschot ruim op.

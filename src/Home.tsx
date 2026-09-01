@@ -11,9 +11,9 @@ interface SessionRow {
 }
 
 /**
- * Startscherm: één veld. De adminsleutel bepaalt welke sessies je ziet —
- * dezelfde sleutel kan meerdere sessies beheren. Deelnemers komen binnen via
- * hun eigen link (#/p/<token>) en zien dit scherm nooit.
+ * Startscherm. Deelnemers komen binnen via hun eigen link (#/p/<token>) en zien
+ * dit scherm nooit — het is dus alleen de facilitator-login. Eén veld: de
+ * adminsleutel bepaalt welke sessies je ziet.
  */
 export default function Home() {
   const [key, setKey] = useState('')
@@ -27,8 +27,6 @@ export default function Home() {
 
   async function unlock() {
     if (busy) return
-    // Niet de knop uitzetten maar zeggen wat er mis is: een grijze knop zonder
-    // uitleg laat je raden waarom er niets gebeurt.
     if (key.trim().length === 0) return setError('Vul je adminsleutel in.')
     if (key.length < 8) return setError(`Een adminsleutel is minstens 8 tekens — deze heeft er ${key.length}.`)
     setBusy(true)
@@ -62,36 +60,29 @@ export default function Home() {
   // ---------------------------------------------------------------- sleutel
   if (sessions === null) {
     return (
-      <Frame>
-        <h1>UX Skill Matrix</h1>
-        <p className="muted small" style={{ marginTop: 6 }}>Vul je adminsleutel in.</p>
-
+      <Frame kop={<>Waar staat je team, en waar wil het <em>heen</em>?</>}>
         {!isConfigured && (
-          <div className="banner error" style={{ marginTop: 16 }}>
+          <div className="banner error" style={{ marginBottom: 16 }}>
             Supabase is niet geconfigureerd — zet <code>VITE_SUPABASE_URL</code> en{' '}
             <code>VITE_SUPABASE_ANON_KEY</code> in <code>.env.local</code>.
           </div>
         )}
-
-        <div className="stack" style={{ marginTop: 20, gap: 12 }}>
+        <label className="field">
+          <span className="micro">Adminsleutel</span>
           <input
             type="password"
             autoFocus
             autoComplete="current-password"
-            placeholder="Adminsleutel"
             value={key}
             onChange={(e) => { setKey(e.target.value); if (error) setError('') }}
             onKeyDown={(e) => e.key === 'Enter' && unlock()}
           />
-          {error && <div className="banner error">{error}</div>}
-          <button className="primary" style={{ justifyContent: 'center' }} onClick={unlock} disabled={busy}>
-            {busy ? 'Bezig…' : 'Openen'}
-          </button>
-        </div>
-
-        <p className="small muted" style={{ marginTop: 14, textAlign: 'center' }}>
-          Minstens 8 tekens. Nog geen sessie? Kies gewoon een sleutel — dan maak je er zo een aan.
-        </p>
+        </label>
+        {error && <div className="banner error">{error}</div>}
+        <button className="primary groot" onClick={unlock} disabled={busy}>
+          {busy ? 'Bezig…' : 'Openen'}
+        </button>
+        <p className="micro voet">Minstens 8 tekens</p>
       </Frame>
     )
   }
@@ -99,36 +90,22 @@ export default function Home() {
   // ---------------------------------------------------------------- nieuwe sessie
   if (naming) {
     return (
-      <Frame>
-        <h1>Nieuwe sessie</h1>
-        <p className="muted small" style={{ marginTop: 6 }}>
-          {sessions.length === 0
-            ? 'Er hoort nog geen sessie bij deze sleutel.'
-            : 'Komt onder dezelfde sleutel te staan.'}
-        </p>
-        <div className="stack" style={{ marginTop: 20, gap: 12 }}>
-          <input type="text" autoFocus placeholder="Bijv. COA · UX-team najaar 2026"
+      <Frame kop={<>Hoe heet deze <em>sessie</em>?</>}>
+        <label className="field">
+          <span className="micro">Naam</span>
+          <input type="text" autoFocus placeholder="COA · UX-team najaar 2026"
             value={name} onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && create()} />
-          {error && <div className="banner error">{error}</div>}
-          <button className="primary" style={{ justifyContent: 'center' }} onClick={create} disabled={busy}>
-            {busy ? 'Bezig…' : 'Aanmaken'}
-          </button>
-        </div>
-        <button
-          className="ghost sm"
-          style={{ marginTop: 14, width: '100%', justifyContent: 'center' }}
+        </label>
+        {error && <div className="banner error">{error}</div>}
+        <button className="primary groot" onClick={create} disabled={busy}>
+          {busy ? 'Bezig…' : 'Aanmaken'}
+        </button>
+        <button className="ghost sm voet-knop"
           onClick={() => {
-            setError('')
-            setNaming(false)
-            // Zonder sessies is er geen lijst om naar terug te keren: dan hoort
-            // "terug" bij het sleutelscherm.
-            if (sessions.length === 0) {
-              setSessions(null)
-              setKey('')
-            }
-          }}
-        >
+            setError(''); setNaming(false)
+            if (sessions.length === 0) { setSessions(null); setKey('') }
+          }}>
           {sessions.length === 0 ? 'Andere sleutel proberen' : 'Terug'}
         </button>
       </Frame>
@@ -137,30 +114,20 @@ export default function Home() {
 
   // ---------------------------------------------------------------- sessiekeuze
   return (
-    <Frame wide>
-      <h1>Jouw sessies</h1>
-      <p className="muted small" style={{ marginTop: 6 }}>{sessions.length} sessies onder deze sleutel.</p>
-
-      <div className="stack" style={{ marginTop: 18, gap: 8 }}>
+    <Frame kop={<>Je hebt <em>{sessions.length}</em> sessies open staan.</>} breed>
+      <div className="sessielijst">
         {sessions.map((s) => (
-          <button key={s.code} onClick={() => open(s.code)}
-            style={{ justifyContent: 'flex-start', textAlign: 'left', padding: '12px 14px' }}>
-            <span style={{ flex: 1 }}>
-              <span style={{ fontWeight: 600, display: 'block' }}>{s.name}</span>
-              <span className="small muted">
-                {s.participants === 0
-                  ? 'nog geen deelnemers'
-                  : `${s.submitted}/${s.participants} ingediend`}
-                {' · '}
-                {new Date(s.created_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' })}
-              </span>
+          <button key={s.code} onClick={() => open(s.code)}>
+            <span className="naam">{s.name}</span>
+            <span className="spacer" />
+            <span className="micro">
+              {s.participants === 0 ? 'geen deelnemers' : `${s.submitted}/${s.participants} ingediend`}
             </span>
-            <span className="mono small muted">{s.code}</span>
+            <span className="micro code">{s.code}</span>
           </button>
         ))}
       </div>
-
-      <button className="ghost sm" style={{ marginTop: 14, width: '100%', justifyContent: 'center' }}
+      <button className="ghost sm voet-knop"
         onClick={() => { setNaming(true); setName(''); setError('') }}>
         + Nieuwe sessie
       </button>
@@ -168,10 +135,48 @@ export default function Home() {
   )
 }
 
-function Frame({ children, wide }: { children: React.ReactNode; wide?: boolean }) {
+/**
+ * De compositie: links uitgelijnd met een grote kop, en rechts een uitsnede van
+ * het spinnenweb uit de radar. Een gecentreerd doosje op een leeg vlak zei
+ * niets over wat dit is of van wie het is.
+ */
+function Frame({ kop, children, breed }: { kop: React.ReactNode; children: React.ReactNode; breed?: boolean }) {
   return (
-    <div className="center-page">
-      <div className="card" style={{ width: wide ? 420 : 340 }}>{children}</div>
+    <div className="entree">
+      <Web />
+      <div className="entree-inhoud">
+        <p className="micro merk">
+          <span className="leeft" aria-hidden="true" />
+          UX Skill Matrix · facilitator
+        </p>
+        <h1>{kop}</h1>
+        <div className={`entree-vorm ${breed ? 'breed' : ''}`}>{children}</div>
+      </div>
     </div>
+  )
+}
+
+/** Het spinnenweb van de radar, uitvergroot en aangesneden. */
+function Web() {
+  const n = 10
+  const punt = (straal: number, i: number) => {
+    const a = (Math.PI * 2 * i) / n - Math.PI / 2
+    return [250 + Math.cos(a) * straal, 250 + Math.sin(a) * straal] as const
+  }
+  const ring = (straal: number) =>
+    Array.from({ length: n }, (_, i) => punt(straal, i))
+      .map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`)
+      .join(' ') + ' Z'
+
+  return (
+    <svg className="entree-web" viewBox="0 0 500 500" aria-hidden="true">
+      {[80, 130, 180, 230].map((r) => (
+        <path key={r} d={ring(r)} fill="none" stroke="currentColor" strokeWidth={1} />
+      ))}
+      {Array.from({ length: n }, (_, i) => {
+        const [x, y] = punt(230, i)
+        return <line key={i} x1={250} y1={250} x2={x} y2={y} stroke="currentColor" strokeWidth={1} />
+      })}
+    </svg>
   )
 }

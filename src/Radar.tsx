@@ -127,8 +127,14 @@ export default function Radar({ axes, series, max = 5, size = 420, showLegend = 
     if (!el) return
     const b = el.getBBox()
     if (!b.width || !b.height) return
-    const pad = 6
-    setFitted(`${b.x - pad} ${b.y - pad} ${b.width + pad * 2} ${b.height + pad * 2}`)
+    // Vierkant én gecentreerd op het middelpunt van het web, niet op het
+    // omhullende kader van de inkt. De labels links en rechts zijn breder dan
+    // die boven en onder, dus een strakke uitsnede duwde het web uit het
+    // midden en liet het platter ogen dan het is.
+    const pad = 8
+    const half =
+      Math.max(cx - b.x, b.x + b.width - cx, cy - b.y, b.y + b.height - cy) + pad
+    setFitted(`${cx - half} ${cy - half} ${half * 2} ${half * 2}`)
   }, [axes.join('|'), max, size])
 
   // Alle reeksen in één veer: zo staan beide vormen in dezelfde render tot mijn
@@ -182,7 +188,7 @@ export default function Radar({ axes, series, max = 5, size = 420, showLegend = 
 
         {axes.map((label, i) => {
           const [ax, ay] = point(i, max)
-          const [lx, ly] = point(i, max + 1.12)
+          const [lx, ly] = point(i, max + 1.34)
           const anchor = Math.abs(lx - cx) < 6 ? 'middle' : lx > cx ? 'start' : 'end'
           const tx = lx + (anchor === 'start' ? 8 : anchor === 'end' ? -8 : 0)
           const lines = wrap(label)
@@ -237,9 +243,11 @@ export default function Radar({ axes, series, max = 5, size = 420, showLegend = 
                   stroke={nu.serie.color} strokeWidth={1.5} strokeLinejoin="round" />
               )}
 
+              {/* Massief in plaats van gestreept: het gevulde verschilgebied
+                  onderscheidt de twee al, en een stippellijn oogt rommelig. */}
               {doel?.d && (
-                <path d={doel.d} fill="none" stroke={doel.serie.color} strokeWidth={2.25}
-                  strokeDasharray="6 4" strokeLinejoin="round" />
+                <path d={doel.d} fill="none" stroke={doel.serie.color} strokeWidth={2}
+                  strokeLinejoin="round" />
               )}
 
               {vormen.map((v) =>
@@ -260,7 +268,7 @@ export default function Radar({ axes, series, max = 5, size = 420, showLegend = 
             <span className="item" key={s.key}>
               <svg width="22" height="10" aria-hidden="true">
                 <line x1="1" y1="5" x2="21" y2="5" stroke={s.color} strokeWidth="3"
-                  strokeDasharray={s.dashed ? '5 3' : undefined} strokeLinecap="round" />
+                  strokeLinecap="round" />
               </svg>
               {s.label}
             </span>
