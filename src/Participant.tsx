@@ -137,7 +137,7 @@ export default function Participant({ token }: { token: string }) {
                 </p>
               </div>
               <span className="spacer" />
-              <button onClick={toggleSubmit}>Toch nog iets wijzigen</button>
+              <button onClick={toggleSubmit}>Aanpassen</button>
             </div>
             <div style={{ maxWidth: 520, margin: '0 auto' }}>
             <Radar
@@ -170,12 +170,12 @@ export default function Participant({ token }: { token: string }) {
           <div className="kolom">
             <div className="kop">
               <div>
-                <h1>{state === 'current' ? 'Waar sta je nu?' : 'Waar wil je naartoe?'}</h1>
-                <p className="muted small" style={{ marginTop: 6 }}>
-                  {state === 'current'
-                    ? 'Scoor jezelf op je huidige niveau. Eerlijk is nuttiger dan bescheiden of stoer.'
-                    : 'Waar wil je over pakweg een jaar staan? Niet alles hoeft omhoog — bewust gelijk blijven mag ook.'}
-                </p>
+                <h1>{state === 'current' ? 'Waar sta je nu?' : 'Waar wil je heen?'}</h1>
+                {state === 'future' && (
+                  <p className="muted small" style={{ marginTop: 6 }}>
+                    Over een jaar. Niet alles hoeft omhoog.
+                  </p>
+                )}
               </div>
 
               <div className="row" style={{ marginTop: 18 }}>
@@ -257,7 +257,7 @@ export default function Participant({ token }: { token: string }) {
             {state === 'future' && done && (
               <div className="opkomen" style={{ borderTop: '1px solid var(--border)', paddingTop: 'var(--space-5)', marginTop: 'var(--space-2)' }}>
                 <button className={submitted ? '' : 'primary'} onClick={toggleSubmit}>
-                  {submitted ? 'Toch nog iets wijzigen' : 'Invulling indienen'}
+                  {submitted ? 'Aanpassen' : 'Indienen'}
                 </button>
               </div>
             )}
@@ -271,7 +271,7 @@ export default function Participant({ token }: { token: string }) {
                   en niet in een eigen kaart met een grote ring naast een korte
                   zin — dat stond uit balans in deze kolom. */}
               <div className="card-head" style={{ alignItems: 'center', marginBottom: 12 }}>
-                <h2>Jouw profiel</h2>
+                <h2>Je profiel</h2>
                 <span className="spacer" />
                 <span className="voortgang">
                   <span className="balk">

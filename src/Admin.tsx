@@ -186,11 +186,6 @@ function Overview({ data, onAddPeople }: { data: AdminPayload; onAddPeople: () =
   if (participants.length === 0) {
     return (
       <div className="card" style={{ textAlign: 'center', padding: '56px 22px' }}>
-        <h2>Nog geen deelnemers</h2>
-        <p className="muted small" style={{ margin: '8px auto 20px', maxWidth: 460 }}>
-          Voeg je team toe, deel de persoonlijke links, en dit scherm vult zich vanzelf. Wil je eerst de
-          skills of de schaal aanpassen? Doe dat nu — daarna kost het je niets meer.
-        </p>
         <button className="primary" onClick={onAddPeople}>Deelnemers toevoegen</button>
       </div>
     )
@@ -231,7 +226,7 @@ function Overview({ data, onAddPeople }: { data: AdminPayload; onAddPeople: () =
         <div className="card">
           <div className="card-head">
             <div>
-              <h2>Waar zit de kloof?</h2>
+              <h2>Waar zit de groei?</h2>
               <p className="muted small" style={{ marginTop: 4 }}>
 Gesorteerd op het grootste verschil tussen waar het team staat en waar het heen wil.
               </p>
@@ -271,7 +266,7 @@ Gesorteerd op het grootste verschil tussen waar het team staat en waar het heen 
                           )}
                         </td>
                         <td style={{ whiteSpace: 'nowrap' }}>
-                          {carry.length ? carry.join(', ') : <span className="muted">van buiten halen</span>}
+                          {carry.length ? carry.join(', ') : <span className="muted">nog niemand</span>}
                         </td>
                         <td className="num">{wantsUp(s.id)}/{participants.length}</td>
                       </tr>
@@ -281,8 +276,7 @@ Gesorteerd op het grootste verschil tussen waar het team staat en waar het heen 
             </table>
           </div>
           <p className="small muted" style={{ marginTop: 12 }}>
-            Waar meerdere mensen omhoog willen én niemand het kan overdragen, is de vraag of je het
-            intern opbouwt of van buiten haalt.
+            Wat niemand kan overdragen, bouw je op of haal je binnen.
           </p>
         </div>
       </div>

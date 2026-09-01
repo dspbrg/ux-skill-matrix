@@ -60,7 +60,7 @@ export default function Home() {
   // ---------------------------------------------------------------- sleutel
   if (sessions === null) {
     return (
-      <Frame kop={<>Waar staat je team, en waar wil het <em>heen</em>?</>}>
+      <Frame kop={<>Eerst jij, dan het <em>team</em>.</>}>
         {!isConfigured && (
           <div className="banner error" style={{ marginBottom: 16 }}>
             Supabase is niet geconfigureerd — zet <code>VITE_SUPABASE_URL</code> en{' '}
@@ -68,7 +68,7 @@ export default function Home() {
           </div>
         )}
         <label className="field">
-          <span className="micro">Adminsleutel</span>
+          <span className="micro">Sleutel</span>
           <input
             type="password"
             autoFocus
@@ -82,7 +82,6 @@ export default function Home() {
         <button className="primary groot" onClick={unlock} disabled={busy}>
           {busy ? 'Bezig…' : 'Openen'}
         </button>
-        <p className="micro voet">Minstens 8 tekens</p>
       </Frame>
     )
   }
@@ -114,7 +113,7 @@ export default function Home() {
 
   // ---------------------------------------------------------------- sessiekeuze
   return (
-    <Frame kop={<>Je hebt <em>{sessions.length}</em> sessies open staan.</>} breed>
+    <Frame kop={<><em>{sessions.length}</em> sessies</>} breed>
       <div className="sessielijst">
         {sessions.map((s) => (
           <button key={s.code} onClick={() => open(s.code)}>
