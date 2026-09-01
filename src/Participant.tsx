@@ -289,13 +289,13 @@ export default function Participant({ token }: { token: string }) {
                 series={[
                   {
                     key: 'current',
-                    label: 'Huidig',
+                    label: 'Nu',
                     color: 'var(--current)',
                     values: skills.map((s) => values[s.id]?.current ?? null),
                   },
                   {
                     key: 'future',
-                    label: 'Gewenst',
+                    label: 'Doel',
                     color: 'var(--future)',
                     dashed: true,
                     values: skills.map((s) => values[s.id]?.future ?? null),

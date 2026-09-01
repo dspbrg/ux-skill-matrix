@@ -151,19 +151,19 @@ function Overview({ data, onAddPeople }: { data: AdminPayload; onAddPeople: () =
   const series = useMemo(() => {
     if (focus === '__team__') {
       return [
-        { key: 'current', label: 'Team — huidig', color: 'var(--current)', values: skills.map((s) => avg(s.id, 'current')) },
-        { key: 'future', label: 'Team — gewenst', color: 'var(--future)', dashed: true, values: skills.map((s) => avg(s.id, 'future')) },
+        { key: 'current', label: 'Team — nu', color: 'var(--current)', values: skills.map((s) => avg(s.id, 'current')) },
+        { key: 'future', label: 'Team — doel', color: 'var(--future)', dashed: true, values: skills.map((s) => avg(s.id, 'future')) },
       ]
     }
     const byS = lookup.get(focus)
     return [
-      { key: 'current', label: 'Huidig', color: 'var(--current)', values: skills.map((s) => byS?.get(s.id)?.current ?? null) },
-      { key: 'future', label: 'Gewenst', color: 'var(--future)', dashed: true, values: skills.map((s) => byS?.get(s.id)?.future ?? null) },
+      { key: 'current', label: 'Nu', color: 'var(--current)', values: skills.map((s) => byS?.get(s.id)?.current ?? null) },
+      { key: 'future', label: 'Doel', color: 'var(--future)', dashed: true, values: skills.map((s) => byS?.get(s.id)?.future ?? null) },
     ]
   }, [focus, skills, avg, lookup])
 
   function exportCsv() {
-    const head = ['deelnemer', 'rol', 'skill', 'huidig', 'gewenst']
+    const head = ['deelnemer', 'rol', 'skill', 'nu', 'doel']
     const rows = participants.flatMap((p) =>
       skills.map((s) => {
         const v = lookup.get(p.id)?.get(s.id)
@@ -244,8 +244,8 @@ Gesorteerd op het grootste verschil tussen waar het team staat en waar het heen 
               <thead>
                 <tr>
                   <th>Skill</th>
-                  <th className="num">Huidig</th>
-                  <th className="num">Gewenst</th>
+                  <th className="num">Nu</th>
+                  <th className="num">Doel</th>
                   <th className="num">Verschil</th>
                   <th>Overdragen</th>
                   <th className="num">Wil omhoog</th>
@@ -290,8 +290,7 @@ Gesorteerd op het grootste verschil tussen waar het team staat en waar het heen 
       <div className="card">
         <h2>Iedereen naast elkaar</h2>
         <p className="muted small" style={{ margin: '4px 0 14px' }}>
-          Huidig niveau, met het gewenste niveau erachter als dat afwijkt. Lager mag: niet elke skill
-          hoeft omhoog.
+          Waar iedereen nu staat, met het doel erachter als dat afwijkt.
         </p>
         <div className="table-wrap">
           <table>
