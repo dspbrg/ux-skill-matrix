@@ -348,7 +348,11 @@ export default function Radar({ axes, series, max, size = 420, showLegend = true
             <tr key={as}>
               <th scope="row">{as}</th>
               {series.map((x) => (
-                <td key={x.key}>{x.values[i] ?? 'niet ingevuld'}</td>
+                <td key={x.key}>
+                  {x.values[i] == null
+                    ? 'niet ingevuld'
+                    : Number.isInteger(x.values[i]) ? x.values[i] : (x.values[i] as number).toFixed(1)}
+                </td>
               ))}
             </tr>
           ))}

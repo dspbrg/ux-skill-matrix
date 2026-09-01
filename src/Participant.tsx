@@ -29,6 +29,14 @@ export default function Participant({ token }: { token: string }) {
   // valt die terug op body. Dan sta je opnieuw bovenaan zonder te weten dat er
   // iets gebeurd is.
   const kopRef = useRef<HTMLHeadingElement>(null)
+  // Losse mededelingen over dingen die de app zelf doet. Ze verdwijnen vanzelf;
+  // het gaat erom dat je ze een keer ziet, niet dat je ze wegklikt.
+  const [melding, setMelding] = useState('')
+  useEffect(() => {
+    if (!melding) return
+    const t = window.setTimeout(() => setMelding(''), 6000)
+    return () => window.clearTimeout(t)
+  }, [melding])
   const queue = useRef<Promise<unknown>>(Promise.resolve())
 
   useEffect(() => {
@@ -57,7 +65,13 @@ export default function Participant({ token }: { token: string }) {
     setValues((v) => ({ ...v, [skillId]: { ...v[skillId], [state]: value ?? undefined } }))
     // Een ingediende invulling die niet meer compleet is, mag niet stil als
     // "Ingediend" blijven staan bij de facilitator.
-    if (value === null && submitted) void toggleSubmit()
+    // Wissen na indienen trekt je inzending in. Dat gebeurde stil: de knop
+    // verdween, de teller zakte, en bij de facilitator stond je ineens weer op
+    // niet-ingediend zonder dat iemand het had gezien.
+    if (value === null && submitted) {
+      void toggleSubmit()
+      setMelding('Je invulling is niet meer compleet en staat weer op niet-ingediend.')
+    }
     setSaving((n) => n + 1)
     // Schrijfacties serialiseren zodat snelle kliks elkaar niet inhalen.
     // Zet je je huidige niveau boven een al gekozen doel, dan zou het doel
@@ -65,7 +79,10 @@ export default function Participant({ token }: { token: string }) {
     const doelMee =
       state === 'current' && value != null &&
       values[skillId]?.future != null && values[skillId]!.future! < value
-    if (doelMee) setValues((v) => ({ ...v, [skillId]: { ...v[skillId], future: value } }))
+    if (doelMee) {
+      setValues((v) => ({ ...v, [skillId]: { ...v[skillId], future: value } }))
+      setMelding('Je doel lag lager dan je nieuwe score en is meegeschoven.')
+    }
 
     queue.current = queue.current
       .then(() => rpc('set_rating', { p_token: token, p_skill: skillId, p_state: state, p_value: value }))
@@ -180,6 +197,9 @@ export default function Participant({ token }: { token: string }) {
         </main>
       ) : (
       <main id="hoofd" tabIndex={-1} className={`shell ${afronden ? 'afronden' : ''}`}>
+        {melding && (
+          <div className="banner" role="status" style={{ marginBottom: 'var(--space-4)' }}>{melding}</div>
+        )}
         {error && (
           <div className="banner error" role="alert" style={{ marginBottom: 'var(--space-4)' }}>
             {error} <button className="ghost sm" onClick={() => setError('')}>sluiten</button>
@@ -225,6 +245,9 @@ export default function Participant({ token }: { token: string }) {
                   </li>
                 ))}
               </ol>
+              <p className="small muted" style={{ marginTop: 'var(--space-2)' }}>
+                Tussen elke twee treden zit een extra positie, voor als je er precies tussenin zit.
+              </p>
             </details>
 
             {skills.map((skill) => {
@@ -268,7 +291,9 @@ export default function Participant({ token }: { token: string }) {
                   className="primary"
                   onClick={() => {
                     setState('future')
-                    window.scrollTo({ top: 0, behavior: 'smooth' })
+                    // niet 'smooth': de render eronder verandert tegelijk, en dan
+                    // blijft de pagina halverwege hangen
+                    window.scrollTo({ top: 0 })
                   }}
                 >
                   Verder naar stap 2 · Doel

@@ -11,6 +11,14 @@ export default function Admin({ initialCode, initialKey }: { initialCode: string
   const [data, setData] = useState<AdminPayload | null>(null)
   const [error, setError] = useState('')
   const [tab, setTab] = useState<Tab>('overview')
+  // Van tab wisselen gooide onopgeslagen skillwijzigingen weg zonder iets te
+  // zeggen — bij tien herschreven assen is dat een middag werk.
+  const [onbewaard, setOnbewaard] = useState(false)
+  const wissel = (naar: Tab) => {
+    if (tab === 'terms' && onbewaard &&
+        !confirm('Je hebt wijzigingen die nog niet zijn opgeslagen. Weggooien?')) return
+    setTab(naar)
+  }
 
   const load = useCallback(async () => {
     setError('')
@@ -58,9 +66,9 @@ export default function Admin({ initialCode, initialKey }: { initialCode: string
         <span className="spacer" />
         <nav aria-label="Secties">
           <div className="tabs">
-            <button aria-current={tab === 'overview' ? 'page' : undefined} onClick={() => setTab('overview')}>Overzicht</button>
-            <button aria-current={tab === 'people' ? 'page' : undefined} onClick={() => setTab('people')}>Deelnemers</button>
-            <button aria-current={tab === 'terms' ? 'page' : undefined} onClick={() => setTab('terms')}>Instellingen</button>
+            <button aria-current={tab === 'overview' ? 'page' : undefined} onClick={() => wissel('overview')}>Overzicht</button>
+            <button aria-current={tab === 'people' ? 'page' : undefined} onClick={() => wissel('people')}>Deelnemers</button>
+            <button aria-current={tab === 'terms' ? 'page' : undefined} onClick={() => wissel('terms')}>Instellingen</button>
           </div>
         </nav>
       </header>
@@ -69,7 +77,10 @@ export default function Admin({ initialCode, initialKey }: { initialCode: string
         {error && <div className="banner error" role="alert" style={{ marginBottom: 'var(--space-4)' }}>{error}</div>}
         {tab === 'overview' && <Overview data={data} onAddPeople={() => setTab('people')} />}
         {tab === 'people' && <People data={data} code={code} adminKey={key} reload={load} setError={setError} />}
-        {tab === 'terms' && <Terms data={data} code={code} adminKey={key} reload={load} setError={setError} />}
+        {tab === 'terms' && (
+          <Terms data={data} code={code} adminKey={key} reload={load} setError={setError}
+            meldOnbewaard={setOnbewaard} />
+        )}
       </main>
     </>
   )
@@ -132,6 +143,13 @@ function Overview({ data, onAddPeople }: { data: AdminPayload; onAddPeople: () =
    * en weet iedereen wie die één is — dan is het geen statistiek maar een
    * persoonskenmerk, weergegeven als tekortentelling.
    */
+  /** Hoeveel mensen deze meting op deze as hebben ingevuld. */
+  const telling = useCallback(
+    (skillId: string, state: State) =>
+      participants.filter((p) => lookup.get(p.id)?.get(skillId)?.[state] != null).length,
+    [participants, lookup],
+  )
+
   const carriers = useCallback(
     (skillId: string) => {
       const at = (level: number) =>
@@ -201,9 +219,11 @@ function Overview({ data, onAddPeople }: { data: AdminPayload; onAddPeople: () =
         <div className="card">
           <div className="card-head">
             <div>
-              <h2>Teamprofiel</h2>
+              <h2>{focus === '__team__' ? 'Teamprofiel' : participants.find((p) => p.id === focus)?.name ?? 'Profiel'}</h2>
               <p className="muted small" style={{ marginTop: 'var(--space-1)' }}>
-                {submittedCount} van {participants.length} ingediend · gemiddelde over ieders ingevulde scores
+                {focus === '__team__'
+                  ? `${submittedCount} van ${participants.length} ingediend · gemiddelde over ieders ingevulde scores`
+                  : participants.find((p) => p.id === focus)?.role || 'individueel profiel'}
               </p>
             </div>
             <span className="spacer" />
@@ -233,7 +253,7 @@ function Overview({ data, onAddPeople }: { data: AdminPayload; onAddPeople: () =
             <div>
               <h2>Waar zit de groei?</h2>
               <p className="muted small" style={{ marginTop: 'var(--space-1)' }}>
-Gesorteerd op het grootste verschil tussen waar het team staat en waar het heen wil.
+Gesorteerd op verschil.
               </p>
             </div>
             <span className="spacer" />
@@ -270,11 +290,23 @@ Gesorteerd op het grootste verschil tussen waar het team staat en waar het heen 
                     const carry = carriers(s.id)
                     return (
                       <tr key={s.id}>
-                        <th scope="row" style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>
-                          {s.label}
-                        </th>
-                        <td className="num">{c?.toFixed(1) ?? '–'}</td>
-                        <td className="num">{f?.toFixed(1) ?? '–'}</td>
+                        <th scope="row">{s.label}</th>
+                        {/* Nu en Doel worden over verschillende mensen gemiddeld
+                            zolang niet iedereen beide heeft ingevuld. Zonder de
+                            aantallen erbij leest '5,0 · 7,0 · +4,0' als een
+                            rekenfout. */}
+                        <td className="num">
+                          {c?.toFixed(1) ?? '–'}
+                          {c != null && telling(s.id, 'current') < participants.length && (
+                            <span className="small muted"> ({telling(s.id, 'current')})</span>
+                          )}
+                        </td>
+                        <td className="num">
+                          {f?.toFixed(1) ?? '–'}
+                          {f != null && telling(s.id, 'future') < participants.length && (
+                            <span className="small muted"> ({telling(s.id, 'future')})</span>
+                          )}
+                        </td>
                         <td className="num" // op negen posities is één positie een halve benoemde trede
                         style={{ color: g && g.mean >= 2 ? 'var(--future)' : 'var(--text-2)' }}>
                           {g == null ? '–' : g.mean > 0 ? `+${g.mean.toFixed(1)}` : g.mean.toFixed(1)}
@@ -318,8 +350,7 @@ Gesorteerd op het grootste verschil tussen waar het team staat en waar het heen 
             <tbody>
               {skills.map((s) => (
                 <tr key={s.id}>
-                  <th scope="row" style={{ whiteSpace: 'nowrap', fontWeight: 400,
-                    textTransform: 'none', letterSpacing: 0 }}>{s.label}</th>
+                  <th scope="row" style={{ whiteSpace: 'nowrap' }}>{s.label}</th>
                   {participants.map((p) => {
                     const v = lookup.get(p.id)?.get(s.id)
                     return (
@@ -477,9 +508,10 @@ function People({
 /* ------------------------------------------------------------------ terminologie */
 
 function Terms({
-  data, code, adminKey, reload, setError,
+  data, code, adminKey, reload, setError, meldOnbewaard,
 }: {
-  data: AdminPayload; code: string; adminKey: string; reload: () => Promise<void>; setError: (s: string) => void
+  data: AdminPayload; code: string; adminKey: string; reload: () => Promise<void>
+  setError: (s: string) => void; meldOnbewaard: (v: boolean) => void
 }) {
   const [skills, setSkills] = useState<Skill[]>(data.skills)
   const [scale, setScale] = useState<ScaleLevel[]>(data.session.scale)
@@ -497,6 +529,8 @@ function Terms({
   const dirtySkills = JSON.stringify(skills) !== JSON.stringify(data.skills)
   const dirtyScale =
     JSON.stringify(scale) !== JSON.stringify(data.session.scale) || sessionName !== data.session.name
+
+  useEffect(() => { meldOnbewaard(dirtySkills || dirtyScale) }, [dirtySkills, dirtyScale, meldOnbewaard])
 
   function patch(i: number, field: 'label' | 'description' | 'anchor' | 'anchor_senior', value: string) {
     setSkills((s) => s.map((sk, k) => (k === i ? { ...sk, [field]: value } : sk)))

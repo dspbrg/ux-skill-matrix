@@ -421,6 +421,12 @@ table { width: 100%; border-collapse: collapse; font-size: var(--fs-2); }
 th, td { text-align: left; padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border); }
 th { font-weight: 700; color: var(--text-2); }
 thead th { border-bottom: 1px solid var(--border-strong); }
+/* Een rijkop is inhoud, geen kolomkop: die mag de mono-kapitalen van thead
+   niet erven. */
+tbody th {
+  font-family: var(--font-ui); font-weight: 400; font-size: var(--fs-2);
+  text-transform: none; letter-spacing: 0; color: var(--text);
+}
 tbody tr:hover { background: var(--surface-2); }
 td.num, th.num { text-align: center; font-variant-numeric: tabular-nums; }
 /* Kop en waarde op dezelfde as: de koppen stonden gecentreerd boven inhoud
@@ -548,8 +554,12 @@ button.groot { justify-content: center; padding: 11px 18px; }
   .grid-2, .grid-2.wide-right { grid-template-columns: 1fr; }
   /* Vijf haltes naast elkaar wordt op een smal scherm te krap om te raken,
      dus daar krijgt elke halte een eigen rij met zijn label ernaast. */
+  /* De haltes zitten ín de rail om ze op de lijn uit te lijnen; die rail
+     verbergen haalde dus de hele schaal weg. Op smal scherm wordt de rail een
+     gewone stapel en verdwijnt alleen de lijn zelf. */
   .baan-spoor { height: auto; }
-  .baan-rail { display: none; }
+  .baan-rail { position: static; left: auto; right: auto; top: auto; bottom: auto; }
+  .baan-lijn, .baan-gat { display: none; }
   .halte {
     position: static; width: auto; height: 46px; margin: 0; padding: 0 4px;
     display: flex; align-items: center; gap: var(--space-3);
