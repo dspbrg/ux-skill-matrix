@@ -164,9 +164,7 @@ export default function Participant({ token }: { token: string }) {
                   </div>
                   {skill.description && <p className="skill-desc">{skill.description}</p>}
                   {skill.anchor && (
-                    <p className="anchor">
-                      <strong>Eén keer dit gedaan</strong> is hier: {skill.anchor}.
-                    </p>
+                    <p className="anchor">{skill.anchor}.</p>
                   )}
                   <div
                     className={`levels ${state === 'future' ? 'future' : ''}`}
@@ -192,6 +190,12 @@ export default function Participant({ token }: { token: string }) {
                         title={scale[lv - 1]?.description ?? ''}
                         onClick={() => rate(skill.id, lv)}
                       >
+                        {/* Ronde twee is een vergelijkend oordeel. Zonder je huidige
+                            score in beeld moet je tien getallen uit je hoofd ophalen,
+                            en dan wordt het verschil — precies waar het om gaat — gok. */}
+                        {state === 'future' && values[skill.id]?.current === lv && (
+                          <span className="now" aria-label="je huidige niveau">nu</span>
+                        )}
                         <span className="lv">{lv}</span>
                         <span className="lb">{scale[lv - 1]?.label ?? ''}</span>
                       </button>

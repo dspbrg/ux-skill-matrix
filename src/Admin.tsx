@@ -122,9 +122,29 @@ function Overview({ data, onAddPeople }: { data: AdminPayload; onAddPeople: () =
     [participants, lookup],
   )
 
-  const coverage = useCallback(
-    (skillId: string, state: State, level: number) =>
-      participants.filter((p) => (lookup.get(p.id)?.get(skillId)?.[state] ?? 0) >= level).length,
+  /**
+   * Wie kan dit overdragen: de vraagbaken (5), anders wie het zelfstandig doet
+   * (4). Bij een klein team is "hoeveel mensen zitten op 4+" altijd nul of één
+   * en weet iedereen wie die één is — dan is het geen statistiek maar een
+   * persoonskenmerk, weergegeven als tekortentelling.
+   */
+  const carriers = useCallback(
+    (skillId: string) => {
+      const at = (level: number) =>
+        participants.filter((p) => (lookup.get(p.id)?.get(skillId)?.current ?? 0) >= level)
+      const best = at(5).length ? at(5) : at(4)
+      return best.map((p) => p.name)
+    },
+    [participants, lookup],
+  )
+
+  /** Hoeveel mensen hebben hier zelf een hoger gewenst niveau opgeschreven. */
+  const wantsUp = useCallback(
+    (skillId: string) =>
+      participants.filter((p) => {
+        const v = lookup.get(p.id)?.get(skillId)
+        return v?.current != null && v?.future != null && v.future > v.current
+      }).length,
     [participants, lookup],
   )
 
@@ -178,7 +198,7 @@ function Overview({ data, onAddPeople }: { data: AdminPayload; onAddPeople: () =
 
   return (
     <>
-      <div className="grid-2" style={{ alignItems: 'start' }}>
+      <div className="grid-2 wide-right" style={{ alignItems: 'start' }}>
         <div className="card">
           <div className="card-head">
             <div>
@@ -213,7 +233,7 @@ function Overview({ data, onAddPeople }: { data: AdminPayload; onAddPeople: () =
             <div>
               <h2>Waar zit de kloof?</h2>
               <p className="muted small" style={{ marginTop: 4 }}>
-                Gemiddelden per skill, en hoeveel mensen dit nu zonder vangnet doen (niveau 4+).
+Gesorteerd op het grootste verschil tussen waar het team staat en waar het heen wil.
               </p>
             </div>
             <span className="spacer" />
@@ -227,7 +247,8 @@ function Overview({ data, onAddPeople }: { data: AdminPayload; onAddPeople: () =
                   <th className="num">Huidig</th>
                   <th className="num">Gewenst</th>
                   <th className="num">Verschil</th>
-                  <th className="num">Zelfstandig</th>
+                  <th>Overdragen</th>
+                  <th className="num">Wil omhoog</th>
                 </tr>
               </thead>
               <tbody>
@@ -237,7 +258,7 @@ function Overview({ data, onAddPeople }: { data: AdminPayload; onAddPeople: () =
                   // niet bovenaan met een verzonnen groot negatief getal.
                   .sort((a, b) => (b.g?.mean ?? -Infinity) - (a.g?.mean ?? -Infinity))
                   .map(({ s, c, f, g }) => {
-                    const strong = coverage(s.id, 'current', 4)
+                    const carry = carriers(s.id)
                     return (
                       <tr key={s.id}>
                         <td>{s.label}</td>
@@ -249,7 +270,10 @@ function Overview({ data, onAddPeople }: { data: AdminPayload; onAddPeople: () =
                             <span className="small muted"> ({g.n}/{participants.length})</span>
                           )}
                         </td>
-                        <td className="num">{strong}</td>
+                        <td style={{ whiteSpace: 'nowrap' }}>
+                          {carry.length ? carry.join(', ') : <span className="muted">van buiten halen</span>}
+                        </td>
+                        <td className="num">{wantsUp(s.id)}/{participants.length}</td>
                       </tr>
                     )
                   })}
@@ -257,9 +281,8 @@ function Overview({ data, onAddPeople }: { data: AdminPayload; onAddPeople: () =
             </table>
           </div>
           <p className="small muted" style={{ marginTop: 12 }}>
-            Een skill met <strong>0</strong> onder “Zelfstandig” doet op dit moment niemand zonder vangnet.
-            Bij een jong team is dat normaal — kijk dan vooral naar welke daarvan een groot verschil met
-            de gewenste kolom hebben. Daar zit je eerstvolgende leerdoel.
+            Waar meerdere mensen omhoog willen én niemand het kan overdragen, is de vraag of je het
+            intern opbouwt of van buiten haalt.
           </p>
         </div>
       </div>
