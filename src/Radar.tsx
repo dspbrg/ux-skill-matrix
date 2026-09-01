@@ -176,7 +176,11 @@ export default function Radar({ axes, series, max = 5, size = 420, showLegend = 
         role="img"
         aria-label={`Radardiagram met ${n} skills`}
       >
-        {Array.from({ length: max }, (_, k) => k + 1).map((level) => (
+        {/* Bij negen posities zijn negen ringen ruis: alleen de benoemde treden
+            krijgen een ring, plus altijd de buitenste. */}
+        {Array.from({ length: max }, (_, k) => k + 1)
+          .filter((level) => level === max || (max > 6 ? level % 2 === 1 : true))
+          .map((level) => (
           <path
             key={level}
             d={ringPath(level)}

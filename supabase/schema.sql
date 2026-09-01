@@ -40,7 +40,12 @@ create table if not exists skills (
   -- Wat "dit heb ik zelfstandig gedaan" (niveau 3) op déze as concreet
   -- betekent. Eén anker per as is genoeg: niveau 1 en 2 spreken voor zich en
   -- niveau 4 is overal hetzelfde (je kunt het overdragen).
-  anchor      text not null default '',
+  -- Twee ankers, want elke as wordt langs een andere lijn senior: onderzoek
+  -- langs repertoire, toegankelijkheid langs diepte, faciliteren langs schaal.
+  -- Eén generieke ladder meet alleen zelfstandigheid, en dan scoort iemand die
+  -- alleen contrast kan controleren een vier op toegankelijkheid.
+  anchor        text not null default '',   -- de instap
+  anchor_senior text not null default '',   -- waar het heen groeit
   sort_order  int  not null default 0
 );
 create index if not exists skills_session_idx on skills(session_id, sort_order);
@@ -60,7 +65,11 @@ create table if not exists ratings (
   participant_id uuid not null references participants(id) on delete cascade,
   skill_id       uuid not null references skills(id) on delete cascade,
   state          text not null check (state in ('current','future')),
-  value          int  not null check (value between 1 and 5),
+  -- Negen posities: de vijf benoemde treden staan op 1, 3, 5, 7 en 9, de vier
+  -- even posities betekenen "hier tussenin". Acht benoemde treden bestaan niet
+  -- -- je zou onderscheidingen moeten verzinnen die niemand kan toepassen --
+  -- maar tussen twee dingen die je wél kunt benoemen kun je prima staan.
+  value          int  not null check (value between 1 and 9),
   updated_at     timestamptz not null default now(),
   primary key (participant_id, skill_id, state)
 );
@@ -72,38 +81,44 @@ alter table ratings      enable row level security;
 
 -- ---------------------------------------------------------------- defaults
 
--- De tien assen. Elke as is geformuleerd als iets wat je kunt opleveren, niet
--- als een vakgebied: "kleur" of "typografie" is geen skill waarop iemand
--- zichzelf een cijfer kan geven, "een scherm ontwerpen binnen een
--- designsysteem" wel.
---
--- Eén tekst per as, en dat is het ankerpunt: wat één keer "dit gedaan hebben"
--- concreet is. Er stond hiervoor ook een omschrijving bij, maar die zei
--- vrijwel hetzelfde in andere woorden — tien keer een parafrase onder elkaar.
--- Het ankerpunt heeft nu de concrete details opgenomen die daar stonden.
+-- De tien assen. Elke as heeft twee ankers: waar je instapt en waar het
+-- heen groeit. Die tweede is per as iets anders -- onderzoek groeit langs
+-- repertoire, toegankelijkheid langs diepte, faciliteren langs schaal -- en
+-- juist dat maakt het verschil tussen "kan contrast controleren" en "kan
+-- toegankelijkheid overdragen".
 create or replace function default_skills() returns jsonb
 language sql immutable as $$
   select jsonb_build_array(
-    jsonb_build_object('label','Kwalitatief onderzoek',   'description','',
-      'anchor','van hypothese tot bevinding: een testronde opzetten, modereren en terugbrengen'),
-    jsonb_build_object('label','Kwantitatief onderzoek',  'description','',
-      'anchor','van hypothese tot conclusie: een vragenlijst of analytics-vraag opzetten en juist lezen'),
-    jsonb_build_object('label','Informatiearchitectuur',  'description','',
-      'anchor','een navigatiestructuur ontwerpen én toetsen met een card sort of tree test'),
-    jsonb_build_object('label','Interaction Design',      'description','',
-      'anchor','een flow uitwerken inclusief lege, fout- en laadstates, klaar om te bouwen'),
-    jsonb_build_object('label','UI Design',               'description','',
-      'anchor','een scherm opleveren binnen het designsysteem: hiërarchie, componenten, states'),
-    jsonb_build_object('label','Prototyping',             'description','',
-      'anchor','een klikbaar prototype waarmee iemand anders kon testen'),
-    jsonb_build_object('label','UX Writing',              'description','',
-      'anchor','de teksten van een hele flow: labels, knoppen, foutmeldingen'),
-    jsonb_build_object('label','Toegankelijkheid (WCAG)', 'description','',
-      'anchor','een ontwerp toetsen op contrast, focusvolgorde, koppen en alt-teksten, met concrete bevindingen'),
-    jsonb_build_object('label','Faciliteren',             'description','',
-      'anchor','een sessie met stakeholders begeleiden waar een besluit uit komt'),
-    jsonb_build_object('label','Presenteren & overtuigen','description','',
-      'anchor','onderzoek presenteren aan mensen die er anders in staan, en het verandert iets')
+    jsonb_build_object('label','Kwalitatief onderzoek',     'description','',
+      'anchor','een usability test draaien die iemand anders bedacht',
+      'anchor_senior','de methode kiezen die bij de vraag past, en de hypothese scherpstellen'),
+    jsonb_build_object('label','Kwantitatief onderzoek',    'description','',
+      'anchor','een vragenlijst uitzetten en de uitkomsten samenvatten',
+      'anchor_senior','een hypothese toetsbaar maken, en zien wanneer een cijfer niets zegt'),
+    jsonb_build_object('label','Informatiearchitectuur',    'description','',
+      'anchor','een menu of paginastructuur voorstellen',
+      'anchor_senior','een structuur ontwerpen én toetsen met een card sort of tree test'),
+    jsonb_build_object('label','Interaction Design',        'description','',
+      'anchor','het gelukkige pad uittekenen',
+      'anchor_senior','alle states uitwerken: leeg, fout, laden en de randgevallen'),
+    jsonb_build_object('label','UI Design',                 'description','',
+      'anchor','een scherm samenstellen uit bestaande componenten',
+      'anchor_senior','een scherm opleveren dat een ander kan bouwen zonder te gokken'),
+    jsonb_build_object('label','Prototyping',               'description','',
+      'anchor','schermen aan elkaar klikken',
+      'anchor_senior','een prototype op precies het detailniveau dat de vraag vraagt'),
+    jsonb_build_object('label','UX Writing',                'description','',
+      'anchor','losse labels en knopteksten schrijven',
+      'anchor_senior','de teksten van een hele flow, inclusief fout- en randgevallen'),
+    jsonb_build_object('label','Toegankelijkheid (WCAG)',   'description','',
+      'anchor','contrast en alt-teksten controleren',
+      'anchor_senior','focusvolgorde, aria en toetsenbordpaden beoordelen'),
+    jsonb_build_object('label','Faciliteren',               'description','',
+      'anchor','een sessie met een handjevol mensen begeleiden',
+      'anchor_senior','een volle zaal, met eigen werkvormen'),
+    jsonb_build_object('label','Presenteren & overtuigen',  'description','',
+      'anchor','je bevindingen delen in het team',
+      'anchor_senior','een zaal met belanghebbenden meekrijgen, met eigen materiaal')
   );
 $$;
 
@@ -154,7 +169,7 @@ create or replace function _skills_json(p_session uuid) returns jsonb
 language sql stable security definer set search_path = public, extensions as $$
   select coalesce(jsonb_agg(jsonb_build_object(
            'id', id, 'label', label, 'description', description,
-           'anchor', anchor, 'sort_order', sort_order
+           'anchor', anchor, 'anchor_senior', anchor_senior, 'sort_order', sort_order
          ) order by sort_order, label), '[]'::jsonb)
   from skills where session_id = p_session;
 $$;
@@ -193,8 +208,9 @@ begin
 
   sk := default_skills();
   for i in 0 .. jsonb_array_length(sk) - 1 loop
-    insert into skills (session_id, label, description, anchor, sort_order)
-    values (s_id, sk->i->>'label', sk->i->>'description', coalesce(sk->i->>'anchor', ''), i);
+    insert into skills (session_id, label, description, anchor, anchor_senior, sort_order)
+    values (s_id, sk->i->>'label', sk->i->>'description',
+            coalesce(sk->i->>'anchor', ''), coalesce(sk->i->>'anchor_senior', ''), i);
   end loop;
 
   return jsonb_build_object('id', s_id, 'code', s_code, 'name', trim(p_name));
@@ -348,6 +364,7 @@ begin
          set label = trim(item->>'label'),
              description = coalesce(item->>'description', ''),
              anchor = coalesce(item->>'anchor', ''),
+             anchor_senior = coalesce(item->>'anchor_senior', ''),
              sort_order = i
        where id = (item->>'id')::uuid and session_id = s.id
       returning id into new_id;
@@ -355,9 +372,9 @@ begin
         raise exception 'unknown_skill' using errcode = '42501';
       end if;
     else
-      insert into skills (session_id, label, description, anchor, sort_order)
+      insert into skills (session_id, label, description, anchor, anchor_senior, sort_order)
       values (s.id, trim(item->>'label'), coalesce(item->>'description', ''),
-              coalesce(item->>'anchor', ''), i)
+              coalesce(item->>'anchor', ''), coalesce(item->>'anchor_senior', ''), i)
       returning id into new_id;
     end if;
     keep := keep || new_id;

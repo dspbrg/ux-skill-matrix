@@ -77,7 +77,9 @@ export default function Admin({ initialCode, initialKey }: { initialCode: string
 
 function Overview({ data, onAddPeople }: { data: AdminPayload; onAddPeople: () => void }) {
   const { skills, participants, ratings, session } = data
-  const max = session.scale.length || 5
+  // Negen posities uit vijf benoemde treden; die staan op 1, 3, 5, 7 en 9.
+  const max = session.scale.length ? session.scale.length * 2 - 1 : 9
+  const positieVan = (index: number) => index * 2 + 1
   const [focus, setFocus] = useState<string>('__team__')
 
   // lookup[participant][skill][state]
@@ -132,7 +134,7 @@ function Overview({ data, onAddPeople }: { data: AdminPayload; onAddPeople: () =
     (skillId: string) => {
       const at = (level: number) =>
         participants.filter((p) => (lookup.get(p.id)?.get(skillId)?.current ?? 0) >= level)
-      const best = at(5).length ? at(5) : at(4)
+      const best = at(positieVan(4)).length ? at(positieVan(4)) : at(positieVan(3))
       return best.map((p) => p.name)
     },
     [participants, lookup],
@@ -306,7 +308,7 @@ Gesorteerd op het grootste verschil tussen waar het team staat en waar het heen 
                     return (
                       <td key={p.id} className="num">
                         <span className="cell">
-                          <span className="heat" style={{ background: v?.current ? `var(--heat-${v.current})` : 'transparent' }}>
+                          <span className="heat" style={{ background: v?.current ? `var(--heat-${Math.ceil((v.current / max) * 5)})` : 'transparent' }}>
                             {v?.current ?? '–'}
                           </span>
                           <span className="to">
@@ -474,7 +476,7 @@ function Terms({
   const dirtyScale =
     JSON.stringify(scale) !== JSON.stringify(data.session.scale) || sessionName !== data.session.name
 
-  function patch(i: number, field: 'label' | 'description' | 'anchor', value: string) {
+  function patch(i: number, field: 'label' | 'description' | 'anchor' | 'anchor_senior', value: string) {
     setSkills((s) => s.map((sk, k) => (k === i ? { ...sk, [field]: value } : sk)))
   }
 
@@ -499,7 +501,8 @@ function Terms({
         p_code: code, p_admin_key: adminKey,
         p_skills: skills.map((s, i) => ({
           id: s.id.startsWith('new-') ? null : s.id,
-          label: s.label, description: s.description, anchor: s.anchor, sort_order: i,
+          label: s.label, description: s.description,
+          anchor: s.anchor, anchor_senior: s.anchor_senior, sort_order: i,
         })),
       })
       await reload()
@@ -554,9 +557,9 @@ function Terms({
           <div>
             <h2>Skills (de assen van de matrix)</h2>
             <p className="muted small" style={{ marginTop: 'var(--space-1)' }}>
-              Per as de naam en het ankerpunt: wat één keer “dit gedaan hebben” op déze as concreet
-              is. Dat anker voorkomt dat twee mensen een andere eenheid werk voor ogen hebben als ze
-              zichzelf een cijfer geven. Hernoemen behoudt de al gegeven scores.
+              Per as de naam en twee ankers: waar je instapt en waar het heen groeit. Die tweede is
+              per as iets anders — onderzoek groeit langs repertoire, toegankelijkheid langs diepte,
+              faciliteren langs schaal. Hernoemen behoudt de al gegeven scores.
             </p>
           </div>
           <span className="spacer" />
@@ -575,8 +578,11 @@ function Terms({
               <div className="stack" style={{ flex: 1, gap: 'var(--space-2)' }}>
                 <input type="text" value={s.label} onChange={(e) => patch(i, 'label', e.target.value)} />
                 <input type="text" className="small" value={s.anchor}
-                  placeholder="Wat is één keer dit gedaan hebben? Bijv. een testronde met een handvol deelnemers"
+                  placeholder="Instap — waar begin je op deze as?"
                   onChange={(e) => patch(i, 'anchor', e.target.value)} />
+                <input type="text" className="small" value={s.anchor_senior}
+                  placeholder="Senior — waar groeit deze as heen?"
+                  onChange={(e) => patch(i, 'anchor_senior', e.target.value)} />
               </div>
               <button className="danger sm" style={{ marginTop: 'var(--space-1)' }}
                 onClick={() => setSkills((cur) => cur.filter((_, k) => k !== i))}>
@@ -590,7 +596,7 @@ function Terms({
           onClick={() =>
             setSkills((s) => [
               ...s,
-              { id: `new-${Date.now()}`, label: '', description: '', anchor: '', sort_order: s.length },
+              { id: `new-${Date.now()}`, label: '', description: '', anchor: '', anchor_senior: '', sort_order: s.length },
             ])
           }>
           + Skill toevoegen

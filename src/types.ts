@@ -4,8 +4,10 @@ export interface Skill {
   id: string
   label: string
   description: string
-  /** Wat niveau 3 — "dit heb ik zelfstandig gedaan" — op deze as betekent. */
+  /** Waar je op deze as instapt. */
   anchor: string
+  /** Waar deze as heen groeit — per as iets anders. */
+  anchor_senior: string
   sort_order: number
 }
 

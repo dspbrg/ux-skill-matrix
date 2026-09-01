@@ -378,6 +378,22 @@ label.field > span { display: block; font-size: var(--fs-2); color: var(--text-2
 .baan.doelstap .merk.is-doel { opacity: 1; }
 .baan.doelstap .merk.is-nu:not(.is-doel) { opacity: .45; }
 
+/* Een positie tussen twee benoemde treden: kleiner, zonder eigen label. */
+.halte.tussen .merk { width: 6px; height: 6px; border-width: 1px; }
+.halte.tussen:hover .merk { border-width: 2px; }
+.halte.tussen .merk.is-nu,
+.halte.tussen .merk.is-doel { width: 16px; height: 16px; border-width: 2px; }
+
+/* De twee uiteinden in de woorden van deze as. */
+.baan-ankers {
+  display: flex; justify-content: space-between; gap: var(--space-5);
+  margin: var(--space-2) 34px 0;
+  font-family: var(--font-mono); font-size: 9.5px; line-height: 1.5;
+  letter-spacing: .02em; color: var(--text-3);
+}
+.baan-ankers span { max-width: 46%; }
+.baan-ankers span:last-child { text-align: right; }
+
 .halte-label { display: none; }
 
 .baan-labels {
@@ -517,6 +533,7 @@ button.groot { justify-content: center; padding: 11px 18px; }
     letter-spacing: .1em; text-transform: uppercase; color: var(--text-2);
   }
   .baan-labels { display: none; }
+  .baan-ankers { margin-left: 0; margin-right: 0; }
   .shell { padding: var(--space-4) var(--space-3) 80px; }
 }
 

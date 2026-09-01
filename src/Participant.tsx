@@ -92,7 +92,9 @@ export default function Participant({ token }: { token: string }) {
 
   const skills = data?.skills ?? []
   const scale = data?.session.scale ?? []
-  const max = scale.length || 5
+  // Negen posities uit vijf benoemde treden: die staan op 1, 3, 5, 7 en 9 en
+  // de even posities betekenen "hier tussenin".
+  const max = scale.length ? scale.length * 2 - 1 : 9
 
   const filled = useMemo(() => {
     const count = (s: State) => skills.filter((sk) => values[sk.id]?.[s] != null).length
@@ -221,11 +223,6 @@ export default function Participant({ token }: { token: string }) {
                       wissen
                     </button>
                   </div>
-                  {/* Eén tekst per as. Er stonden er twee, en die zeiden
-                      vrijwel hetzelfde — tien keer een parafrase onder elkaar. */}
-                  {(skill.anchor || skill.description) && (
-                    <p className="anchor">{skill.anchor || skill.description}</p>
-                  )}
                   <Baan
                     skill={skill}
                     scale={scale}
@@ -377,6 +374,11 @@ function Baan({
           const isNu = nu === lv
           const isDoel = doel === lv
           const geblokkeerd = lv < bodem
+          const benoemd = lv % 2 === 1
+          const trede = scale[(lv - 1) / 2]
+          const omschrijving = benoemd
+            ? trede?.description ?? ''
+            : `Tussen ${scale[(lv - 2) / 2]?.label ?? ''} en ${scale[lv / 2]?.label ?? ''}`
           return (
             <button
               key={lv}
@@ -384,10 +386,11 @@ function Baan({
               aria-checked={actief === lv}
               aria-disabled={geblokkeerd}
               disabled={geblokkeerd}
+              aria-label={benoemd ? trede?.label ?? String(lv) : omschrijving}
               tabIndex={actief === lv || (actief == null && lv === bodem) ? 0 : -1}
-              title={geblokkeerd ? 'Lager dan waar je nu staat' : scale[lv - 1]?.description ?? ''}
+              title={geblokkeerd ? 'Lager dan waar je nu staat' : omschrijving}
               onClick={() => onKies(lv)}
-              className="halte"
+              className={`halte ${benoemd ? '' : 'tussen'}`}
               style={{ left: `${pct(lv)}%` }}
             >
               <span
@@ -395,7 +398,7 @@ function Baan({
                 aria-hidden="true"
               />
               {/* Op een smal scherm vervalt de labelrij en staat het label hier. */}
-              <span className="halte-label">{scale[lv - 1]?.label ?? lv}</span>
+              <span className="halte-label">{benoemd ? trede?.label ?? lv : omschrijving}</span>
             </button>
           )
         })}
@@ -403,7 +406,7 @@ function Baan({
       </div>
 
       <div className="baan-labels" aria-hidden="true">
-        {Array.from({ length: max }, (_, i) => i + 1).map((lv) => (
+        {Array.from({ length: max }, (_, i) => i + 1).filter((lv) => lv % 2 === 1).map((lv) => (
           <span
             key={lv}
             className={`${nu === lv ? 'is-nu' : doel === lv ? 'is-doel' : ''} ${lv < bodem ? 'uit' : ''}`}
@@ -412,10 +415,19 @@ function Baan({
             // rest er 60 had; de kaartmarge vangt het overschot ruim op.
             style={{ left: `${pct(lv)}%`, transform: 'translateX(-50%)' }}
           >
-            {scale[lv - 1]?.label ?? lv}
+            {scale[(lv - 1) / 2]?.label ?? lv}
           </span>
         ))}
       </div>
+
+      {/* De twee uiteinden in de woorden van déze as: elke as wordt langs een
+          andere lijn senior, en dat kan één generieke ladder niet zeggen. */}
+      {(skill.anchor || skill.anchor_senior) && (
+        <div className="baan-ankers">
+          <span>{skill.anchor}</span>
+          <span>{skill.anchor_senior}</span>
+        </div>
+      )}
     </div>
   )
 }
