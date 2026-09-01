@@ -131,6 +131,13 @@ export default function Radar({ axes, series, max = 5, size = 420, showLegend = 
     setFitted(`${b.x - pad} ${b.y - pad} ${b.width + pad * 2} ${b.height + pad * 2}`)
   }, [axes.join('|'), max, size])
 
+  // Alle reeksen in één veer: zo staan beide vormen in dezelfde render tot mijn
+  // beschikking, wat nodig is om het gebied ertussen te kunnen tekenen.
+  const plat = useSpring(series.flatMap((x) => x.values))
+  const perSerie: (number | null)[][] = []
+  let k = 0
+  for (const x of series) { perSerie.push(plat.slice(k, k + x.values.length)); k += x.values.length }
+
   const angle = (i: number) => (Math.PI * 2 * i) / n - Math.PI / 2
   const point = (i: number, v: number) => {
     const a = angle(i)
@@ -200,9 +207,51 @@ export default function Radar({ axes, series, max = 5, size = 420, showLegend = 
           )
         })}
 
-        {series.map((s) => (
-          <Shape key={s.key} series={s} point={point} />
-        ))}
+        {(() => {
+          const padVan = (waarden: (number | null)[]) => {
+            const pts = waarden
+              .map((v, i) => ({ v, i }))
+              .filter((q): q is { v: number; i: number } => q.v != null)
+              .map(({ v, i }) => point(i, v))
+            if (pts.length < 3) return { d: '', pts }
+            return {
+              d: pts.map(([x, y], j) => `${j === 0 ? 'M' : 'L'}${x.toFixed(2)},${y.toFixed(2)}`).join(' ') + ' Z',
+              pts,
+            }
+          }
+          const vormen = series.map((x, i) => ({ serie: x, ...padVan(perSerie[i]) }))
+          const nu = vormen.find((v) => !v.serie.dashed)
+          const doel = vormen.find((v) => v.serie.dashed)
+
+          return (
+            <>
+              {/* Het gebied tussen nu en doel als eigen vorm. Twee vormen over
+                  elkaar heen laten je niet zien wie boven wie ligt; het verschil
+                  is juist waar het gesprek over gaat, dus dat krijgt de vulling. */}
+              {nu?.d && doel?.d && (
+                <path d={`${nu.d} ${doel.d}`} fillRule="evenodd" fill={doel.serie.color} fillOpacity={0.16} />
+              )}
+
+              {nu?.d && (
+                <path d={nu.d} fill={nu.serie.color} fillOpacity={0.22}
+                  stroke={nu.serie.color} strokeWidth={1.5} strokeLinejoin="round" />
+              )}
+
+              {doel?.d && (
+                <path d={doel.d} fill="none" stroke={doel.serie.color} strokeWidth={2.25}
+                  strokeDasharray="6 4" strokeLinejoin="round" />
+              )}
+
+              {vormen.map((v) =>
+                v.pts.map(([x, y], j) => (
+                  <circle key={`${v.serie.key}-${j}`} cx={x} cy={y} r={3.2}
+                    fill={v.serie.color} stroke="var(--surface)" strokeWidth={1.5} />
+                )),
+              )}
+            </>
+          )
+        })()}
+
       </svg>
 
       {showLegend && (
@@ -253,62 +302,5 @@ export default function Radar({ axes, series, max = 5, size = 420, showLegend = 
         </div>
       )}
     </div>
-  )
-}
-
-
-/**
- * Eén geveerde reeks. Als eigen component, want de veer is een hook en die
- * mag niet in een map staan: zodra het aantal reeksen verandert klopt de
- * volgorde van de hooks niet meer.
- */
-function Shape({
-  series,
-  point,
-}: {
-  series: Series
-  point: (i: number, v: number) => readonly [number, number]
-}) {
-  const values = useSpring(series.values)
-
-  // Alleen de ingevulde assen vormen de veelhoek. Ontbrekende waarden als nul
-  // lezen zou de vorm naar het middelpunt trekken en een half ingevulde meting
-  // er dramatischer uit laten zien dan ze is.
-  const pts = values
-    .map((v, i) => ({ v, i }))
-    .filter((p): p is { v: number; i: number } => p.v != null)
-    .map(({ v, i }) => point(i, v))
-
-  const d =
-    pts.length >= 2
-      ? pts.map(([x, y], k) => `${k === 0 ? 'M' : 'L'}${x.toFixed(2)},${y.toFixed(2)}`).join(' ') +
-        (pts.length >= 3 ? ' Z' : '')
-      : ''
-
-  return (
-    <g>
-      {d && (
-        <path
-          d={d}
-          /* Twee gevulde vlakken over elkaar geven een modderige mengkleur die in
-             geen van beide paletten bestaat, precies in het brandpunt. Dus: waar
-             je staat is gevuld, waar je heen wil is alleen lijn. */
-          /* Plat in plaats van een verloop: de gradient maakte de vulling vuil,
-             en twee gevulde vlakken over elkaar gaven een mengkleur die in geen
-             van beide paletten bestaat. Waar je staat is gevuld, waar je heen
-             wil is alleen lijn. */
-          fill={pts.length >= 3 && !series.dashed ? series.color : 'none'}
-          fillOpacity={0.2}
-          stroke={series.color}
-          strokeOpacity={series.dashed ? 1 : 0.65}
-          strokeWidth={series.dashed ? 2.25 : 1.25}
-          strokeDasharray={series.dashed ? '6 4' : undefined}
-          strokeLinejoin="round"
-        />
-      )}
-      {pts.map(([x, y], k) => (
-        <circle key={k} cx={x} cy={y} r={3.2} fill={series.color} stroke="var(--surface)" strokeWidth={1.5} />
-      ))}
-    </g>
   )
 }

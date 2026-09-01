@@ -21,6 +21,9 @@ export default function Participant({ token }: { token: string }) {
   const [saving, setSaving] = useState(0)
   const [savedAt, setSavedAt] = useState<Date | null>(null)
   const [submitted, setSubmitted] = useState(false)
+  // Welke skill staat uitgeklapt. Tien even zware blokken onder elkaar geven het
+  // oog nergens houvast; ingevuld klapt dicht tot één regel.
+  const [open, setOpen] = useState<string | null>(null)
   const queue = useRef<Promise<unknown>>(Promise.resolve())
 
   useEffect(() => {
@@ -43,11 +46,21 @@ export default function Participant({ token }: { token: string }) {
    * was, wiste een dubbelklik op een nog niet gekozen knop de score meteen
    * weer — twee losse events, waarvan het tweede de waarde terugzette op null.
    */
+  /** De eerstvolgende skill die in deze stap nog geen score heeft. */
+  function volgendeLege(naId?: string): string | null {
+    const lijst = data?.skills ?? []
+    const start = naId ? lijst.findIndex((s) => s.id === naId) + 1 : 0
+    const zoek = (van: number, tot: number) =>
+      lijst.slice(van, tot).find((s) => values[s.id]?.[state] == null)?.id ?? null
+    return zoek(start, lijst.length) ?? zoek(0, start)
+  }
+
   function rate(skillId: string, value: number | null) {
     setValues((v) => ({ ...v, [skillId]: { ...v[skillId], [state]: value ?? undefined } }))
     // Een ingediende invulling die niet meer compleet is, mag niet stil als
     // "Ingediend" blijven staan bij de facilitator.
     if (value === null && submitted) void toggleSubmit()
+    if (value !== null) setOpen(volgendeLege(skillId))
     setSaving((n) => n + 1)
     // Schrijfacties serialiseren zodat snelle kliks elkaar niet inhalen.
     queue.current = queue.current
@@ -77,6 +90,8 @@ export default function Participant({ token }: { token: string }) {
     const count = (s: State) => skills.filter((sk) => values[sk.id]?.[s] != null).length
     return { current: count('current'), future: count('future'), total: skills.length }
   }, [skills, values])
+
+  const actief = open ?? volgendeLege()
 
   if (error && !data) {
     return (
@@ -127,10 +142,10 @@ export default function Participant({ token }: { token: string }) {
 
             <div className="row" style={{ marginBottom: 14 }}>
               <div className="tabs">
-                <button aria-selected={state === 'current'} onClick={() => setState('current')}>
+                <button aria-selected={state === 'current'} onClick={() => { setState('current'); setOpen(null) }}>
                   1 · Nu <span className="muted small">&nbsp;{filled.current}/{filled.total}</span>
                 </button>
-                <button aria-selected={state === 'future'} onClick={() => setState('future')}>
+                <button aria-selected={state === 'future'} onClick={() => { setState('future'); setOpen(null) }}>
                   2 · Doel <span className="muted small">&nbsp;{filled.future}/{filled.total}</span>
                 </button>
               </div>
@@ -147,8 +162,27 @@ export default function Participant({ token }: { token: string }) {
               </ol>
             </details>
 
+            {/* Zonder eigen keuze staat de eerstvolgende lege open; is alles
+                ingevuld, dan staat alles dicht. */}
             {skills.map((skill) => {
               const value = values[skill.id]?.[state]
+              const uitgeklapt = actief === skill.id
+              if (!uitgeklapt) {
+                return (
+                  <button
+                    key={skill.id}
+                    className="skill dicht"
+                    onClick={() => setOpen(skill.id)}
+                    aria-expanded={false}
+                  >
+                    <span className="name">{skill.label}</span>
+                    <span className="spacer" />
+                    <span className={`waarde ${state === 'future' ? 'doel' : ''}`}>
+                      {value ? scale[value - 1]?.label ?? value : 'nog leeg'}
+                    </span>
+                  </button>
+                )
+              }
               return (
                 <div className="skill" key={skill.id}>
                   <div className="skill-head">
@@ -302,17 +336,19 @@ function Baan({
           ;(e.currentTarget.querySelectorAll('button')[volgende - 1] as HTMLButtonElement)?.focus()
         }}
       >
-        {/* De rail loopt van de eerste tot de laatste halte; het spoor eromheen
-            begint op dezelfde kantlijn als de tekst erboven. */}
-        <span className="baan-rail" aria-hidden="true">
-          <span className="baan-lijn" />
+        {/* Lijn, gat én haltes delen één doos, anders lopen de percentages van
+            de markers niet synchroon met die van de rail. Het spoor eromheen
+            begint op dezelfde kantlijn als de tekst erboven; de eindruimte is
+            er zodat de buitenste labels binnen de kaart passen. */}
+        <div className="baan-rail">
+          <span className="baan-lijn" aria-hidden="true" />
           {gat && (
             <span
               className="baan-gat"
+              aria-hidden="true"
               style={{ left: `${pct(van)}%`, width: `${pct(tot) - pct(van)}%` }}
             />
           )}
-        </span>
         {Array.from({ length: max }, (_, i) => i + 1).map((lv) => {
           const isNu = nu === lv
           const isDoel = doel === lv
@@ -336,6 +372,7 @@ function Baan({
             </button>
           )
         })}
+        </div>
       </div>
 
       <div className="baan-labels" aria-hidden="true">

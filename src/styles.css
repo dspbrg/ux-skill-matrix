@@ -277,6 +277,28 @@ label.field > span { display: block; font-size: var(--fs-2); color: var(--text-2
 
 /* ---------------------------------------------------------------- skill */
 .skill { padding: var(--space-5) 0; border-top: 1px solid var(--border); }
+
+/* Ingevuld en niet in beeld: één regel met de gekozen waarde. Tien even zware
+   blokken onder elkaar geven het oog nergens houvast, en na tien beslissingen
+   leest niemand ze nog. */
+button.skill.dicht {
+  display: flex; align-items: baseline; gap: var(--space-3);
+  width: 100%; text-align: left;
+  background: none; border: none; border-top: 1px solid var(--border);
+  border-radius: 0; padding: var(--space-3) 0;
+  color: var(--text-2);
+  transition: color .14s;
+}
+button.skill.dicht:hover { background: none; color: var(--text); }
+button.skill.dicht .name {
+  font-family: var(--font-display); font-weight: 500; font-size: var(--fs-3);
+  letter-spacing: -.01em; color: var(--text);
+}
+button.skill.dicht .waarde {
+  font-family: var(--font-mono); font-size: var(--fs-1);
+  letter-spacing: .1em; text-transform: uppercase; color: var(--current);
+}
+button.skill.dicht .waarde.doel { color: var(--future); }
 .skill:first-child { border-top: none; padding-top: var(--space-1); }
 .skill-head { display: flex; align-items: baseline; gap: var(--space-3); margin-bottom: var(--space-2); }
 .skill-head .name { font-family: var(--font-display); font-weight: 500; font-size: var(--fs-3);
