@@ -99,7 +99,8 @@ export default function Participant({ token }: { token: string }) {
         <span className="sep">·</span>
         <span className="muted">{data.participant.name}</span>
         <span className="spacer" />
-        <span className="small muted">
+        <span className="small muted" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+          <span className="leeft" aria-hidden="true" />
           {saving > 0 ? 'Opslaan…' : savedAt ? `Bewaard om ${savedAt.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}` : 'Automatisch bewaard'}
         </span>
       </header>
@@ -208,7 +209,7 @@ export default function Participant({ token }: { token: string }) {
             {/* De lijst liep dood: na de laatste skill stond niets, en de weg
                 naar stap 2 was helemaal terugscrollen naar boven. */}
             {state === 'current' && filled.current === filled.total && filled.total > 0 && (
-              <div style={{ borderTop: '1px solid var(--border)', paddingTop: 'var(--space-5)', marginTop: 'var(--space-2)' }}>
+              <div className="opkomen" style={{ borderTop: '1px solid var(--border)', paddingTop: 'var(--space-5)', marginTop: 'var(--space-2)' }}>
                 <button
                   className="primary"
                   onClick={() => {
@@ -221,7 +222,7 @@ export default function Participant({ token }: { token: string }) {
               </div>
             )}
             {state === 'future' && done && (
-              <div style={{ borderTop: '1px solid var(--border)', paddingTop: 'var(--space-5)', marginTop: 'var(--space-2)' }}>
+              <div className="opkomen" style={{ borderTop: '1px solid var(--border)', paddingTop: 'var(--space-5)', marginTop: 'var(--space-2)' }}>
                 <button className={submitted ? '' : 'primary'} onClick={toggleSubmit}>
                   {submitted ? 'Toch nog iets wijzigen' : 'Invulling indienen'}
                 </button>
@@ -254,26 +255,63 @@ export default function Participant({ token }: { token: string }) {
               />
             </div>
 
-            <div className="card">
-              {done ? (
-                <>
-                  <p className="small" style={{ marginBottom: 10 }}>
-                    Alles is ingevuld. {submitted ? 'Je hebt je invulling ingediend.' : 'Dien hem in als je tevreden bent — je kunt daarna nog wijzigen.'}
-                  </p>
-                  <button className={submitted ? '' : 'primary'} onClick={toggleSubmit}>
-                    {submitted ? 'Toch nog iets wijzigen' : 'Invulling indienen'}
-                  </button>
-                </>
-              ) : (
-                <p className="small muted">
-                  Nog {filled.total * 2 - filled.current - filled.future} van de {filled.total * 2} scores te gaan.
-                  Alles wordt automatisch bewaard; je kunt deze link later opnieuw openen.
-                </p>
-              )}
+            <div className={done ? 'card opkomen' : 'card'}>
+              <div className="voortgang">
+                <Ring gedaan={filled.current + filled.future} totaal={filled.total * 2} />
+                <div>
+                  {done ? (
+                    <>
+                      <p className="small" style={{ marginBottom: 10 }}>
+                        {submitted ? 'Ingediend.' : 'Alles ingevuld.'}
+                      </p>
+                      <button className={submitted ? '' : 'primary'} onClick={toggleSubmit}>
+                        {submitted ? 'Toch nog iets wijzigen' : 'Invulling indienen'}
+                      </button>
+                    </>
+                  ) : (
+                    <p className="small muted">
+                      Nog {filled.total * 2 - filled.current - filled.future} te gaan. Alles wordt
+                      automatisch bewaard.
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </>
+  )
+}
+
+
+/** Voortgang als ring: de boog loopt vol en het getal telt mee. */
+function Ring({ gedaan, totaal }: { gedaan: number; totaal: number }) {
+  const straal = 26
+  const omtrek = 2 * Math.PI * straal
+  const deel = totaal ? gedaan / totaal : 0
+  return (
+    <div className="voortgang" style={{ position: 'relative', width: 64, height: 64 }}>
+      <svg width="64" height="64" viewBox="0 0 64 64" aria-hidden="true">
+        <circle className="ring-baan" cx="32" cy="32" r={straal} fill="none" strokeWidth="4" />
+        <circle
+          className="ring-vul"
+          cx="32" cy="32" r={straal} fill="none" strokeWidth="4"
+          strokeDasharray={omtrek}
+          strokeDashoffset={omtrek * (1 - deel)}
+          transform="rotate(-90 32 32)"
+        />
+      </svg>
+      <span
+        className="telling"
+        style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center' }}
+      >
+        {gedaan}
+      </span>
+      <span className="micro" style={{ position: 'absolute', bottom: -14, left: 0, right: 0,
+        textAlign: 'center', color: 'var(--text-3)' }}>
+        /{totaal}
+      </span>
+    </div>
   )
 }

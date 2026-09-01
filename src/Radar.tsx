@@ -36,8 +36,10 @@ function useSpring(target: (number | null)[]): (number | null)[] {
       return
     }
     const m = motion.current
-    target.forEach((t, i) => {
-      if (m.x[i] == null) m.x[i] = t ?? 0
+    target.forEach((_, i) => {
+      // Bij het openen vanuit het midden beginnen: de vorm groeit naar buiten
+      // in plaats van er ineens te staan.
+      if (m.x[i] == null) m.x[i] = 0
       if (m.v[i] == null) m.v[i] = 0
     })
     m.x.length = target.length

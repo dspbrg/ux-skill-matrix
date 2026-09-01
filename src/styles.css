@@ -111,6 +111,19 @@
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; }
 
+/* Het raster van je site, maar met de cijfers van deze schaal: op 4% dekking
+   is het textuur in plaats van decoratie, en het zegt waar je bent. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: .045;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='104' height='104'%3E%3Ctext x='6' y='22' font-family='monospace' font-size='13' fill='%23888'%3E1%3C/text%3E%3Ctext x='58' y='22' font-family='monospace' font-size='13' fill='%23888'%3E4%3C/text%3E%3Ctext x='32' y='48' font-family='monospace' font-size='13' fill='%23888'%3E2%3C/text%3E%3Ctext x='84' y='48' font-family='monospace' font-size='13' fill='%23888'%3E5%3C/text%3E%3Ctext x='6' y='74' font-family='monospace' font-size='13' fill='%23888'%3E3%3C/text%3E%3Ctext x='58' y='74' font-family='monospace' font-size='13' fill='%23888'%3E1%3C/text%3E%3Ctext x='32' y='100' font-family='monospace' font-size='13' fill='%23888'%3E4%3C/text%3E%3Ctext x='84' y='100' font-family='monospace' font-size='13' fill='%23888'%3E2%3C/text%3E%3C/svg%3E");
+}
+.topbar, .shell, .center-page { position: relative; z-index: 1; }
+
 body {
   margin: 0;
   background: var(--bg);
@@ -159,12 +172,24 @@ a { color: var(--accent); }
 .topbar .spacer { flex: 1; }
 
 .card {
+  position: relative;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
   padding: var(--space-5);
 }
+/* Hoekhaken, net als op de site: twee lijntjes die de kaart vasthouden. */
+.card::before, .card::after {
+  content: '';
+  position: absolute;
+  width: 11px; height: 11px;
+  border: 1px solid var(--border-strong);
+  pointer-events: none;
+  opacity: .7;
+}
+.card::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0; border-radius: var(--radius-lg) 0 0 0; }
+.card::after { bottom: -1px; right: -1px; border-left: 0; border-top: 0; border-radius: 0 0 var(--radius-lg) 0; }
 .card + .card { margin-top: var(--space-4); }
 .card-head { display: flex; align-items: flex-start; gap: var(--space-3); margin-bottom: var(--space-4); }
 .card-head .spacer { flex: 1; }
@@ -294,12 +319,27 @@ label.field > span { display: block; font-size: var(--fs-2); color: var(--text-2
 .levels button .lb { color: var(--text-2); line-height: 1.25; letter-spacing: .06em; }
 
 .levels button:hover:not([aria-checked="true"]) { background: color-mix(in srgb, var(--accent) 9%, transparent); }
+.levels button:active { transform: none; }
+.levels button:active .lv { transform: scale(.88); }
+.levels button .lv { transition: transform .18s var(--spring); }
 
-.levels button[aria-checked="true"] {
-  background: var(--accent); color: var(--on-accent);
+/* De vulling groeit uit de knop in plaats van aan te floepen. */
+.levels button::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: var(--accent);
+  transform: scaleY(0);
+  transform-origin: bottom;
+  transition: transform .28s var(--spring);
+  z-index: 0;
 }
+.levels.future button::before { background: var(--future); }
+.levels button[aria-checked="true"]::before { transform: scaleY(1); }
+.levels button > * { position: relative; z-index: 1; }
+
+.levels button[aria-checked="true"] { color: var(--on-accent); }
 .levels button[aria-checked="true"] .lb { color: color-mix(in srgb, var(--on-accent) 88%, transparent); }
-.levels.future button[aria-checked="true"] { background: var(--future); color: var(--on-future); }
+.levels.future button[aria-checked="true"] { color: var(--on-future); }
 .levels.future button[aria-checked="true"] .lb { color: color-mix(in srgb, var(--on-future) 88%, transparent); }
 
 /* Waar je vandaag staat, terwijl je kiest waar je heen wil. */
@@ -362,3 +402,36 @@ td.num .cell .to { text-align: left; font-size: var(--fs-1); color: var(--text-2
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+
+/* ---------------------------------------------------------------- voortgang */
+.voortgang { display: flex; align-items: center; gap: var(--space-4); }
+.voortgang svg { flex: none; }
+.voortgang .ring-baan { stroke: var(--border); }
+.voortgang .ring-vul {
+  stroke: var(--accent);
+  stroke-linecap: round;
+  transition: stroke-dashoffset .55s var(--spring);
+}
+.voortgang .telling {
+  font-family: var(--font-display); font-size: var(--fs-4); font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Levende stip in de statusregel, zoals de beschikbaarheidsindicator. */
+.leeft {
+  width: 7px; height: 7px; border-radius: 50%; flex: none;
+  background: var(--accent);
+  animation: pols 2.4s ease-in-out infinite;
+}
+@keyframes pols {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 55%, transparent); }
+  50%      { opacity: .75; box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 0%, transparent); }
+}
+
+/* Kaarten die verschijnen als je iets bereikt, komen binnen in plaats van
+   er ineens te staan. */
+@keyframes opkomen {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+.opkomen { animation: opkomen .4s var(--spring) both; }
