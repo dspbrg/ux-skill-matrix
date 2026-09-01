@@ -141,11 +141,10 @@ export default function Participant({ token }: { token: string }) {
               <span className="spacer" />
               <button onClick={toggleSubmit}>Aanpassen</button>
             </div>
-            <div style={{ maxWidth: 520, margin: '0 auto' }}>
             <Radar
               axes={skills.map((s) => s.label)}
               max={max}
-              size={520}
+              size={560}
               exportName={`${data.session.name} — ${data.participant.name}`}
               series={[
                 { key: 'current', label: 'Nu', color: 'var(--current)',
@@ -154,7 +153,6 @@ export default function Participant({ token }: { token: string }) {
                   values: skills.map((s) => values[s.id]?.future ?? null) },
               ]}
             />
-            </div>
           </div>
         </div>
       ) : (
@@ -172,12 +170,9 @@ export default function Participant({ token }: { token: string }) {
           <div className="kolom">
             <div className="kop">
               <div>
-                <h1>{state === 'current' ? 'Waar sta je nu?' : 'Waar wil je heen?'}</h1>
-                {state === 'future' && (
-                  <p className="muted small" style={{ marginTop: 'var(--space-2)' }}>
-                    Over een jaar. Niet alles hoeft omhoog.
-                  </p>
-                )}
+                {/* Beide koppen zijn één regel. Stap 2 had een zin eronder die
+                    stap 1 niet had, waardoor de tabs versprongen bij het wisselen. */}
+                <h1>{state === 'current' ? 'Waar sta je nu?' : 'Waar wil je over een jaar staan?'}</h1>
               </div>
 
               <div className="row" style={{ marginTop: 'var(--space-4)' }}>

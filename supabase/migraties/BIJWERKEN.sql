@@ -196,3 +196,57 @@ begin
   return _skills_json(s.id);
 end;
 $$;
+
+
+-- ---------------------------------------------------------------------
+-- Aanvulling: stakeholders als elfde as, en een ronde over de ankerteksten.
+-- Let op: dit geldt voor sessies die je hierna aanmaakt. Een bestaande
+-- sessie vul je aan onder Instellingen.
+
+-- De elf assen. Elke as heeft twee ankers: waar je instapt en waar het heen
+-- groeit. Die tweede is per as iets anders -- onderzoek groeit langs
+-- repertoire, toegankelijkheid langs diepte, faciliteren langs schaal,
+-- stakeholders langs tegengestelde belangen.
+--
+-- Stakeholders staat los van faciliteren en presenteren: faciliteren is of je
+-- een sessie kunt leiden, presenteren of je het kunt overbrengen, en dit of je
+-- met de belangen kunt omgaan. Bij een overheidsorganisatie is dat laatste
+-- vaak wat bepaalt of ontwerpwerk ergens landt.
+create or replace function default_skills() returns jsonb
+language sql immutable as $$
+  select jsonb_build_array(
+    jsonb_build_object('label','Kwalitatief onderzoek',     'description','',
+      'anchor','een usability test draaien die iemand anders bedacht',
+      'anchor_senior','de methode kiezen die bij de vraag past, en de hypothese scherpstellen'),
+    jsonb_build_object('label','Kwantitatief onderzoek',    'description','',
+      'anchor','een vragenlijst uitzetten en de uitkomsten samenvatten',
+      'anchor_senior','een hypothese toetsbaar maken, en zien wanneer een cijfer niets zegt'),
+    jsonb_build_object('label','Informatiearchitectuur',    'description','',
+      'anchor','een menu of paginastructuur voorstellen',
+      'anchor_senior','een structuur ontwerpen én toetsen met een card sort of tree test'),
+    jsonb_build_object('label','Interaction Design',        'description','',
+      'anchor','het gelukkige pad uittekenen',
+      'anchor_senior','alle states uitwerken: leeg, fout, laden en de randgevallen'),
+    jsonb_build_object('label','UI Design',                 'description','',
+      'anchor','een scherm samenstellen uit bestaande componenten',
+      'anchor_senior','een bestand opleveren waar een developer niet uit hoeft te gokken: auto-layout, componenten, tokens en states'),
+    jsonb_build_object('label','Prototyping',               'description','',
+      'anchor','een klikbaar prototype maken van schermen die er al zijn',
+      'anchor_senior','het detailniveau kiezen dat de vraag vraagt, en niet meer bouwen dan dat'),
+    jsonb_build_object('label','UX Writing',                'description','',
+      'anchor','losse labels en knopteksten schrijven',
+      'anchor_senior','de teksten van een hele flow, inclusief fout- en randgevallen'),
+    jsonb_build_object('label','Toegankelijkheid (WCAG)',   'description','',
+      'anchor','contrast en alt-teksten controleren',
+      'anchor_senior','focusvolgorde, aria en toetsenbordpaden beoordelen'),
+    jsonb_build_object('label','Faciliteren',               'description','',
+      'anchor','een sessie met een handjevol mensen begeleiden',
+      'anchor_senior','een volle zaal, met werkvormen die je zelf kiest'),
+    jsonb_build_object('label','Stakeholders',              'description','',
+      'anchor','weten wie waarover beslist en wat die nodig heeft',
+      'anchor_senior','tegengestelde belangen bij elkaar brengen tot een besluit dat standhoudt'),
+    jsonb_build_object('label','Presenteren & overtuigen',  'description','',
+      'anchor','je bevindingen delen in het team',
+      'anchor_senior','een zaal met belanghebbenden meekrijgen, met eigen materiaal')
+  );
+$$;

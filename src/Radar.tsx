@@ -127,14 +127,15 @@ export default function Radar({ axes, series, max = 5, size = 420, showLegend = 
     if (!el) return
     const b = el.getBBox()
     if (!b.width || !b.height) return
-    // Vierkant én gecentreerd op het middelpunt van het web, niet op het
-    // omhullende kader van de inkt. De labels links en rechts zijn breder dan
-    // die boven en onder, dus een strakke uitsnede duwde het web uit het
-    // midden en liet het platter ogen dan het is.
+    // Gecentreerd op het middelpunt van het web, niet op het omhullende kader
+    // van de inkt: de labels links en rechts steken verder uit dan die boven
+    // en onder, en een strakke uitsnede duwde het web daardoor uit het midden.
+    // Wél per as apart, want één vierkant kader liet een berg dode ruimte
+    // boven en onder staan.
     const pad = 8
-    const half =
-      Math.max(cx - b.x, b.x + b.width - cx, cy - b.y, b.y + b.height - cy) + pad
-    setFitted(`${cx - half} ${cy - half} ${half * 2} ${half * 2}`)
+    const halfX = Math.max(cx - b.x, b.x + b.width - cx) + pad
+    const halfY = Math.max(cy - b.y, b.y + b.height - cy) + pad
+    setFitted(`${cx - halfX} ${cy - halfY} ${halfX * 2} ${halfY * 2}`)
   }, [axes.join('|'), max, size])
 
   // Alle reeksen in één veer: zo staan beide vormen in dezelfde render tot mijn
@@ -143,6 +144,13 @@ export default function Radar({ axes, series, max = 5, size = 420, showLegend = 
   const perSerie: (number | null)[][] = []
   let k = 0
   for (const x of series) { perSerie.push(plat.slice(k, k + x.values.length)); k += x.values.length }
+
+  // Hoe leger de meting, hoe stiller het web. Een volledig aangezet
+  // spinnenweb met twee losse stippen erin leest als een kapotte grafiek;
+  // een flauw web met twee stippen leest als een begin.
+  const eerste = series.find((x) => !x.dashed) ?? series[0]
+  const gevuld = eerste ? eerste.values.filter((v) => v != null).length / n : 0
+  const webKracht = 0.3 + 0.7 * gevuld
 
   const angle = (i: number) => (Math.PI * 2 * i) / n - Math.PI / 2
   const point = (i: number, v: number) => {
@@ -178,38 +186,63 @@ export default function Radar({ axes, series, max = 5, size = 420, showLegend = 
       >
         {/* Bij negen posities zijn negen ringen ruis: alleen de benoemde treden
             krijgen een ring, plus altijd de buitenste. */}
+        <g opacity={webKracht}>
         {Array.from({ length: max }, (_, k) => k + 1)
           .filter((level) => level === max || (max > 6 ? level % 2 === 1 : true))
           .map((level) => (
           <path
             key={level}
             d={ringPath(level)}
-            fill={level === max ? 'var(--surface-2)' : 'none'}
-            stroke={level === max ? 'var(--border-strong)' : 'var(--border)'}
-            strokeWidth={level === max ? 1.5 : 1}
+            // Geen vlak onder de data: een gevulde tienhoek draagt niets en
+            // concurreert met de enige vorm die iets betekent.
+            fill="none"
+            stroke="var(--border)"
+            strokeWidth={1}
+            opacity={level === max ? 1 : 0.4}
           />
         ))}
+        </g>
 
         {axes.map((label, i) => {
           const [ax, ay] = point(i, max)
-          const [lx, ly] = point(i, max + 1.34)
+          // Vaste afstand in pixels vanaf de buitenring, niet in schaal-eenheden:
+          // met negen posities in plaats van vijf is één eenheid de helft zo
+          // klein, en dan kruipt het label tegen de data aan.
+          const richting = angle(i)
+          const lx = ax + Math.cos(richting) * 34
+          const ly = ay + Math.sin(richting) * 34
           const anchor = Math.abs(lx - cx) < 6 ? 'middle' : lx > cx ? 'start' : 'end'
-          const tx = lx + (anchor === 'start' ? 8 : anchor === 'end' ? -8 : 0)
-          const lines = wrap(label)
+          const tx = lx + (anchor === 'start' ? 10 : anchor === 'end' ? -10 : 0)
+          const lines = wrap(label, 17)
+          const regel = 15
+          // Een tweeregelig label centreren op zijn punt duwt de tweede regel
+          // naar de grafiek toe — precies waar het bovenste datapunt zit. Boven
+          // het midden lijnt het blok daarom naar boven uit, eronder naar
+          // beneden, en alleen op ooghoogte blijft het gecentreerd.
+          const boven = ly < cy - 8
+          const onder = ly > cy + 8
+          const y0 = boven
+            ? ly - (lines.length - 1) * regel
+            : onder
+              ? ly
+              : ly - ((lines.length - 1) * regel) / 2
           return (
             <g key={i}>
-              <line x1={cx} y1={cy} x2={ax} y2={ay} stroke="var(--border)" strokeWidth={1} />
+              <line x1={cx} y1={cy} x2={ax} y2={ay} stroke="var(--border)" strokeWidth={1}
+                opacity={webKracht * 0.5} />
               <text
                 x={tx}
-                y={ly - ((lines.length - 1) * 13) / 2}
+                y={y0}
                 textAnchor={anchor}
                 dominantBaseline="middle"
-                fontSize={12.5}
-                fill="var(--text-2)"
+                fontSize={13}
+                fontFamily="var(--font-mono)"
+                letterSpacing="0.06em"
+                fill="var(--text-3)"
               >
                 {lines.map((ln, k) => (
-                  <tspan key={k} x={tx} dy={k === 0 ? 0 : 13}>
-                    {ln}
+                  <tspan key={k} x={tx} dy={k === 0 ? 0 : regel}>
+                    {ln.toUpperCase()}
                   </tspan>
                 ))}
               </text>
@@ -243,8 +276,8 @@ export default function Radar({ axes, series, max = 5, size = 420, showLegend = 
               )}
 
               {nu?.d && (
-                <path d={nu.d} fill={nu.serie.color} fillOpacity={0.22}
-                  stroke={nu.serie.color} strokeWidth={1.5} strokeLinejoin="round" />
+                <path d={nu.d} fill={nu.serie.color} fillOpacity={0.18}
+                  stroke={nu.serie.color} strokeWidth={2} strokeLinejoin="round" />
               )}
 
               {/* Massief in plaats van gestreept: het gevulde verschilgebied
@@ -256,7 +289,7 @@ export default function Radar({ axes, series, max = 5, size = 420, showLegend = 
 
               {vormen.map((v) =>
                 v.pts.map(([x, y], j) => (
-                  <circle key={`${v.serie.key}-${j}`} cx={x} cy={y} r={3.2}
+                  <circle key={`${v.serie.key}-${j}`} cx={x} cy={y} r={v.pts.length < 3 ? 4.5 : 3.2}
                     fill={v.serie.color} stroke="var(--surface)" strokeWidth={1.5} />
                 )),
               )}
