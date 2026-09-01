@@ -85,9 +85,9 @@ create or replace function default_skills() returns jsonb
 language sql immutable as $$
   select jsonb_build_array(
     jsonb_build_object('label','Kwalitatief onderzoek',   'description','',
-      'anchor','een testronde met een handvol deelnemers: opzet, moderatie en terugkoppeling'),
+      'anchor','van hypothese tot bevinding: een testronde opzetten, modereren en terugbrengen'),
     jsonb_build_object('label','Kwantitatief onderzoek',  'description','',
-      'anchor','een vragenlijst of analytics-vraag, van vraagstelling tot conclusie'),
+      'anchor','van hypothese tot conclusie: een vragenlijst of analytics-vraag opzetten en juist lezen'),
     jsonb_build_object('label','Informatiearchitectuur',  'description','',
       'anchor','een navigatiestructuur ontwerpen én toetsen met een card sort of tree test'),
     jsonb_build_object('label','Interaction Design',      'description','',
