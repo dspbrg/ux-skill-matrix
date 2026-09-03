@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import Radar from './Radar'
 import { rpc } from './supabase'
 import type { AdminPayload, ScaleLevel, Skill, State } from './types'
@@ -93,6 +93,19 @@ function Overview({ data, onAddPeople }: { data: AdminPayload; onAddPeople: () =
   // Negen posities uit vijf benoemde treden; die staan op 1, 3, 5, 7 en 9.
   const max = session.scale.length ? session.scale.length * 2 - 1 : 9
   const positieVan = (index: number) => index * 2 + 1
+  // Dit overzicht sprak in posities (1 tot 9) terwijl de deelnemer in treden
+  // klikt (Nog niet tot Expert). Op het scherm dat tijdens de sessie op de muur
+  // hangt -- naast de mensen die die woorden net hebben aangeklikt -- moest de
+  // facilitator dus live vertalen, en '+3,0' las bovendien als drie stappen
+  // terwijl het er anderhalve zijn. Alles hieronder rekent daarom terug naar
+  // treden: positie 5 is trede 3.
+  const perTrede = session.scale.length > 1 ? (max - 1) / (session.scale.length - 1) : 1
+  const trede = (positie: number) => (positie - 1) / perTrede + 1
+  /** Eén score van één persoon: een hele trede zonder een ',0' erachter. */
+  const getal = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1).replace('.', ','))
+  /** Een gemiddelde: altijd één decimaal, anders staat '4' naast '3,3' in
+   *  dezelfde kolom en lijkt de ene preciezer dan de andere. */
+  const gemiddeld = (n: number) => n.toFixed(1).replace('.', ',')
   const [focus, setFocus] = useState<string>('__team__')
 
   // lookup[participant][skill][state]
@@ -239,6 +252,7 @@ function Overview({ data, onAddPeople }: { data: AdminPayload; onAddPeople: () =
             axes={skills.map((s) => s.label)}
             series={series}
             max={max}
+            ringLabels={session.scale.map((lv) => lv.label)}
             size={440}
             exportName={
               focus === '__team__'
@@ -253,7 +267,7 @@ function Overview({ data, onAddPeople }: { data: AdminPayload; onAddPeople: () =
             <div>
               <h2>Waar zit de groei?</h2>
               <p className="muted small" style={{ marginTop: 'var(--space-1)' }}>
-Gesorteerd op verschil.
+                Gesorteerd op verschil. Alles in treden van de schaal, niet in posities.
               </p>
             </div>
             <span className="spacer" />
@@ -261,7 +275,7 @@ Gesorteerd op verschil.
           </div>
           <div className="table-wrap">
             <table>
-              <caption className="vh">Gemiddelde score per skill, met het verschil tussen nu en doel</caption>
+              <caption className="vh">Gemiddelde trede per skill, met het verschil tussen nu en doel</caption>
               <thead>
                 <tr>
                   <th scope="col">Skill</th>
@@ -296,20 +310,22 @@ Gesorteerd op verschil.
                             aantallen erbij leest '5,0 · 7,0 · +4,0' als een
                             rekenfout. */}
                         <td className="num">
-                          {c?.toFixed(1) ?? '–'}
+                          {c == null ? '–' : gemiddeld(trede(c))}
                           {c != null && telling(s.id, 'current') < participants.length && (
                             <span className="small muted"> ({telling(s.id, 'current')})</span>
                           )}
                         </td>
                         <td className="num">
-                          {f?.toFixed(1) ?? '–'}
+                          {f == null ? '–' : gemiddeld(trede(f))}
                           {f != null && telling(s.id, 'future') < participants.length && (
                             <span className="small muted"> ({telling(s.id, 'future')})</span>
                           )}
                         </td>
-                        <td className="num" // op negen posities is één positie een halve benoemde trede
-                        style={{ color: g && g.mean >= 2 ? 'var(--future)' : 'var(--text-2)' }}>
-                          {g == null ? '–' : g.mean > 0 ? `+${g.mean.toFixed(1)}` : g.mean.toFixed(1)}
+                        {/* Een hele trede of meer is het punt waarop dit een
+                            opleidingsvraag wordt en geen nuance. */}
+                        <td className="num"
+                        style={{ color: g && g.mean / perTrede >= 1 ? 'var(--future)' : 'var(--text-2)' }}>
+                          {g == null ? '–' : `${g.mean > 0 ? '+' : ''}${gemiddeld(g.mean / perTrede)}`}
                           {g != null && g.n < participants.length && (
                             <span className="small muted"> ({g.n}/{participants.length})</span>
                           )}
@@ -324,6 +340,7 @@ Gesorteerd op verschil.
               </tbody>
             </table>
           </div>
+          <Schaalsleutel scale={session.scale} />
           <p className="small muted" style={{ marginTop: 'var(--space-3)' }}>
             Wat niemand kan overdragen, bouw je op of haal je binnen.
           </p>
@@ -333,11 +350,11 @@ Gesorteerd op verschil.
       <div className="card">
         <h2>Iedereen naast elkaar</h2>
         <p className="muted small" style={{ margin: 'var(--space-1) 0 var(--space-4)' }}>
-          Waar iedereen nu staat, met het doel erachter als dat afwijkt.
+          Waar iedereen nu staat, met het doel erachter als dat afwijkt. In treden.
         </p>
         <div className="table-wrap">
           <table>
-            <caption className="vh">Score per deelnemer per skill, nu met het doel erachter</caption>
+            <caption className="vh">Score per deelnemer per skill in treden, nu met het doel erachter</caption>
             <thead>
               <tr>
                 <th scope="col">Skill</th>
@@ -357,13 +374,13 @@ Gesorteerd op verschil.
                       <td key={p.id} className="num">
                         <span className="cell">
                           <span className="heat" style={{ background: v?.current ? `var(--heat-${Math.ceil((v.current / max) * 5)})` : 'transparent' }}>
-                            {v?.current ?? '–'}
+                            {v?.current == null ? '–' : getal(trede(v.current))}
                           </span>
                           <span className="to">
                             {v?.future != null && v.future !== v.current ? (
                               <>
-                                <span className="vh">, doel {v.future}</span>
-                                <span aria-hidden="true">→{v.future}</span>
+                                <span className="vh">, doel {getal(trede(v.future))}</span>
+                                <span aria-hidden="true">→{getal(trede(v.future))}</span>
                               </>
                             ) : ''}
                           </span>
@@ -371,14 +388,36 @@ Gesorteerd op verschil.
                       </td>
                     )
                   })}
-                  <td className="num muted">{avg(s.id, 'current')?.toFixed(1) ?? '–'}</td>
+                  <td className="num muted">
+                    {(() => { const a = avg(s.id, 'current'); return a == null ? '–' : gemiddeld(trede(a)) })()}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+        <Schaalsleutel scale={session.scale} />
       </div>
     </>
+  )
+}
+
+/**
+ * De vijf treden met hun nummer, als één dunne regel. Beide tabellen krijgen
+ * hem: ze staan in aparte kaarten en moeten allebei los op een muur kunnen.
+ */
+function Schaalsleutel({ scale }: { scale: ScaleLevel[] }) {
+  return (
+    <p className="micro schaalsleutel">
+      {scale.map((lv, i) => (
+        <Fragment key={lv.level}>
+          {i > 0 && <i> · </i>}
+          <span>
+            <b>{i + 1}</b> {lv.label}
+          </span>
+        </Fragment>
+      ))}
+    </p>
   )
 }
 

@@ -301,6 +301,36 @@ label.field > span { display: block; font-size: var(--fs-2); color: var(--text-2
 .skill-head .spacer { flex: 1; }
 .skill-desc { color: var(--text); font-size: var(--fs-2); margin: 0 0 var(--space-1); max-width: 58ch; }
 
+/* 'Nog open' staat in dezelfde hoek als de wisknop en heeft precies dezelfde
+   doos: 19,5px regel plus 5px lucht plus 1px rand is 31,5px, net als een
+   button.sm. Scheelt er iets aan, dan schuift de hele lijst een streepje
+   omhoog zodra iemand zijn eerste score zet. */
+.nog-open {
+  display: inline-flex; align-items: center;
+  padding: 5px 10px;
+  border: 1px solid transparent;
+  line-height: 19.5px;
+  color: var(--text-3);
+}
+
+/* De voet van de lijst: de weg vooruit, of de as die je nog mist. */
+.voet-lijst {
+  display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap;
+  border-top: 1px solid var(--border);
+  padding-top: var(--space-5);
+  margin-top: var(--space-2);
+}
+.voet-lijst .spacer { flex: 1; }
+
+/* Waar je landt na 'Naar <as>'. De focusring alleen volstaat niet: focus die
+   een script zet haalt niet altijd :focus-visible, en dan spring je ergens
+   heen zonder te zien waar. */
+@keyframes aanwijzen {
+  from { background: color-mix(in srgb, var(--accent) 18%, transparent); }
+  to   { background: transparent; }
+}
+.skill.aangewezen { animation: aanwijzen 1.6s ease-out; border-radius: var(--radius); }
+
 /* Het ankerpunt is nu de enige tekst per as, dus het leest als gewone tekst
    in plaats van als kleine mono-noot. Het stond eerder in een kader met een
    gekleurd streepje links — de meest generieke component die er bestaat. */
@@ -438,11 +468,25 @@ th.num { text-align: center; }
 .heat { border: 1px solid color-mix(in srgb, var(--heat-fg) 18%, transparent); }
 .table-wrap { overflow-x: auto; }
 
+/* De vijf treden met hun nummer, als één dunne regel onder een tabel die in
+   die eenheid rekent. Zonder die regel is een '4,5' in een cel een getal
+   zonder maat -- en dit zijn de kaarten die op de muur belanden. */
+.schaalsleutel {
+  color: var(--text-3); margin-top: var(--space-3); line-height: 1.9;
+}
+/* Losse flexitems braken af tot '5 EXPERT' alleen op een tweede regel; als
+   gewone tekst loopt hij netjes door. Het scheidingsteken staat in de opmaak
+   en niet in een ::before, want zonder echte spaties ertussen heeft de regel
+   geen enkele plek om af te breken en loopt hij de kaart uit. */
+.schaalsleutel span { white-space: nowrap; }
+.schaalsleutel i { font-style: normal; opacity: .55; }
+.schaalsleutel b { color: var(--text-2); font-weight: 700; }
+
 .heat {
   display: inline-block; min-width: 26px; padding: 2px 6px; border-radius: 6px;
   font-variant-numeric: tabular-nums; color: var(--heat-fg);
 }
-td.num .cell { display: grid; grid-template-columns: 26px 26px; align-items: center;
+td.num .cell { display: grid; grid-template-columns: 44px 34px; align-items: center;
                justify-content: center; gap: var(--space-1); }
 td.num .cell .to { text-align: left; font-size: var(--fs-1); color: var(--text-2); font-family: var(--font-mono); }
 

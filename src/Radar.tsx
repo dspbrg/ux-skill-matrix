@@ -1,4 +1,4 @@
-import { useEffect, useId, useLayoutEffect, useReducer, useRef, useState } from 'react'
+import { Fragment, useEffect, useId, useLayoutEffect, useReducer, useRef, useState } from 'react'
 import { exportSvgAsPng } from './exportPng'
 
 interface Series {
@@ -14,6 +14,9 @@ interface Props {
   axes: string[]
   series: Series[]
   max: number
+  /** De namen van de benoemde treden, van binnen naar buiten. Zetten de ringen
+   *  in woorden in plaats van in getallen. */
+  ringLabels?: string[]
   size?: number
   showLegend?: boolean
   /** Zet een downloadknop onder de radar; wordt de bestandsnaam. */
@@ -106,7 +109,7 @@ function wrap(label: string, limit = 15): string[] {
   return lines.slice(0, 3)
 }
 
-export default function Radar({ axes, series, max, size = 420, showLegend = true, exportName }: Props) {
+export default function Radar({ axes, series, max, ringLabels, size = 420, showLegend = true, exportName }: Props) {
   const svgRef = useRef<SVGSVGElement>(null)
   const [exporting, setExporting] = useState(false)
   const [failed, setFailed] = useState('')
@@ -146,7 +149,7 @@ export default function Radar({ axes, series, max, size = 420, showLegend = true
     let levend = true
     document.fonts?.ready.then(() => { if (levend) meet() })
     return () => { levend = false }
-  }, [axes.join('|'), max, size])
+  }, [axes.join('|'), max, size, ringLabels?.join('|')])
 
   // Alle reeksen in één veer: zo staan beide vormen in dezelfde render tot mijn
   // beschikking, wat nodig is om het gebied ertussen te kunnen tekenen.
@@ -175,6 +178,23 @@ export default function Radar({ axes, series, max, size = 420, showLegend = true
         return `${i === 0 ? 'M' : 'L'}${x.toFixed(2)},${y.toFixed(2)}`
       })
       .join(' ') + ' Z'
+
+  // De ringen krijgen een naam, want anders is dit een plaatje met vijf
+  // naamloze ringen waarvan de kijker moet raden wat ze betekenen -- en juist
+  // dit beeld hangt tijdens de sessie op de muur, naast de mensen die die
+  // woorden net hebben aangeklikt.
+  //
+  // De naam zelf past er niet bij: uitgeschreven staan ze binnen het web,
+  // precies waar de data het dichtst zit, en dan loopt de vorm dwars door
+  // 'ZELF GEDAAN' heen. Op de ring staat daarom alleen het tredenummer; de
+  // namen staan als sleutel onder de tekening, dezelfde regel die ook onder
+  // de tabellen staat.
+  const treden = ringLabels && ringLabels.length > 1 ? ringLabels.length : 0
+  /** Positie (1..max) naar trede (1..treden). */
+  const naarTrede = (v: number) => (v - 1) / ((max - 1) / (treden - 1)) + 1
+  const ringen = treden
+    ? ringLabels!.map((_, i) => point(0, 1 + (i * (max - 1)) / (treden - 1))[1])
+    : []
 
   if (n < 3) {
     return (
@@ -330,13 +350,37 @@ export default function Radar({ axes, series, max, size = 420, showLegend = true
           )
         })()}
 
+        {/* Bovenop de data, met een halo in de kaartkleur: eronder vallen ze
+            weg achter de vorm op precies de assen waar die het hoogst is. */}
+        {ringen.map((y, i) => (
+          <text
+            key={i}
+            x={cx - 6}
+            y={y}
+            textAnchor="end"
+            dominantBaseline="middle"
+            fontSize={9}
+            fontFamily="var(--font-mono)"
+            fill="var(--text-3)"
+            opacity={0.8}
+            stroke="var(--surface)"
+            strokeWidth={2.5}
+            paintOrder="stroke"
+          >
+            {i + 1}
+          </text>
+        ))}
       </svg>
 
       {/* De radar is het enige resultaat dat een deelnemer overhoudt, en
           role="img" snoeit alle aslabels uit de toegankelijkheidsboom. Deze
           tabel zegt hetzelfde in tekst. */}
       <table id={tabelId} className="vh">
-        <caption>{exportName ?? 'Scores per skill'}</caption>
+        <caption>
+          {exportName ?? 'Scores per skill'}
+          {treden > 0 &&
+            ` — in treden van 1 tot ${treden}: ${ringLabels!.map((l, i) => `${i + 1} ${l}`).join(', ')}`}
+        </caption>
         <thead>
           <tr>
             <th scope="col">Skill</th>
@@ -349,9 +393,12 @@ export default function Radar({ axes, series, max, size = 420, showLegend = true
               <th scope="row">{as}</th>
               {series.map((x) => (
                 <td key={x.key}>
-                  {x.values[i] == null
-                    ? 'niet ingevuld'
-                    : Number.isInteger(x.values[i]) ? x.values[i] : (x.values[i] as number).toFixed(1)}
+                  {(() => {
+                    const v = x.values[i]
+                    if (v == null) return 'niet ingevuld'
+                    const n = treden ? naarTrede(v) : v
+                    return Number.isInteger(n) ? n : n.toFixed(1)
+                  })()}
                 </td>
               ))}
             </tr>
@@ -373,6 +420,21 @@ export default function Radar({ axes, series, max, size = 420, showLegend = true
         </div>
       )}
 
+      {/* De namen bij de cijfers op de ringen. Dezelfde regel als onder de
+          tabellen, zodat het hele scherm één sleutel deelt. */}
+      {treden > 0 && (
+        <p className="micro schaalsleutel" style={{ textAlign: 'center' }}>
+          {ringLabels!.map((label, i) => (
+            <Fragment key={i}>
+              {i > 0 && <i> · </i>}
+              <span>
+                <b>{i + 1}</b> {label}
+              </span>
+            </Fragment>
+          ))}
+        </p>
+      )}
+
       {exportName && (
         <div style={{ textAlign: 'center', marginTop: 'var(--space-3)' }}>
           <button
@@ -387,6 +449,10 @@ export default function Radar({ axes, series, max, size = 420, showLegend = true
                 await exportSvgAsPng(svgRef.current, exportName, {
                   title: exportName,
                   legend: series.map((x) => ({ label: x.label, color: x.color, dashed: x.dashed })),
+                  // Zonder de sleutel is de geëxporteerde PNG een plaatje met
+                  // genummerde ringen en geen woord erbij -- en dat is nou net
+                  // het bestand dat in een rapport belandt.
+                  scaleKey: ringLabels?.map((l, i) => `${i + 1} ${l}`).join('   ·   '),
                 })
               } catch (e) {
                 setFailed((e as Error).message)

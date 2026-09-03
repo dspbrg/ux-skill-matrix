@@ -149,7 +149,33 @@ export default function Participant({ token }: { token: string }) {
   }
   if (!data) return <div className="skeleton">Laden…</div>
 
-  const done = filled.current === filled.total && filled.future === filled.total && filled.total > 0
+  // Welke assen in deze stap nog leeg zijn. De teller op de tab zei wel
+  // '9/10', maar niet welke -- en de knop naar de volgende stap verscheen pas
+  // bij 10/10, dus onderaan de lijst stond juist niets op het moment dat je
+  // klaar dacht te zijn. Bij tien assen scan je dan zelf terug naar de rij
+  // zonder bol.
+  const openIn = (s: State) => skills.filter((sk) => values[sk.id]?.[s] == null)
+  const open = openIn(state)
+  const openAnders = openIn(state === 'current' ? 'future' : 'current')
+
+  /** Springt naar een as en zet de focus op zijn schaal. */
+  function gaNaar(skillId: string) {
+    const rij = document.getElementById(`as-${skillId}`)
+    if (!rij) return
+    // Focussen vóór het scrollen: doe je het erna, dan scrollt de browser er
+    // zelf nog een keer heen.
+    rij.querySelector<HTMLButtonElement>('.baan-spoor button[tabindex="0"]')?.focus({ preventScroll: true })
+    // Niet 'smooth'. Gemeten in Chrome: daarmee blijft de pagina staan waar hij
+    // stond -- dezelfde onbetrouwbaarheid als bij de knop naar stap 2 hieronder.
+    // Instant landen mag ook, want het oplichten hieronder laat zien waar je
+    // terechtkomt.
+    rij.scrollIntoView({ block: 'center' })
+    // Focus die een script zet haalt niet altijd :focus-visible. Zonder dit
+    // spring je ergens heen zonder te zien waar je geland bent.
+    rij.classList.remove('aangewezen')
+    void rij.offsetWidth
+    rij.classList.add('aangewezen')
+  }
 
   return (
     <>
@@ -184,6 +210,7 @@ export default function Participant({ token }: { token: string }) {
             <Radar
               axes={skills.map((s) => s.label)}
               max={max}
+              ringLabels={scale.map((lv) => lv.label)}
               size={560}
               exportName={`${data.session.name} — ${data.participant.name}`}
               series={[
@@ -253,22 +280,25 @@ export default function Participant({ token }: { token: string }) {
             {skills.map((skill) => {
               const value = values[skill.id]?.[state]
               return (
-                <div className="skill" key={skill.id}>
+                <div className="skill" id={`as-${skill.id}`} key={skill.id}>
                   <div className="skill-head">
                     <span className="name">{skill.label}</span>
                     <span className="spacer" />
-                    {/* Altijd in de opmaak aanwezig, alleen onzichtbaar zolang er
-                        niets te wissen valt: anders verspringt het hele blok zodra
-                        je je eerste score zet. */}
-                    <button
-                      className="ghost sm"
-                      style={{ visibility: value == null ? 'hidden' : 'visible' }}
-                      tabIndex={value == null ? -1 : 0}
-                      aria-hidden={value == null}
-                      onClick={() => rate(skill.id, null)}
-                    >
-                      wissen
-                    </button>
+                    {/* Eén plek, twee toestanden: staat er niets, dan zegt hij dat
+                        deze as nog open is; staat er wel iets, dan is het de knop
+                        om het te wissen. Beide dozen zijn even hoog, zodat het
+                        blok niet verspringt zodra je je eerste score zet. En het
+                        merkteken blijft weg tot je in deze stap begonnen bent:
+                        tien keer 'nog open' vóór de eerste klik is geen hulp maar
+                        een uitbrander. */}
+                    {value == null ? (
+                      <span className="micro nog-open"
+                        style={{ visibility: filled[state] > 0 ? 'visible' : 'hidden' }}>
+                        nog open
+                      </span>
+                    ) : (
+                      <button className="ghost sm" onClick={() => rate(skill.id, null)}>wissen</button>
+                    )}
                   </div>
                   <Baan
                     skill={skill}
@@ -283,28 +313,54 @@ export default function Participant({ token }: { token: string }) {
               )
             })}
 
-            {/* De lijst liep dood: na de laatste skill stond niets, en de weg
-                naar stap 2 was helemaal terugscrollen naar boven. */}
-            {state === 'current' && filled.current === filled.total && filled.total > 0 && (
-              <div className="opkomen" style={{ borderTop: '1px solid var(--border)', paddingTop: 'var(--space-5)', marginTop: 'var(--space-2)' }}>
-                <button
-                  className="primary"
-                  onClick={() => {
-                    setState('future')
-                    // niet 'smooth': de render eronder verandert tegelijk, en dan
-                    // blijft de pagina halverwege hangen
-                    window.scrollTo({ top: 0 })
-                  }}
-                >
-                  Verder naar stap 2 · Doel
-                </button>
-              </div>
-            )}
-            {state === 'future' && done && (
-              <div className="opkomen" style={{ borderTop: '1px solid var(--border)', paddingTop: 'var(--space-5)', marginTop: 'var(--space-2)' }}>
-                <button className={submitted ? '' : 'primary'} onClick={toggleSubmit}>
-                  {submitted ? 'Aanpassen' : 'Indienen'}
-                </button>
+            {/* De voet van de lijst. Ben je klaar, dan staat hier de weg
+                vooruit; ben je dat niet, dan de as die je nog mist. Dat tweede
+                geval stond er eerder helemaal niet -- juist op de plek waar je
+                klaar dacht te zijn liep de lijst dood. De key laat de voet
+                opnieuw opkomen als hij van boodschap wisselt. */}
+            {filled.total > 0 && (
+              <div className="voet-lijst opkomen" key={open.length > 0 ? 'open' : 'klaar'}>
+                {open.length > 0 ? (
+                  <>
+                    <p className="small muted">
+                      Nog {open.length} van de {filled.total} open in deze stap.
+                    </p>
+                    <span className="spacer" />
+                    <button className="sm" onClick={() => gaNaar(open[0].id)}>
+                      Naar {open[0].label}
+                    </button>
+                  </>
+                ) : state === 'current' ? (
+                  <button
+                    className="primary"
+                    onClick={() => {
+                      setState('future')
+                      // niet 'smooth': de render eronder verandert tegelijk, en dan
+                      // blijft de pagina halverwege hangen
+                      window.scrollTo({ top: 0 })
+                    }}
+                  >
+                    Verder naar stap 2 · Doel
+                  </button>
+                ) : openAnders.length > 0 ? (
+                  <>
+                    {/* Stap 2 kan af zijn terwijl stap 1 nog een gat heeft -- je
+                        mag van tab wisselen wanneer je wil. Indienen kan dan nog
+                        niet, dus wijs terug in plaats van niets te tonen. */}
+                    <p className="small muted">
+                      Stap 1 is nog niet af: daar staan er {openAnders.length} open.
+                    </p>
+                    <span className="spacer" />
+                    <button className="sm"
+                      onClick={() => { setState('current'); window.scrollTo({ top: 0 }) }}>
+                      Terug naar stap 1 · Nu
+                    </button>
+                  </>
+                ) : (
+                  <button className={submitted ? '' : 'primary'} onClick={toggleSubmit}>
+                    {submitted ? 'Aanpassen' : 'Indienen'}
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -331,6 +387,7 @@ export default function Participant({ token }: { token: string }) {
               <Radar
                 axes={skills.map((s) => s.label)}
                 max={max}
+                ringLabels={scale.map((lv) => lv.label)}
                 exportName={`${data.session.name} — ${data.participant.name}`}
                 series={[
                   {

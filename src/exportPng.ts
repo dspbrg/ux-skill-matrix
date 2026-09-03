@@ -14,6 +14,8 @@
 interface ExportOptions {
   title?: string
   legend?: { label: string; color: string; dashed?: boolean }[]
+  /** De namen bij de cijfers op de ringen, als één regel. */
+  scaleKey?: string
   scale?: number
 }
 
@@ -33,7 +35,7 @@ function svgText(text: string, x: number, y: number, size: number, fill: string,
 export async function exportSvgAsPng(
   svg: SVGSVGElement,
   filename: string,
-  { title, legend = [], scale = 2 }: ExportOptions = {},
+  { title, legend = [], scaleKey, scale = 2 }: ExportOptions = {},
 ) {
   const holder = document.createElement('div')
   holder.className = 'force-light'
@@ -51,7 +53,7 @@ export async function exportSvgAsPng(
     // tekenen levert de export een plaatje met twee naamloze kleuren op, dus
     // maken we hier ruimte en zetten we ze erbij.
     const titleH = title ? 46 : 12
-    const legendH = legend.length ? 46 : 12
+    const legendH = (legend.length ? 46 : 12) + (scaleKey ? 24 : 0)
     const vy = vy0 - titleH
     const vh = vh0 + titleH + legendH
     const cx = vx + vw / 2
@@ -75,7 +77,7 @@ export async function exportSvgAsPng(
     const itemW = legend.map((l) => 31 + l.label.length * 7.4)
       const total = itemW.reduce((a, b) => a + b, 0) + (legend.length - 1) * 22
       let x = cx - total / 2
-      const y = vy0 + vh0 + legendH - 16
+      const y = vy0 + vh0 + legendH - 16 - (scaleKey ? 24 : 0)
       legend.forEach((l, i) => {
         // Een stip verzwijgt dat de tweede reeks gestreept is; in een grijs
         // afgedrukt rapport zijn de twee dan niet uit elkaar te houden.
@@ -91,6 +93,12 @@ export async function exportSvgAsPng(
         clone.appendChild(svgText(l.label, x + 27, y, 13, 'var(--text-2)', 'start'))
         x += itemW[i] + 22
       })
+    }
+
+    if (scaleKey) {
+      const el = svgText(scaleKey, cx, vy0 + vh0 + legendH - 8, 11, 'var(--text-3)')
+      el.setAttribute('font-family', 'ui-monospace, SFMono-Regular, Menlo, monospace')
+      clone.appendChild(el)
     }
 
     clone.setAttribute('viewBox', `${vx} ${vy} ${vw} ${vh}`)
