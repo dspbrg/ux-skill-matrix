@@ -266,14 +266,13 @@ export default function Radar({ axes, series, max, ringLabels, size = 420, showL
                 y={y0}
                 textAnchor={anchor}
                 dominantBaseline="middle"
+                className="as-label"
                 fontSize={13}
-                fontFamily="var(--font-mono)"
-                letterSpacing="0.06em"
                 fill="var(--text-3)"
               >
                 {lines.map((ln, k) => (
                   <tspan key={k} x={tx} dy={k === 0 ? 0 : regel}>
-                    {ln.toUpperCase()}
+                    {ln}
                   </tspan>
                 ))}
               </text>

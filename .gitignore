@@ -13,3 +13,6 @@ Input/
 # zijn de bron en die horen er wel in.
 ontwerp/*.html
 !ontwerp/*.dc.html
+
+# losse bouw van de werkbank
+dist-voorbeeld

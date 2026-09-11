@@ -113,6 +113,22 @@ export async function exportSvgAsPng(
       for (const prop of ['fill', 'stroke'] as const) {
         if (el.getAttribute(prop)?.includes('var(')) el.setAttribute(prop, computed[prop])
       }
+      // Tekststijl komt uit een klasse in de stylesheet en reist niet mee in
+      // het losse bestand. Font en spatiëring zet ik hard; hoofdletters zijn
+      // een transformatie die pas bij het tekenen gebeurt, dus die moet ik
+      // zelf op de inhoud toepassen.
+      if (el.tagName === 'text') {
+        el.setAttribute('font-family', computed.fontFamily)
+        if (computed.letterSpacing && computed.letterSpacing !== 'normal') {
+          el.setAttribute('letter-spacing', computed.letterSpacing)
+        }
+        if (computed.textTransform === 'uppercase') {
+          el.querySelectorAll('tspan').forEach((t) => {
+            t.textContent = (t.textContent ?? '').toUpperCase()
+          })
+          if (!el.querySelector('tspan')) el.textContent = (el.textContent ?? '').toUpperCase()
+        }
+      }
       // De vulling is een gradient; zonder dit blijft var(--current) in de
       // stops staan en komt de vorm leeg uit de export.
       if (el.getAttribute('stop-color')?.includes('var(')) {

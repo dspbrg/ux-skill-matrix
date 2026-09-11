@@ -8,6 +8,7 @@
  */
 import { createRoot } from 'react-dom/client'
 import './styles.css'
+import './thema-coa.css'
 
 const scale = [
   { level: 1, label: 'Nog niet', description: 'Je weet wat het is, maar je hebt het nog niet gedaan.' },

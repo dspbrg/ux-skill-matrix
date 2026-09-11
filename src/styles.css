@@ -36,6 +36,19 @@
   --heat-5: #4ba081;
   --heat-fg: #15141a;
 
+  /* Rollen die eerst hardgecodeerd in de regels stonden. Een thema kan alleen
+     overnemen wat een token is. */
+  --text-heading: var(--text);
+  --focus: var(--text);
+  --chrome: var(--surface);
+  --on-chrome: var(--text);
+  --on-chrome-muted: var(--text-2);
+  --on-chrome-accent: var(--accent);
+  --topbar-h: 64px;
+  --micro-family: var(--font-mono);
+  --micro-transform: uppercase;
+  --micro-tracking: .1em;
+
   --font-display: "Space Grotesk", system-ui, sans-serif;
   --font-ui: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-mono: "Space Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -141,6 +154,8 @@ h1, h2, h3 {
   font-family: var(--font-display);
   font-weight: 700;
   letter-spacing: -.02em;
+  color: var(--text-heading);
+  text-wrap: balance;
 }
 h1 { font-size: var(--fs-5); line-height: 1.15; max-width: 22ch; }
 /* Stap 1 is één regel, stap 2 twee. Zonder vaste hoogte schuift de hele
@@ -155,10 +170,10 @@ a { color: var(--accent); }
    identiteit, en het maakt secundaire informatie leesbaar zonder dat het
    met de tekst concurreert. */
 .micro, th, .pill, .levels button .lb {
-  font-family: var(--font-mono);
+  font-family: var(--micro-family);
   font-size: var(--fs-1);
-  letter-spacing: .1em;
-  text-transform: uppercase;
+  letter-spacing: var(--micro-tracking);
+  text-transform: var(--micro-transform);
 }
 
 /* ---------------------------------------------------------------- layout */
@@ -167,14 +182,19 @@ a { color: var(--accent); }
 
 .topbar {
   display: flex; align-items: center; gap: var(--space-3);
-  min-height: 64px;
+  min-height: var(--topbar-h);
   padding: 0 var(--space-5);
   border-bottom: 1px solid var(--border);
-  background: var(--surface);
+  background: var(--chrome);
+  color: var(--on-chrome);
   position: sticky; top: 0; z-index: 20;
 }
-.topbar .brand { font-family: var(--font-display); font-weight: 700; letter-spacing: -.02em; }
-.topbar .sep { color: var(--text-3); }
+.topbar .brand { font-family: var(--font-display); font-weight: 700; letter-spacing: -.02em;
+                 color: var(--on-chrome); }
+/* De balk heeft zijn eigen ondergrond, dus zijn tekst komt uit een eigen
+   schaal. Anders staat er donkergrijs op teal. */
+.topbar .sep, .topbar .muted, .topbar .small { color: var(--on-chrome-muted); }
+.topbar .leeft { background: var(--on-chrome-accent); }
 .topbar .spacer { flex: 1; }
 
 .card {
@@ -249,7 +269,7 @@ input:focus, textarea:focus, select:focus {
 }
 /* Neutraal en met offset, zodat "gefocust" niet lijkt op "geselecteerd". */
 :where(button, .btn, summary, a, [tabindex]):focus-visible {
-  outline: 2px solid var(--text);
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
 input[type="text"].small { font-size: var(--fs-2); color: var(--text-2); }
@@ -389,7 +409,7 @@ label.field > span { display: block; font-size: var(--fs-2); color: var(--text-2
 .halte:focus-visible { outline: none; border-radius: 50%; }
 .halte:focus-visible::before {
   opacity: 1; transform: scale(1);
-  box-shadow: 0 0 0 2px var(--text);
+  box-shadow: 0 0 0 2px var(--focus);
 }
 
 .merk {
@@ -425,8 +445,8 @@ label.field > span { display: block; font-size: var(--fs-2); color: var(--text-2
 .baan-ankers {
   display: flex; justify-content: space-between; gap: var(--space-5);
   margin: var(--space-2) 34px 0;
-  font-family: var(--font-mono); font-size: 9.5px; line-height: 1.5;
-  letter-spacing: .02em; color: var(--text-3);
+  font-family: var(--micro-family); font-size: 9.5px; line-height: 1.5;
+  letter-spacing: var(--micro-tracking); color: var(--text-3);
 }
 .baan-ankers span { max-width: 46%; }
 .baan-ankers span:last-child { text-align: right; }
@@ -435,13 +455,22 @@ label.field > span { display: block; font-size: var(--fs-2); color: var(--text-2
 
 .baan-labels {
   position: relative; height: 15px; margin: 0 34px; overflow: visible;
-  font-family: var(--font-mono); font-size: 9.5px;
-  letter-spacing: .08em; text-transform: uppercase;
+  font-family: var(--micro-family); font-size: 9.5px;
+  letter-spacing: var(--micro-tracking); text-transform: var(--micro-transform);
   color: var(--text-3);
 }
 .baan-labels span { position: absolute; top: 0; white-space: nowrap; }
 .baan-labels .is-nu { color: var(--current); }
 .baan-labels .is-doel { color: var(--future); }
+
+/* De aslabels van de radar volgen dezelfde regels als de andere microlabels:
+   in het ene thema mono-kapitalen, in het COA-systeem gewone zinsvorm, want
+   daar mag uppercase alleen in overlines en tabelkoppen. */
+.as-label {
+  font-family: var(--micro-family);
+  letter-spacing: var(--micro-tracking);
+  text-transform: var(--micro-transform);
+}
 
 /* ---------------------------------------------------------------- legenda & tabellen */
 .legend { display: flex; gap: var(--space-4); flex-wrap: wrap; font-size: var(--fs-2); color: var(--text-2); }
@@ -488,7 +517,7 @@ th.num { text-align: center; }
 }
 td.num .cell { display: grid; grid-template-columns: 44px 34px; align-items: center;
                justify-content: center; gap: var(--space-1); }
-td.num .cell .to { text-align: left; font-size: var(--fs-1); color: var(--text-2); font-family: var(--font-mono); }
+td.num .cell .to { text-align: left; font-size: var(--fs-1); color: var(--text-2); font-family: var(--micro-family); }
 
 /* Alleen voor schermlezers: niet display:none, want dan wordt het ook niet
    voorgelezen. */
@@ -611,8 +640,9 @@ button.groot { justify-content: center; padding: 11px 18px; }
   }
   .halte-label {
     display: block;
-    font-family: var(--font-mono); font-size: var(--fs-1);
-    letter-spacing: .1em; text-transform: uppercase; color: var(--text-2);
+    font-family: var(--micro-family); font-size: var(--fs-1);
+    letter-spacing: var(--micro-tracking); text-transform: var(--micro-transform);
+    color: var(--text-2);
   }
   .baan-labels { display: none; }
   .baan-ankers { margin-left: 0; margin-right: 0; }

@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useState } from 'react'
 import Home from './Home'
 import Participant from './Participant'
 import Admin from './Admin'
+import { pasThemaToe } from './thema'
 
 function currentRoute() {
   const raw = window.location.hash.replace(/^#/, '') || '/'
@@ -35,6 +36,9 @@ function takeAdminKey(code: string, fromUrl: string | null): string {
 
 export default function App() {
   const [route, setRoute] = useState(currentRoute)
+
+  // Vóór de eerste verf, anders zie je het eigen thema even oplichten.
+  useLayoutEffect(() => { pasThemaToe() }, [route.path])
 
   useEffect(() => {
     const onHash = () => {
