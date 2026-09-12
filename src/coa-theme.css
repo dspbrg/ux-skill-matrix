@@ -1,123 +1,230 @@
 /* =====================================================================
-   COA-thema voor de UX Skill Matrix — OPTIONEEL, standaard uit.
-   =====================================================================
-   Deze app heeft een eigen visuele taal (dspbrg: papier, mint, amber).
-   Dit bestand zet die om naar de COA-huisstijl zonder dat er ook maar
-   één component of .tsx hoeft te veranderen: het overschrijft alleen de
-   variabelen uit styles.css met de rollen uit het COA design system.
+   COA-thema · vertaalt de skill matrix naar het COA design system v0.4.0
+   Bron van alle waarden: 00 Design System/tokens/coa.tokens.flat.json
+   Contract: 00 Design System/DESIGN.md
 
-   Aanzetten:  in src/main.tsx onder `import './styles.css'` de regel
-               `import './coa-theme.css'` toevoegen.
-   Uitzetten:  die regel weghalen.
+   Dit bestand overschrijft alleen tokens. Het eigen thema blijft intact en
+   is nog steeds de standaard; dit treedt in werking bij data-thema="coa".
 
-   Bron van de waarden: "00 Design System/tokens/coa.tokens.json" (v0.4.0),
-   git dspbrg/coa-design-system. Wijzig hier niets met de hand: haal een
-   nieuwe waarde uit de tokens en werk dit bestand bij.
-
-   Let op: de app gebruikt Space Grotesk, Inter en Space Mono. Het COA
-   design system schrijft Source Sans 3 en Zilla Slab voor. Beide font-
-   regels staan hieronder; haal het commentaar weg als je ook de
-   typografie wilt omzetten.
+   Rolverdeling uit het contract, letterlijk aangehouden:
+     teal    = structuur en actie          (--accent, --current)
+     goud    = staat en focus              (--focus, --future)
+     magenta = links, maximaal één CTA     (--link)
+     rood    = destructief en fout         (--danger)
+   Tekst is teal-900, nooit zwart.
    ===================================================================== */
 
-@import url("https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Zilla+Slab:ital,wght@1,400&family=JetBrains+Mono:wght@400&display=swap");
+:root[data-thema="coa"] {
+  /* ---- vlakken en lijnen (semantic.surface-*, semantic.line-*) -------- */
+  --bg: #f8f9fa;            /* surface-page    · neutral-50  */
+  --surface: #ffffff;       /* surface         · neutral-0   */
+  --surface-2: #eff2f3;     /* surface-sunken  · neutral-100 */
+  --border: #dde6e8;        /* line            · neutral-200 */
+  --border-strong: #cad6d9; /* line-control    · neutral-300 */
+  /* De rail van de schaal is geen veldrand maar betekenisdragende UI en moet
+     dus 3:1 halen: op line-control (neutral-300) is dat 1,41:1. Neutral-600
+     doet 4,7:1 op de kaart, en blijft neutraal genoeg om de meting die erop
+     staat niet te storen. */
+  --rail: #66767a;          /* neutral-600 */
 
-:root {
-  /* Vlakken: pagina, kaart, verzonken */
-  --bg: #f8f9fa;            /* neutral-50  – surface-page */
-  --surface: #ffffff;       /* neutral-0   – surface */
-  --surface-2: #eff2f3;     /* neutral-100 – surface-sunken */
-  --border: #dde6e8;        /* neutral-200 – line */
-  --border-strong: #66767a; /* neutral-600 – line-strong, 4,7:1 */
+  /* ---- tekst (fg-*) --------------------------------------------------- */
+  --text: #002d36;          /* fg          · primary-900 — nooit zwart */
+  --text-2: #495a5e;        /* fg-muted    · neutral-700 */
+  --text-3: #66767a;        /* fg-subtle   · neutral-600 */
+  --text-heading: #064855;  /* fg-heading  · primary-800 */
 
-  /* Tekst: teal 900 in plaats van zwart */
-  --text: #002d36;          /* primary-900 – fg, 14,7:1 op wit */
-  --text-2: #495a5e;        /* neutral-700 – fg-muted, 7,2:1 */
-  --text-3: #66767a;        /* neutral-600 – fg-subtle, 4,7:1 */
-
-  /* Accent = teal (actie), tweede stem = magenta (nadruk, doel) */
-  --accent: #067788;        /* primary-600 – action-primary, 5,3:1 op wit */
-  --accent-soft: #edf6f8;   /* primary-50  – surface-selected */
-  --current: #067788;       /* huidig niveau in de radar */
-  --future: #bb396d;        /* secondary-600 – gewenst niveau, 5,4:1 */
-  --on-accent: #ffffff;
-  --on-future: #ffffff;
-
-  --danger: #ca2301;        /* danger-600  – status-error */
+  /* ---- actie, staat, link -------------------------------------------- */
+  --accent: #067788;        /* action-primary · primary-600 */
+  --accent-soft: #edf6f8;   /* surface-selected · primary-50 */
+  --on-accent: #ffffff;     /* witte tekst mag vanaf stap 600 */
+  --focus: #9c7308;         /* focus · accent-600 — goud, 2px, offset 2px */
+  --link: #bb396d;          /* fg-link · secondary-600 */
+  --danger: #ca2301;        /* action-danger · danger-600 */
   --ok: #30794e;            /* status-success */
 
-  /* Heatmap: sequentiële teal-schaal uit de dataviz-tokens */
-  --heat-1: #ebf6f8;
-  --heat-2: #bce1e9;
-  --heat-3: #8cc9d7;
-  --heat-4: #5db1c3;
-  --heat-5: #2a97ab;
+  /* ---- de twee metingen in de radar (dataviz, in de voorgeschreven
+         volgorde: 1 teal, 2 goud) ------------------------------------- */
+  --current: #067788;       /* chart-1 */
+  --future: #be8c0a;        /* chart-2 */
+  --on-future: #002d36;     /* goud draagt geen witte tekst */
+
+  /* ---- heatmap: de sequentiële teal-schaal, vijf van de acht ---------
+         Niet 1 tot en met 5: seq-5 draagt geen enkele tekstkleur op 4,5:1
+         (donker 4,28, wit 3,44). seq-6 wel, met wit op 5,25 — en visueel is
+         het dezelfde oplopende reeks. */
+  --heat-1: #ebf6f8;        /* seq-1 */
+  --heat-2: #bce1e9;        /* seq-2 */
+  --heat-3: #8cc9d7;        /* seq-3 */
+  --heat-4: #5db1c3;        /* seq-4 */
+  --heat-5: #067788;        /* seq-6 */
   --heat-fg: #002d36;
+  --heat-fg-1: #002d36;     /* 13,4:1 */
+  --heat-fg-2: #002d36;     /* 10,6:1 */
+  --heat-fg-3: #002d36;     /*  8,0:1 */
+  --heat-fg-4: #002d36;     /*  6,0:1 */
+  --heat-fg-5: #ffffff;     /*  5,3:1 */
 
-  /* Vorm en schaduw volgen het COA-contract: radius 8/12, teal-getinte schaduw */
-  --radius: 8px;
-  --radius-lg: 12px;
-  --shadow: 0 1px 2px rgba(0, 45, 54, .10), 0 8px 24px -14px rgba(0, 45, 54, .22);
+  /* ---- app-chrome: topbar is teal, 48 hoog --------------------------- */
+  --chrome: #064855;        /* surface-chrome · primary-800 */
+  --on-chrome: #ffffff;     /* 10,2:1 */
+  --on-chrome-muted: #afd8e1;  /* primary-200 · 6,7:1 op de balk */
+  --on-chrome-accent: #d9a730; /* goud, want teal op teal verdwijnt · 4,6:1 */
+  --topbar-h: 48px;
 
-  /* Typografie — haal het commentaar weg om ook de fonts om te zetten
-  --font-display: "Source Sans 3", system-ui, sans-serif;
-  --font-ui: "Source Sans 3", system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* ---- typografie ----------------------------------------------------- */
+  --font-display: "Source Sans 3", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font-ui: "Source Sans 3", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-  */
+
+  /* Uppercase mag alleen in overlines en tabelkoppen. De labels onder de
+     schaal en de aslabels van de radar zijn geen van beide, dus die staan
+     hier in gewone zinsvorm. */
+  --micro-family: var(--font-ui);
+  --micro-transform: none;
+  --micro-tracking: 0;
+
+  /* App-schaal uit het contract: 12 · 14 · 16 · 20 · 24, op het 4px-grid */
+  --fs-1: 12px;
+  --fs-2: 14px;
+  --fs-3: 14px;           /* body-sm */
+  --fs-h3: 16px;          /* h3 is hier een maat groter dan lopende tekst */
+  --fs-4: 20px;
+  --fs-5: 24px;
+
+  /* Regelhoogtes uit het contract, niet uit een factor: 24/32 · 20/28 ·
+     16/24 · 14/20, allemaal op het 4px-grid. */
+  --lh-h1: 32px;
+  --lh-h2: 28px;
+  --lh-h3: 24px;
+  --lh-body: 20px;
+
+  /* ---- vorm: radius 6 controls, 8 vlakken, lijnen 1px ---------------- */
+  --radius: 6px;
+  --radius-lg: 8px;
+
+  /* Elevatie is teal-getint. Kaarten in een grid: alleen rand, geen schaduw. */
+  --shadow: 0 1px 2px rgba(0, 45, 54, .06);
+  --shadow-licht: 0 1px 2px rgba(0, 45, 54, .12);
+
+  /* Motion: 100ms hover, 150ms focus, easing uit het contract. */
+  --spring: cubic-bezier(.2, 0, 0, 1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #001a20;            /* primary-950 – surface-page */
-    --surface: #002d36;       /* primary-900 – surface */
-    --surface-2: #03404c;     /* primary-850 – surface-raised */
-    --border: #135f6e;        /* primary-700 – line */
-    --border-strong: #52aabc; /* primary-400 – line-strong */
-
-    --text: #eff2f3;          /* neutral-100 – fg, 13,1:1 */
-    --text-2: #b0bdc1;        /* neutral-400 – fg-muted, 7,6:1 */
-    --text-3: #8c9b9f;        /* neutral-500 – fg-subtle */
-
-    --accent: #52aabc;        /* primary-400 – actie in donker */
-    --accent-soft: #03404c;
-    --current: #52aabc;
-    --future: #f293b4;        /* secondary-300 – 6,7:1 op primary-900 */
-    --on-accent: #001a20;
-    --on-future: #002d36;
-
-    --danger: #ff8a70;
-    --ok: #7cc46a;
-
-    --heat-1: #03404c;
-    --heat-2: #064855;
-    --heat-3: #135f6e;
-    --heat-4: #1c91a5;
-    --heat-5: #52aabc;
-    --heat-fg: #eff2f3;
-
-    --shadow: 0 1px 2px rgba(0, 0, 0, .5), 0 10px 30px -16px rgba(0, 0, 0, .8);
-  }
+/* Het COA-systeem is licht-eerst en kent donker als expliciete keuze, niet als
+   iets wat het apparaat stilletjes beslist. Daarom staat hier geen mediaquery:
+   thema.ts zet data-donker, en volgt daarbij het apparaat alleen zolang niemand
+   ?licht of ?donker heeft meegegeven. Zo is er ook een manier om donker af te
+   dwingen op een laptop die op licht staat. */
+:root[data-thema="coa"] { color-scheme: light; }
+:root[data-thema="coa"][data-donker] {
+  color-scheme: dark;
+  --bg: #001a20;          /* surface-page  · primary-950 */
+  --surface: #002d36;     /* surface       · primary-900 */
+  --surface-2: #03404c;   /* surface-selected · primary-850 */
+  --border: #135f6e;      /* line          · primary-700 */
+  --border-strong: #067788;
+  /* Neutraal en niet teal: de rail mag niet concurreren met de meting die
+     erop staat, en primary-400 is hier al --current. 5,1:1 op de kaart. */
+  --rail: #8c9b9f;        /* neutral-500 */
+  --text: #eff2f3;
+  --text-2: #b0bdc1;
+  --text-3: #8c9b9f;
+  --text-heading: #ffffff;
+  --accent: #067788;
+  --accent-soft: #03404c;
+  --focus: #d9a730;       /* accent-400 */
+  --link: #f293b4;        /* secondary-300 */
+  --danger: #fc937f;      /* fg-danger@dark  · danger-300 */
+  --ok: #7cc46a;          /* status-success@dark */
+  --current: #52aabc;     /* chart-1 donker · primary-400 */
+  --future: #d9a730;      /* chart-2 donker · accent-400 */
+  --on-future: #002d36;
+  /* Andersom dan in het licht: hoe heter de cel, hoe lichter het vlak, en
+     vanaf stap 4 draagt dat geen witte tekst meer. */
+  --heat-1: #064855;      /* seq-8, wit 10,2:1 */
+  --heat-2: #135f6e;      /* seq-7, wit  7,3:1 */
+  --heat-3: #067788;      /* seq-6, wit  5,3:1 */
+  --heat-4: #5db1c3;      /* seq-4, teal-900 6,0:1 */
+  --heat-5: #8cc9d7;      /* seq-3, teal-900 8,0:1 */
+  --heat-fg: #ffffff;
+  --heat-fg-1: #ffffff;
+  --heat-fg-2: #ffffff;
+  --heat-fg-3: #ffffff;
+  --heat-fg-4: #002d36;
+  --heat-fg-5: #002d36;
+  --chrome: #001a20;      /* surface-chrome donker · primary-950 */
+  --on-chrome-muted: #b0bdc1;  /* 9,3:1 */
+  --on-chrome-accent: #d9a730; /* 8,2:1 */
+  --shadow: 0 1px 2px rgba(0, 0, 0, .4);
 }
 
-/* De PNG-export dwingt het lichte thema af; die waarden moeten mee. */
-.force-light {
+/* ---------------------------------------------------------------------
+   Wat een tokenwissel niet kan dragen: een paar regels die in het COA-
+   contract anders zijn dan in het eigen thema.
+   --------------------------------------------------------------------- */
+
+/* Links zijn magenta én onderstreept (1px, offset 3px). */
+:root[data-thema="coa"] a { color: var(--link); text-decoration: underline;
+  text-underline-offset: 3px; text-decoration-thickness: 1px; }
+:root[data-thema="coa"] a:hover { text-decoration-thickness: 2px; }
+
+/* De achtergrondtextuur is sfeer, en kleur is in dit systeem betekenis. */
+:root[data-thema="coa"] body::before { display: none; }
+
+/* Hoekhaken zijn een merkteken van het andere thema. */
+:root[data-thema="coa"] .card::before,
+:root[data-thema="coa"] .card::after,
+:root[data-thema="coa"] .entree::before,
+:root[data-thema="coa"] .entree::after { display: none; }
+
+/* Kaarten in een raster krijgen een rand en geen schaduw. */
+:root[data-thema="coa"] .grid-2 > .card { box-shadow: none; }
+
+/* Staat is goud: de actieve tab krijgt een gouden onderstreep van 2px. */
+:root[data-thema="coa"] .tabs {
+  background: transparent; border: none; border-radius: 0; padding: 0;
+  gap: var(--space-4); align-self: stretch; align-items: stretch;
+}
+:root[data-thema="coa"] .tabs button {
+  border-radius: 0; box-shadow: none; background: none;
+  padding: 0 var(--space-1); border-bottom: 2px solid transparent;
+  display: inline-flex; align-items: center;
+}
+:root[data-thema="coa"] .tabs button[aria-current] {
+  background: none; box-shadow: none; border-bottom-color: var(--focus);
+}
+
+/* In de kopbalk leest de tab op de teal ondergrond, niet op de pagina. */
+:root[data-thema="coa"] .topbar .tabs button { color: var(--on-chrome-muted); }
+:root[data-thema="coa"] .topbar .tabs button[aria-current] { color: var(--on-chrome); }
+:root[data-thema="coa"] .topbar .tabs button:hover { color: var(--on-chrome); }
+
+/* Buiten de kopbalk (de stappen bij de deelnemer) staat er een scheidslijn onder. */
+:root[data-thema="coa"] .kolom .tabs,
+:root[data-thema="coa"] .entree .tabs { border-bottom: 1px solid var(--border); }
+:root[data-thema="coa"] .kolom .tabs button { padding: var(--space-2) var(--space-1); }
+
+/* Koppen zijn zinnen zonder negatieve tracking. */
+:root[data-thema="coa"] h1,
+:root[data-thema="coa"] h2,
+:root[data-thema="coa"] h3 { letter-spacing: 0; }
+
+/* De PNG-export legt .force-light lokaal op het exportvlak, en die klasse wint
+   daarmee van alles wat hij erft — ook van dit thema. Zonder dit blok komt een
+   COA-radar er in de kleuren van het andere thema uit: mint en roze-rood op
+   papier, in het enige stuk dat het gebouw ooit verlaat. */
+:root[data-thema="coa"] .force-light {
   --surface: #ffffff;
   --surface-2: #eff2f3;
   --border: #dde6e8;
-  --border-strong: #66767a;
+  --border-strong: #cad6d9;
+  --rail: #66767a;
   --text: #002d36;
   --text-2: #495a5e;
   --text-3: #66767a;
+  --text-heading: #064855;
   --accent: #067788;
-  --accent-soft: #edf6f8;
   --current: #067788;
-  --future: #bb396d;
-  --on-accent: #ffffff;
-  --on-future: #ffffff;
-  --heat-1: #ebf6f8;
-  --heat-2: #bce1e9;
-  --heat-3: #8cc9d7;
-  --heat-4: #5db1c3;
-  --heat-5: #2a97ab;
-  --heat-fg: #002d36;
+  --future: #be8c0a;
+  --on-future: #002d36;
 }

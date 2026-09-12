@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useId, useLayoutEffect, useReducer, useRef, useState } from 'react'
+import { Icoon } from './Icoon'
 import { exportSvgAsPng } from './exportPng'
 
 interface Series {
@@ -460,12 +461,7 @@ export default function Radar({ axes, series, max, ringLabels, size = 420, showL
               }
             }}
           >
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="M8 1.5v8.5m0 0L4.75 6.75M8 10l3.25-3.25" stroke="currentColor"
-                strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M2 11.5v1.75c0 .69.56 1.25 1.25 1.25h9.5c.69 0 1.25-.56 1.25-1.25V11.5"
-                stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
+            <Icoon naam="download" />
             {exporting ? 'Bezig…' : 'PNG downloaden'}
           </button>
           {failed && <p className="small" style={{ color: 'var(--danger)', marginTop: 'var(--space-2)' }}>{failed}</p>}

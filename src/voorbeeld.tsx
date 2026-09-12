@@ -7,8 +7,9 @@
  *   http://localhost:5175/voorbeeld.html#/admin?s=DEMO&k=demo
  */
 import { createRoot } from 'react-dom/client'
+import './dspbrg-theme.css'
 import './styles.css'
-import './thema-coa.css'
+import './coa-theme.css'
 
 const scale = [
   { level: 1, label: 'Nog niet', description: 'Je weet wat het is, maar je hebt het nog niet gedaan.' },

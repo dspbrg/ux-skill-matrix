@@ -1,0 +1,157 @@
+/* =====================================================================
+   dspbrg-thema — de tokenlaag van de eigen identiteit
+   Warm papier tegenover bijna-zwart, mint als accent, roze-rood als tweede
+   stem, Space Grotesk voor koppen, Inter voor tekst, Space Mono voor
+   microlabels. Alle kleurcombinaties zijn nagerekend; de waarden in het
+   commentaar zijn gemeten contrastverhoudingen.
+
+   Dit is het tegenhangerbestand van coa-theme.css: allebei zetten ze alleen
+   tokens, styles.css kent verder geen enkele losse waarde. Zo is 'het COA-
+   thema is een tokenlaag' een eigenschap van de map en niet een belofte.
+   ===================================================================== */
+
+:root {
+  --bg: #ebe5de;            /* papier */
+  --surface: #ffffff;
+  --surface-2: #f2ede6;
+  --border: #dcd5cc;
+  --border-strong: #888075;  /* rand van een veld of knop */
+  /* De rail van de schaal en de niet-gekozen stip zijn betekenisdragende UI:
+     die moeten 3:1 halen. Een 1px veldrand hoeft dat niet, dus het is niet
+     dezelfde rol — en in het COA-systeem lopen de twee waarden uiteen. */
+  --rail: #888075;           /* 3,1:1 op papier */
+  --text: #15141a;          /* 18,3:1 */
+  --text-2: #5c5851;        /*  7,1:1 */
+  --text-3: #635e57;        /*  5,1:1 op papier, 6,4:1 op wit */
+
+  /* Mint is op papier onbruikbaar helder (1,3:1), dus verdiept. */
+  --accent: #0a6b4c;        /*  5,2:1 op papier, 6,5:1 op wit */
+  --accent-soft: #e2f0ea;
+  --current: #0a6b4c;
+  /* Amber was te tam voor wat het moet dragen: dit is het doel, niet een
+     waarschuwing. Roze-rood, nagerekend op 6,0:1 tegen wit. */
+  --future: #c1174b;        /*  6,0:1 */
+  --on-accent: #ffffff;
+  --on-future: #ffffff;
+
+  --danger: #a3311f;
+  --ok: #0a6b4c;
+
+  --heat-1: #e6efe9;
+  --heat-2: #c8e0d4;
+  --heat-3: #a4cdbb;
+  --heat-4: #7ab89e;
+  --heat-5: #4ba081;
+  --heat-fg: #15141a;
+  --heat-fg-1: var(--heat-fg);
+  --heat-fg-2: var(--heat-fg);
+  --heat-fg-3: var(--heat-fg);
+  --heat-fg-4: var(--heat-fg);
+  --heat-fg-5: var(--heat-fg);
+
+  /* Rollen die eerst hardgecodeerd in de regels stonden. Een thema kan alleen
+     overnemen wat een token is. */
+  --text-heading: var(--text);
+  --focus: var(--text);
+  --chrome: var(--surface);
+  --on-chrome: var(--text);
+  --on-chrome-muted: var(--text-2);
+  --on-chrome-accent: var(--accent);
+  --topbar-h: 64px;
+  --micro-family: var(--font-mono);
+  --micro-transform: uppercase;
+  --micro-tracking: .1em;
+
+  --font-display: "Space Grotesk", system-ui, sans-serif;
+  --font-ui: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "Space Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --fs-1: 11px;
+  --fs-2: 13px;
+  --fs-3: 15px;
+  --fs-4: 19px;
+  --fs-5: 33px;
+  /* h3 stond op --fs-3 en was daarmee per definitie even groot als lopende
+     tekst. Hier is dat de bedoeling — het verschil zit in het gewicht — in het
+     COA-contract niet: daar is h3 16 op 24. Dat kan alleen als het een eigen
+     token is. */
+  --fs-h3: var(--fs-3);
+
+  /* Regelhoogte als maat en niet als factor: anders valt elke kop buiten het
+     grid zodra een thema de tekstgrootte wisselt. */
+  --lh-h1: 38px;
+  --lh-h2: 24px;
+  --lh-h3: 20px;
+  --lh-body: 1.5;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  --radius: 10px;
+  --radius-lg: 16px;
+  --shadow: 0 1px 2px rgba(21, 20, 26, .05), 0 8px 24px -14px rgba(21, 20, 26, .22);
+  --shadow-licht: 0 1px 2px rgba(21, 20, 26, .14);
+
+  /* Veert door en komt terug: de vorm landt in plaats van te schuiven. */
+  --spring: cubic-bezier(.34, 1.56, .64, 1);
+
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #15141a;
+    --surface: #1c1b22;
+    --surface-2: #232229;
+    --border: #2e2c36;
+    --border-strong: #6a6773;
+    --rail: #6a6773;        /* 3,1:1 op de kaart */
+    --text: #ece6df;        /* 13,8:1 */
+    --text-2: #9a958e;      /*  5,8:1 */
+    --text-3: #948f86;      /*  5,3:1 op de kaart, 4,9:1 op surface-2 */
+
+    --accent: #3dffd2;      /* 13,4:1 */
+    --accent-soft: #12332b;
+    --current: #3dffd2;
+    --future: #ff4e7a;      /*  5,4:1 */
+    --on-accent: #0a1512;
+    --on-future: #15141a;
+
+    --danger: #f08a7a;
+    --ok: #3dffd2;
+
+    --heat-1: #1e2a27;
+    --heat-2: #23423a;
+    --heat-3: #295b4d;
+    --heat-4: #245b4d;
+    --heat-5: #29715f;
+    --heat-fg: #ece6df;
+
+    --shadow: 0 1px 2px rgba(0, 0, 0, .5), 0 10px 30px -16px rgba(0, 0, 0, .8);
+    --shadow-licht: 0 1px 2px rgba(0, 0, 0, .5);
+  }
+}
+
+/* Alleen tijdens het exporteren naar PNG: dwingt papier af, ongeacht het
+   thema van de kijker. Een donkere radar is zelden bruikbaar in een rapport.
+   Deze klasse staat lokaal op het exportvlak en wint dus van alles wat hij
+   erft — ook van een thema. Daarom heeft elk thema hier zijn eigen blok: een
+   COA-radar die als PNG in de kleuren van het andere thema uit de tool komt,
+   is precies het enige stuk dat het gebouw ooit verlaat. */
+.force-light {
+  --surface: #ffffff;
+  --surface-2: #f2ede6;
+  --border: #dcd5cc;
+  --border-strong: #888075;
+  --rail: #888075;           /* 3,1:1 op papier */
+  --text: #15141a;
+  --text-2: #5c5851;
+  --text-3: #635e57;
+  --accent: #0a6b4c;
+  --current: #0a6b4c;
+  --future: #c1174b;
+}

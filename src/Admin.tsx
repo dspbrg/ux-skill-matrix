@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import Radar from './Radar'
+import { Icoon } from './Icoon'
 import { rpc } from './supabase'
 import type { AdminPayload, ScaleLevel, Skill, State } from './types'
 
@@ -87,6 +88,21 @@ export default function Admin({ initialCode, initialKey }: { initialCode: string
 }
 
 /* ------------------------------------------------------------------ overzicht */
+
+/**
+ * De vulling van een cel in de heatmap, plus de tekstkleur die erbij hoort.
+ *
+ * Eén vaste tekstkleur haalt over vijf stappen van een verzadigende schaal
+ * nooit 4,5:1: onderin is donkere tekst het enige leesbare, bovenin wit (in
+ * het donkere thema precies andersom). Daarom draagt elke stap zijn eigen
+ * voorgrond als token.
+ */
+function heatStijl(waarde: number | null | undefined, max: number) {
+  if (!waarde) return { background: 'transparent' }
+  const stap = Math.ceil((waarde / max) * 5)
+  return { background: `var(--heat-${stap})`, color: `var(--heat-fg-${stap})` }
+}
+
 
 function Overview({ data, onAddPeople }: { data: AdminPayload; onAddPeople: () => void }) {
   const { skills, participants, ratings, session } = data
@@ -373,14 +389,14 @@ function Overview({ data, onAddPeople }: { data: AdminPayload; onAddPeople: () =
                     return (
                       <td key={p.id} className="num">
                         <span className="cell">
-                          <span className="heat" style={{ background: v?.current ? `var(--heat-${Math.ceil((v.current / max) * 5)})` : 'transparent' }}>
+                          <span className="heat" style={heatStijl(v?.current, max)}>
                             {v?.current == null ? '–' : getal(trede(v.current))}
                           </span>
                           <span className="to">
                             {v?.future != null && v.future !== v.current ? (
                               <>
                                 <span className="vh">, doel {getal(trede(v.future))}</span>
-                                <span aria-hidden="true">→{getal(trede(v.future))}</span>
+                                <span aria-hidden="true"><Icoon naam="rechts" maat={12} />{getal(trede(v.future))}</span>
                               </>
                             ) : ''}
                           </span>
@@ -669,11 +685,11 @@ function Terms({
               <div className="stack" style={{ gap: 'var(--space-1)', paddingTop: 'var(--space-1)' }}>
                 <button className="ghost sm" onClick={() => move(i, -1)} disabled={i === 0}
                   aria-label={`${s.label || `Skill ${i + 1}`} omhoog verplaatsen`}>
-                  <span aria-hidden="true">↑</span>
+                  <Icoon naam="omhoog" />
                 </button>
                 <button className="ghost sm" onClick={() => move(i, 1)} disabled={i === skills.length - 1}
                   aria-label={`${s.label || `Skill ${i + 1}`} omlaag verplaatsen`}>
-                  <span aria-hidden="true">↓</span>
+                  <Icoon naam="omlaag" />
                 </button>
               </div>
               <div className="stack" style={{ flex: 1, gap: 'var(--space-2)' }}>
@@ -691,7 +707,7 @@ function Terms({
               <button className="danger sm" style={{ marginTop: 'var(--space-1)' }}
                 aria-label={`Skill ${s.label || i + 1} verwijderen`}
                 onClick={() => setSkills((cur) => cur.filter((_, k) => k !== i))}>
-                <span aria-hidden="true">✕</span>
+                <Icoon naam="kruis" />
               </button>
             </div>
           ))}
@@ -704,7 +720,8 @@ function Terms({
               { id: `new-${Date.now()}`, label: '', description: '', anchor: '', anchor_senior: '', sort_order: s.length },
             ])
           }>
-          + Skill toevoegen
+          <Icoon naam="plus" />
+          Skill toevoegen
         </button>
         {skills.length < 3 && (
           <p className="small" style={{ color: 'var(--danger)', marginTop: 'var(--space-2)' }}>
@@ -747,7 +764,7 @@ function Terms({
               <button className="danger sm" style={{ marginTop: 'var(--space-1)' }} disabled={scale.length <= 2}
                 aria-label={`Niveau ${i + 1} verwijderen`}
                 onClick={() => setScale((s) => s.filter((_, k) => k !== i))}>
-                <span aria-hidden="true">✕</span>
+                <Icoon naam="kruis" />
               </button>
             </div>
           ))}

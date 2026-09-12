@@ -44,8 +44,16 @@ export async function exportSvgAsPng(
   holder.appendChild(clone)
   document.body.appendChild(holder)
 
+  // De PNG is het enige dat deze tool ooit verlaat. Hij moet dus het thema
+  // dragen dat de facilitator ziet, en niet één vast palet: lees de waarden
+  // van het exportvlak zelf, waar .force-light en het thema samen uitkomen.
+  const stijl = getComputedStyle(holder)
+  const token = (naam: string, terugval: string) =>
+    stijl.getPropertyValue(naam).trim() || terugval
+  const papier = token('--surface', '#ffffff') // coa-lint-disable-line: terugval als het thema niet geladen is, geen ontwerpwaarde
+
   try {
-    clone.setAttribute('font-family', 'Inter, -apple-system, "Segoe UI", Roboto, sans-serif')
+    clone.setAttribute('font-family', token('--font-ui', 'Inter, -apple-system, "Segoe UI", Roboto, sans-serif'))
 
     const [vx, vy0, vw, vh0] = (svg.getAttribute('viewBox') ?? '0 0 400 400').split(/\s+/).map(Number)
 
@@ -63,7 +71,7 @@ export async function exportSvgAsPng(
     bg.setAttribute('y', String(vy))
     bg.setAttribute('width', String(vw))
     bg.setAttribute('height', String(vh))
-    bg.setAttribute('fill', '#ffffff')
+    bg.setAttribute('fill', papier)
     clone.insertBefore(bg, clone.firstChild)
 
     if (title) {
@@ -152,7 +160,7 @@ export async function exportSvgAsPng(
       canvas.height = Math.round(vh * scale)
       const ctx = canvas.getContext('2d')
       if (!ctx) throw new Error('Canvas is niet beschikbaar in deze browser.')
-      ctx.fillStyle = '#ffffff'
+      ctx.fillStyle = papier
       ctx.fillRect(0, 0, canvas.width, canvas.height)
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
 

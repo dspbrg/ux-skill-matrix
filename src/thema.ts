@@ -9,16 +9,30 @@
  */
 export type Thema = 'eigen' | 'coa'
 
+/**
+ * Licht of donker is in het COA-systeem een expliciete keuze; het apparaat
+ * volgen is daar een opt-in. Daarom staat die keuze hier en niet in een
+ * mediaquery: ?licht voor een beamer in een verlichte zaal, ?donker voor een
+ * avondsessie op een laptop die zelf op licht staat, en anders het apparaat.
+ */
+type Modus = 'auto' | 'licht' | 'donker'
+
 const SLEUTEL = 'skillmatrix:thema'
 
-function uitAdres(): Thema | null {
+/** Zoekt een parameter in de adresbalk, ook achter de hash. */
+function uitAdres(naam: string): string | null {
   const hash = window.location.hash
   const bronnen = [window.location.search, hash.includes('?') ? '?' + hash.split('?')[1] : '']
   for (const bron of bronnen) {
-    const waarde = new URLSearchParams(bron).get('thema')
-    if (waarde === 'coa' || waarde === 'eigen') return waarde
+    const params = new URLSearchParams(bron)
+    if (params.has(naam)) return params.get(naam) ?? ''
   }
   return null
+}
+
+function themaUitAdres(): Thema | null {
+  const waarde = uitAdres('thema')
+  return waarde === 'coa' || waarde === 'eigen' ? waarde : null
 }
 
 function onthouden(): Thema | null {
@@ -28,6 +42,12 @@ function onthouden(): Thema | null {
   } catch {
     return null
   }
+}
+
+function modus(): Modus {
+  if (uitAdres('donker') !== null) return 'donker'
+  if (uitAdres('licht') !== null) return 'licht'
+  return 'auto'
 }
 
 let fontsGeladen = false
@@ -42,11 +62,13 @@ function laadCoaFonts() {
   document.head.appendChild(link)
 }
 
-/** Licht afdwingen met ?licht in de adresbalk, ongeacht de voorkeur van het apparaat. */
-function lichtGevraagd(): boolean {
-  const hash = window.location.hash
-  const bronnen = [window.location.search, hash.includes('?') ? '?' + hash.split('?')[1] : '']
-  return bronnen.some((b) => new URLSearchParams(b).has('licht'))
+const donkerVoorkeur = window.matchMedia?.('(prefers-color-scheme: dark)')
+let luistert = false
+
+function zetDonker(aan: boolean) {
+  const wortel = document.documentElement
+  if (aan) wortel.setAttribute('data-donker', '')
+  else wortel.removeAttribute('data-donker')
 }
 
 export function pasThemaToe(thema: Thema = huidigThema()) {
@@ -57,8 +79,17 @@ export function pasThemaToe(thema: Thema = huidigThema()) {
   } else {
     wortel.removeAttribute('data-thema')
   }
-  if (lichtGevraagd()) wortel.setAttribute('data-licht', '')
-  else wortel.removeAttribute('data-licht')
+
+  const keuze = modus()
+  zetDonker(keuze === 'donker' || (keuze === 'auto' && !!donkerVoorkeur?.matches))
+
+  // Wisselt iemand halverwege de sessie van systeemthema, dan mag de app
+  // meebewegen — maar alleen zolang hij die keuze niet zelf heeft gemaakt.
+  if (keuze === 'auto' && donkerVoorkeur && !luistert) {
+    luistert = true
+    donkerVoorkeur.addEventListener('change', (e) => zetDonker(e.matches))
+  }
+
   try {
     localStorage.setItem(SLEUTEL, thema)
   } catch {
@@ -67,5 +98,5 @@ export function pasThemaToe(thema: Thema = huidigThema()) {
 }
 
 export function huidigThema(): Thema {
-  return uitAdres() ?? onthouden() ?? 'eigen'
+  return themaUitAdres() ?? onthouden() ?? 'eigen'
 }

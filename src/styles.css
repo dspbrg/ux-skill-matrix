@@ -1,127 +1,8 @@
 /* =====================================================================
-   UX Skill Matrix — visuele taal van dspbrg.com
-   Warm papier tegenover bijna-zwart, mint als accent, amber als tweede
-   stem, Space Grotesk voor koppen, Inter voor tekst, Space Mono voor
-   microlabels. Alle kleurcombinaties zijn nagerekend; de waarden in het
-   commentaar zijn gemeten contrastverhoudingen.
+   UX Skill Matrix — de componentlaag
+   Geen enkele kleur, maat of lettertype staat hier los: alles komt uit
+   dspbrg-theme.css, en coa-theme.css wisselt diezelfde tokens.
    ===================================================================== */
-
-:root {
-  --bg: #ebe5de;            /* papier */
-  --surface: #ffffff;
-  --surface-2: #f2ede6;
-  --border: #dcd5cc;
-  --border-strong: #888075;  /* 3,1:1 op papier — het is de rail zelf */
-  --text: #15141a;          /* 18,3:1 */
-  --text-2: #5c5851;        /*  7,1:1 */
-  --text-3: #635e57;        /*  5,1:1 op papier, 6,4:1 op wit */
-
-  /* Mint is op papier onbruikbaar helder (1,3:1), dus verdiept. */
-  --accent: #0a6b4c;        /*  5,2:1 op papier, 6,5:1 op wit */
-  --accent-soft: #e2f0ea;
-  --current: #0a6b4c;
-  /* Amber was te tam voor wat het moet dragen: dit is het doel, niet een
-     waarschuwing. Roze-rood, nagerekend op 6,0:1 tegen wit. */
-  --future: #c1174b;        /*  6,0:1 */
-  --on-accent: #ffffff;
-  --on-future: #ffffff;
-
-  --danger: #a3311f;
-  --ok: #0a6b4c;
-
-  --heat-1: #e6efe9;
-  --heat-2: #c8e0d4;
-  --heat-3: #a4cdbb;
-  --heat-4: #7ab89e;
-  --heat-5: #4ba081;
-  --heat-fg: #15141a;
-
-  /* Rollen die eerst hardgecodeerd in de regels stonden. Een thema kan alleen
-     overnemen wat een token is. */
-  --text-heading: var(--text);
-  --focus: var(--text);
-  --chrome: var(--surface);
-  --on-chrome: var(--text);
-  --on-chrome-muted: var(--text-2);
-  --on-chrome-accent: var(--accent);
-  --topbar-h: 64px;
-  --micro-family: var(--font-mono);
-  --micro-transform: uppercase;
-  --micro-tracking: .1em;
-
-  --font-display: "Space Grotesk", system-ui, sans-serif;
-  --font-ui: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-mono: "Space Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-
-  --fs-1: 11px;
-  --fs-2: 13px;
-  --fs-3: 15px;
-  --fs-4: 19px;
-  --fs-5: 33px;
-
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 24px;
-  --space-6: 32px;
-
-  --radius: 10px;
-  --radius-lg: 16px;
-  --shadow: 0 1px 2px rgba(21, 20, 26, .05), 0 8px 24px -14px rgba(21, 20, 26, .22);
-
-  /* Veert door en komt terug: de vorm landt in plaats van te schuiven. */
-  --spring: cubic-bezier(.34, 1.56, .64, 1);
-
-  color-scheme: light dark;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #15141a;
-    --surface: #1c1b22;
-    --surface-2: #232229;
-    --border: #2e2c36;
-    --border-strong: #6a6773;  /* 3,1:1 op de kaart */
-    --text: #ece6df;        /* 13,8:1 */
-    --text-2: #9a958e;      /*  5,8:1 */
-    --text-3: #948f86;      /*  5,3:1 op de kaart, 4,9:1 op surface-2 */
-
-    --accent: #3dffd2;      /* 13,4:1 */
-    --accent-soft: #12332b;
-    --current: #3dffd2;
-    --future: #ff4e7a;      /*  5,4:1 */
-    --on-accent: #0a1512;
-    --on-future: #15141a;
-
-    --danger: #f08a7a;
-    --ok: #3dffd2;
-
-    --heat-1: #1e2a27;
-    --heat-2: #23423a;
-    --heat-3: #295b4d;
-    --heat-4: #245b4d;
-    --heat-5: #29715f;
-    --heat-fg: #ece6df;
-
-    --shadow: 0 1px 2px rgba(0, 0, 0, .5), 0 10px 30px -16px rgba(0, 0, 0, .8);
-  }
-}
-
-/* Alleen tijdens het exporteren naar PNG: dwingt papier af, ongeacht het
-   thema van de kijker. Een donkere radar is zelden bruikbaar in een rapport. */
-.force-light {
-  --surface: #ffffff;
-  --surface-2: #f2ede6;
-  --border: #dcd5cc;
-  --border-strong: #888075;  /* 3,1:1 op papier — het is de rail zelf */
-  --text: #15141a;
-  --text-2: #5c5851;
-  --text-3: #635e57;
-  --accent: #0a6b4c;
-  --current: #0a6b4c;
-  --future: #c1174b;
-}
 
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; }
@@ -145,7 +26,7 @@ body {
   color: var(--text);
   font-family: var(--font-ui);
   font-size: var(--fs-3);
-  line-height: 1.5;
+  line-height: var(--lh-body);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -157,12 +38,12 @@ h1, h2, h3 {
   color: var(--text-heading);
   text-wrap: balance;
 }
-h1 { font-size: var(--fs-5); line-height: 1.15; max-width: 22ch; }
+h1 { font-size: var(--fs-5); line-height: var(--lh-h1); max-width: 22ch; }
 /* Stap 1 is één regel, stap 2 twee. Zonder vaste hoogte schuift de hele
    pagina bij elke tabwissel. */
-.kolom .kop h1 { min-height: calc(var(--fs-5) * 1.15 * 2); }
-h2 { font-size: var(--fs-4); line-height: 1.25; }
-h3 { font-size: var(--fs-3); line-height: 1.3; }
+.kolom .kop h1 { min-height: calc(var(--lh-h1) * 2); }
+h2 { font-size: var(--fs-4); line-height: var(--lh-h2); }
+h3 { font-size: var(--fs-h3); line-height: var(--lh-h3); }
 p { margin: 0; }
 a { color: var(--accent); }
 
@@ -231,6 +112,10 @@ a { color: var(--accent); }
 .small { font-size: var(--fs-2); }
 .mono { font-family: var(--font-mono); }
 
+/* Iconen staan op de tekstlijn en houden hun maat: een icoon in een knop mag
+   niet meekrimpen met de flexruimte. */
+.icoon { flex: none; }
+
 /* ---------------------------------------------------------------- controls */
 button, .btn {
   font: inherit; font-weight: 500;
@@ -238,6 +123,10 @@ button, .btn {
   border: 1px solid var(--border-strong);
   background: var(--surface);
   color: var(--text);
+  /* De hoogte kwam uit padding plus geërfde regelhoogte en landde daardoor
+     net naast de schaal (39 in plaats van 40). Nu is 40 de maat en vult de
+     padding de rest. */
+  min-height: 40px;
   padding: 8px 14px;
   cursor: pointer;
   transition: background .14s, border-color .14s, color .14s, transform .06s var(--spring);
@@ -253,7 +142,7 @@ button.ghost { border-color: transparent; background: transparent; color: var(--
 button.ghost:hover { background: var(--surface-2); color: var(--text); }
 button.danger { color: var(--danger); border-color: transparent; background: transparent; }
 button.danger:hover { background: color-mix(in srgb, var(--danger) 12%, transparent); }
-button.sm { padding: 5px 10px; font-size: var(--fs-2); }
+button.sm { min-height: 32px; padding: 4px 10px; font-size: var(--fs-2); }
 
 input[type="text"], input[type="password"], textarea, select {
   font: inherit;
@@ -264,8 +153,10 @@ input[type="text"], input[type="password"], textarea, select {
   background: var(--surface);
   color: var(--text);
 }
+/* Een veld kreeg de accentkleur met 1px afstand en een knop de focuskleur
+   met 2px: twee signalen voor dezelfde staat. */
 input:focus, textarea:focus, select:focus {
-  outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent;
+  outline: 2px solid var(--focus); outline-offset: 2px; border-color: transparent;
 }
 /* Neutraal en met offset, zodat "gefocust" niet lijkt op "geselecteerd". */
 :where(button, .btn, summary, a, [tabindex]):focus-visible {
@@ -280,7 +171,7 @@ label.field > span { display: block; font-size: var(--fs-2); color: var(--text-2
 .tabs button { border: none; background: transparent; color: var(--text-2); border-radius: 8px; padding: 7px 15px; }
 .tabs button[aria-current] {
   background: var(--surface); color: var(--text); font-weight: 600;
-  box-shadow: 0 1px 2px rgba(21, 20, 26, .14);
+  box-shadow: var(--shadow-licht);
 }
 
 .pill {
@@ -375,7 +266,7 @@ label.field > span { display: block; font-size: var(--fs-2); color: var(--text-2
 .baan-rail { position: absolute; left: 34px; right: 34px; top: 0; bottom: 0; }
 .baan-lijn {
   position: absolute; left: 0; right: 0; top: 50%; height: 2px;
-  margin-top: -1px; background: var(--border-strong); border-radius: 2px;
+  margin-top: -1px; background: var(--rail); border-radius: 2px;
 }
 .baan-gat {
   position: absolute; top: 50%; height: 2px; margin-top: -1px; border-radius: 2px;
@@ -406,16 +297,20 @@ label.field > span { display: block; font-size: var(--fs-2); color: var(--text-2
 }
 .halte:hover::before { opacity: 1; transform: scale(1); }
 .halte:hover .merk { border-color: var(--text-3); }
-.halte:focus-visible { outline: none; border-radius: 50%; }
+/* Het raakvlak is 44px en het merkteken 8 tot 20px. Een outline om de knop
+   zelf is dus een ring van 44px om een stip van 8: hij zou aanwijzen waar je
+   kúnt klikken, niet waar je staat. Daarom ligt de ring op het ronde vlak —
+   nog steeds 2px in de focuskleur, met 2px afstand. */
+.halte:focus-visible { outline: none; border-radius: 50%; } /* coa-lint-disable-line: de ring staat op ::before, om het merkteken in plaats van om het 44px raakvlak */
 .halte:focus-visible::before {
   opacity: 1; transform: scale(1);
-  box-shadow: 0 0 0 2px var(--focus);
+  outline: 2px solid var(--focus); outline-offset: 2px;
 }
 
 .merk {
   width: 8px; height: 8px; border-radius: 50%;
   background: var(--surface);
-  border: 2px solid var(--border-strong);
+  border: 2px solid var(--rail);
   box-sizing: border-box;
   transition: width .3s var(--spring), height .3s var(--spring),
               background .2s, border-color .2s, transform .2s var(--spring);
@@ -494,7 +389,7 @@ th.num { text-align: center; }
 
 /* 8. Een chip met waarde 1 had vrijwel geen vulling en las als leeg, terwijl
    een lege cel ernaast '–' toont. Twee betekenissen die er hetzelfde uitzien. */
-.heat { border: 1px solid color-mix(in srgb, var(--heat-fg) 18%, transparent); }
+.heat { border: 1px solid color-mix(in srgb, currentColor 18%, transparent); }
 .table-wrap { overflow-x: auto; }
 
 /* De vijf treden met hun nummer, als één dunne regel onder een tabel die in
@@ -517,7 +412,11 @@ th.num { text-align: center; }
 }
 td.num .cell { display: grid; grid-template-columns: 44px 34px; align-items: center;
                justify-content: center; gap: var(--space-1); }
-td.num .cell .to { text-align: left; font-size: var(--fs-1); color: var(--text-2); font-family: var(--micro-family); }
+/* Het pijltje is nu een icoon en geen letter meer: als tekst kreeg het de
+   grondlijn van het lettertype, als icoon moet het op het midden van het
+   getal staan. */
+td.num .cell .to { display: inline-flex; align-items: center; font-size: var(--fs-1);
+                   color: var(--text-2); font-family: var(--micro-family); }
 
 /* Alleen voor schermlezers: niet display:none, want dan wordt het ook niet
    voorgelezen. */
@@ -529,7 +428,7 @@ td.num .cell .to { text-align: left; font-size: var(--fs-1); color: var(--text-2
 .skip:focus {
   left: var(--space-5); top: var(--space-3); z-index: 30;
   background: var(--surface); color: var(--text);
-  padding: 8px 14px; border-radius: var(--radius); outline: 2px solid var(--text);
+  padding: 8px 14px; border-radius: var(--radius); outline: 2px solid var(--focus);
 }
 
 /* ---------------------------------------------------------------- overig */
