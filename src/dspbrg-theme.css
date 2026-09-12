@@ -61,6 +61,11 @@
   --micro-family: var(--font-mono);
   --micro-transform: uppercase;
   --micro-tracking: .1em;
+  /* Mono-kapitalen met ruime spatiëring lezen groter dan ze meten, dus de
+     microlabels kunnen hier onder de tekstschaal duiken. Een thema dat ze in
+     gewone zinsvorm zet kan dat niet, dus is het een token. */
+  --fs-micro: 9.5px;
+  --lh-micro: 1.5;
 
   --font-display: "Space Grotesk", system-ui, sans-serif;
   --font-ui: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;

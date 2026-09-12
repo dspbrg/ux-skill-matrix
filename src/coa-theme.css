@@ -82,6 +82,10 @@
   --micro-family: var(--font-ui);
   --micro-transform: none;
   --micro-tracking: 0;
+  /* Zonder kapitalen en zonder spatiëring is er niets dat de maat optisch
+     opvangt: hier is een microlabel gewoon een caption, 12 op 16. */
+  --fs-micro: 12px;
+  --lh-micro: 16px;
 
   /* App-schaal uit het contract: 12 · 14 · 16 · 20 · 24, op het 4px-grid */
   --fs-1: 12px;

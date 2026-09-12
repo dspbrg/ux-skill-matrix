@@ -207,7 +207,9 @@ label.field > span { display: block; font-size: var(--fs-2); color: var(--text-2
 .skill { padding: var(--space-5) 0; border-top: 1px solid var(--border); }
 .skill:first-child { border-top: none; padding-top: var(--space-1); }
 .skill-head { display: flex; align-items: baseline; gap: var(--space-3); margin-bottom: var(--space-2); }
-.skill-head .name { font-family: var(--font-display); font-weight: 500; font-size: var(--fs-3);
+/* Geen <h3> in de opmaak — de as wordt al als legenda aangekondigd — maar wel
+   de rol van een kop boven dit blok, dus ook die maat. */
+.skill-head .name { font-family: var(--font-display); font-weight: 500; font-size: var(--fs-h3);
                     letter-spacing: -.01em; }
 .skill-head .spacer { flex: 1; }
 .skill-desc { color: var(--text); font-size: var(--fs-2); margin: 0 0 var(--space-1); max-width: 58ch; }
@@ -340,7 +342,7 @@ label.field > span { display: block; font-size: var(--fs-2); color: var(--text-2
 .baan-ankers {
   display: flex; justify-content: space-between; gap: var(--space-5);
   margin: var(--space-2) 34px 0;
-  font-family: var(--micro-family); font-size: 9.5px; line-height: 1.5;
+  font-family: var(--micro-family); font-size: var(--fs-micro); line-height: var(--lh-micro);
   letter-spacing: var(--micro-tracking); color: var(--text-3);
 }
 .baan-ankers span { max-width: 46%; }
@@ -349,8 +351,10 @@ label.field > span { display: block; font-size: var(--fs-2); color: var(--text-2
 .halte-label { display: none; }
 
 .baan-labels {
-  position: relative; height: 15px; margin: 0 34px; overflow: visible;
-  font-family: var(--micro-family); font-size: 9.5px;
+  /* De labels staan absoluut, dus de rij heeft geen eigen hoogte. In em
+     omdat hij dan meeschaalt met de maat die het thema kiest. */
+  position: relative; height: 1.6em; margin: 0 34px; overflow: visible;
+  font-family: var(--micro-family); font-size: var(--fs-micro);
   letter-spacing: var(--micro-tracking); text-transform: var(--micro-transform);
   color: var(--text-3);
 }
