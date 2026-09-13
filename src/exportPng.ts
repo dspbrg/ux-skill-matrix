@@ -32,6 +32,8 @@ function svgText(text: string, x: number, y: number, size: number, fill: string,
   return el
 }
 
+import { ingebakkenLetters } from './lettersInline'
+
 export async function exportSvgAsPng(
   svg: SVGSVGElement,
   filename: string,
@@ -105,7 +107,10 @@ export async function exportSvgAsPng(
 
     if (scaleKey) {
       const el = svgText(scaleKey, cx, vy0 + vh0 + legendH - 8, 11, 'var(--text-3)')
-      el.setAttribute('font-family', 'ui-monospace, SFMono-Regular, Menlo, monospace')
+      // Op het scherm staat de schaalsleutel in de gewone UI-letter; hij stond
+      // hier op een systeem-monospace en week daarmee als enige regel van de
+      // PNG af van wat de deelnemer zag.
+      el.setAttribute('font-family', token('--font-ui', 'Inter, sans-serif'))
       clone.appendChild(el)
     }
 
@@ -142,6 +147,16 @@ export async function exportSvgAsPng(
       if (el.getAttribute('stop-color')?.includes('var(')) {
         el.setAttribute('stop-color', computed.stopColor)
       }
+    }
+
+    // De letters mee de SVG in, anders tekent de browser hem in Helvetica
+    // zodra hij als <img> wordt ingeladen. Lukt het ophalen niet, dan valt hij
+    // terug op de systeemletters en gaat de export gewoon door.
+    const letters = await ingebakkenLetters()
+    if (letters) {
+      const stijl = document.createElementNS(NS, 'style')
+      stijl.textContent = letters
+      clone.insertBefore(stijl, clone.firstChild)
     }
 
     const source = new XMLSerializer().serializeToString(clone)
