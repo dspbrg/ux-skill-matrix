@@ -60,8 +60,35 @@ const balk = `
   var schermen = ${JSON.stringify(SCHERMEN)}
   var thema = new URLSearchParams(location.search).get('thema') || localStorage.getItem('skillmatrix:thema') || 'eigen'
   function ga(hash) { location.hash = hash }
+
+  // Niet via de adresbalk en een reload: die twee vochten om dezelfde tik en
+  // de reload won, zodat er niets gebeurde. Dit is wat thema.ts ook doet.
+  var fontsGeladen = false
+  function laadFonts() {
+    if (fontsGeladen) return
+    fontsGeladen = true
+    var l = document.createElement('link')
+    l.rel = 'stylesheet'
+    l.href = 'https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700' +
+             '&family=JetBrains+Mono:wght@400;500&display=swap'
+    document.head.appendChild(l)
+  }
   function zetThema(naam) {
-    var u = new URL(location.href); u.searchParams.set('thema', naam); location.href = u.href; location.reload()
+    thema = naam
+    var w = document.documentElement
+    if (naam === 'coa') { w.setAttribute('data-thema', 'coa'); laadFonts() }
+    else { w.removeAttribute('data-thema') }
+    try { localStorage.setItem('skillmatrix:thema', naam) } catch (e) {}
+    // Staat het thema in de adresbalk, dan wint dat bij de volgende
+    // routewissel van de knop die je net indrukte. Dus haalt hij hem eruit.
+    try {
+      var u = new URL(location.href)
+      if (u.searchParams.has('thema')) {
+        u.searchParams.delete('thema')
+        history.replaceState(null, '', u.pathname + u.search + u.hash)
+      }
+    } catch (e) {}
+    teken()
   }
   function teken() {
     var bar = document.getElementById('wb')
