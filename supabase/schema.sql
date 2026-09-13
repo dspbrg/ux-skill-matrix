@@ -121,6 +121,13 @@ language sql immutable as $$
   );
 $$;
 
+-- De treden zijn werkwoorden en geen voltooide deelwoorden. "Meegedaan" en
+-- "Zelf gedaan" lazen als een stickerkaart — dat vraag je een kind over een
+-- tekening, niet een collega over zijn vak. Een werkwoord benoemt wat je op dat
+-- niveau doet in plaats van wat je hebt afgevinkt, en het houdt de schaal weg
+-- van bijvoeglijke naamwoorden als "bekwaam" of "ervaren", die over de persoon
+-- gaan in plaats van over het werk.
+--
 -- De schaal gaat over het werk, niet over de persoon. Twee eerdere versies
 -- gingen daar onderuit: "met vangnet" zette de invuller neer als iemand die
 -- beschermd moest worden, en "met review" maakte een omstandigheid tot
@@ -160,11 +167,11 @@ $$;
 create or replace function default_scale() returns jsonb
 language sql immutable as $$
   select jsonb_build_array(
-    jsonb_build_object('level',1,'label','Nog niet',    'description','Je weet wat het is, maar je hebt het nog niet gedaan.'),
-    jsonb_build_object('level',2,'label','Meegedaan',   'description','Je deed mee; iemand anders bepaalde de aanpak.'),
-    jsonb_build_object('level',3,'label','Zelf gedaan', 'description','Je hebt het zelf gedraaid, bij een vraag die al scherp was.'),
-    jsonb_build_object('level',4,'label','Eigen koers' ,'description','Je hebt het in verschillende situaties gedaan en kiest de aanpak zelf, ook als de vraag nog open is.'),
-    jsonb_build_object('level',5,'label','Expert',      'description','Anderen komen bij jou, en je maakt het overdraagbaar.')
+    jsonb_build_object('level',1,'label','Nog niet',  'description','Je hebt hier nog niet aan gewerkt.'),
+    jsonb_build_object('level',2,'label','Meewerken', 'description','Je draagt bij; iemand anders richt het werk in.'),
+    jsonb_build_object('level',3,'label','Uitvoeren', 'description','Je voert het zelfstandig uit, bij een vraag die al scherp is.'),
+    jsonb_build_object('level',4,'label','Bepalen',   'description','Je bepaalt de aanpak zelf, ook bij een open vraag, in uiteenlopende situaties.'),
+    jsonb_build_object('level',5,'label','Overdragen','description','Collega''s schakelen je in, en je maakt je werkwijze overdraagbaar.')
   );
 $$;
 
