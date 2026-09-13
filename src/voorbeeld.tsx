@@ -15,7 +15,7 @@ const scale = [
   { level: 1, label: 'Nog niet', description: 'Je weet wat het is, maar je hebt het nog niet gedaan.' },
   { level: 2, label: 'Meegedaan', description: 'Je deed mee; iemand anders bepaalde de aanpak.' },
   { level: 3, label: 'Zelf gedaan', description: 'Je hebt het zelf gedraaid, bij een vraag die al scherp was.' },
-  { level: 4, label: 'Eigen koers', description: 'Je kiest de aanpak zelf, ook als de vraag nog open is.' },
+  { level: 4, label: 'Eigen koers', description: 'Je hebt het in verschillende situaties gedaan en kiest de aanpak zelf, ook als de vraag nog open is.' },
   { level: 5, label: 'Expert', description: 'Anderen komen bij jou, en je maakt het overdraagbaar.' },
 ]
 

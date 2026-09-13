@@ -137,10 +137,23 @@ $$;
 -- helft telt blootstelling: heb je het gedaan, en wie trok het. Die vraag is
 -- op bij trede 3 — daarboven heeft iedereen met een paar jaar ervaring hem
 -- allang beantwoord, en een schaal die daar doortelt loopt vol op 5.
--- De bovenste helft meet daarom oordeel en overdracht: kies jij de aanpak
--- als de vraag nog niet vaststaat (4), en kan iemand anders het van je
--- overnemen (5). Zo blijft er boven een half jaar ervaring nog iets te gaan,
--- en betekent een 5 iets anders dan "doet het al een tijdje".
+-- De bovenste helft meet daarom repertoire en overdracht: heb je het in
+-- verschillende situaties gedaan en kies jij de aanpak als de vraag nog niet
+-- vaststaat (4), en kan iemand anders het van je overnemen (5). Zo blijft er
+-- boven een half jaar ervaring nog iets te gaan, en betekent een 5 iets
+-- anders dan "doet het al een tijdje".
+--
+-- Bewust geen aantal in trede 4, al ligt "drie keer gedaan" voor de hand. Een
+-- telling meet waar iemand op stond en niet wat hij kan: wie dit jaar op het
+-- onderzoekszware traject zat telt hoger dan wie de beheerstroom draaide. Ze
+-- schaalt ook niet over de assen — drie usability tests is veel, drie keer een
+-- knoptekst schrijven is dinsdag — en ze dwingt per as een definitie af van
+-- wat meetelt. Dat zijn tien definities die erbij uitgelegd moeten worden, en
+-- juist dat hoeft hier niet.
+--
+-- Om dezelfde reden staat er nergens "ken de theorie". Dat is een andere as,
+-- geen lagere trede: wie zes sessies faciliteerde zonder een boek open te
+-- slaan zou eronder komen te staan.
 --
 -- Trede 3 is daarmee bewust begrensd: één keer of tien keer zelf gedraaid
 -- zitten er allebei in, maar allebei bij een vraag die al scherp was.
@@ -150,7 +163,7 @@ language sql immutable as $$
     jsonb_build_object('level',1,'label','Nog niet',    'description','Je weet wat het is, maar je hebt het nog niet gedaan.'),
     jsonb_build_object('level',2,'label','Meegedaan',   'description','Je deed mee; iemand anders bepaalde de aanpak.'),
     jsonb_build_object('level',3,'label','Zelf gedaan', 'description','Je hebt het zelf gedraaid, bij een vraag die al scherp was.'),
-    jsonb_build_object('level',4,'label','Eigen koers' ,'description','Je kiest de aanpak zelf, ook als de vraag nog open is.'),
+    jsonb_build_object('level',4,'label','Eigen koers' ,'description','Je hebt het in verschillende situaties gedaan en kiest de aanpak zelf, ook als de vraag nog open is.'),
     jsonb_build_object('level',5,'label','Expert',      'description','Anderen komen bij jou, en je maakt het overdraagbaar.')
   );
 $$;
