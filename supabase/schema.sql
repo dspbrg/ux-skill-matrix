@@ -533,7 +533,20 @@ begin
   end loop;
 end $$;
 
--- interne helpers blijven dicht
-revoke execute on function public._session_by_admin(text,text) from anon, authenticated;
-revoke execute on function public._skills_json(uuid) from anon, authenticated;
-revoke execute on function public.new_token() from anon, authenticated;
+-- Interne helpers blijven dicht — en dat moet ook van public, niet alleen van
+-- anon en authenticated. Postgres geeft EXECUTE op een nieuwe functie namelijk
+-- standaard aan PUBLIC, en Supabase geeft er via default privileges nog een
+-- expliciete grant aan anon bovenop. Wie alleen die laatste intrekt haalt één
+-- van de twee weg: de rol erft het recht daarna gewoon via PUBLIC en kan de
+-- functie nog steeds aanroepen. Dat was hier zo, en het viel niet op omdat de
+-- revoke zelf zonder klagen slaagde.
+--
+-- Wat er lekte: _skills_json(uuid) gaf de assen van elke sessie terug zonder
+-- enige controle, en _session_by_admin gaf bij een kloppende sleutel de hele
+-- sessierij inclusief de bcrypt-hash van die sleutel. Allebei buiten de
+-- credentiaalcontrole om die de hele opzet nu juist moet afdwingen.
+revoke execute on function public._session_by_admin(text,text) from public, anon, authenticated;
+revoke execute on function public._skills_json(uuid)           from public, anon, authenticated;
+revoke execute on function public.new_token()                  from public, anon, authenticated;
+revoke execute on function public.default_skills()             from public, anon, authenticated;
+revoke execute on function public.default_scale()              from public, anon, authenticated;
