@@ -128,21 +128,30 @@ $$;
 -- niet van wat je kunt. Wie in een klein team iets één keer alleen deed
 -- zonder dat iemand ernaar keek, viel daardoor door de ladder heen.
 --
--- De grens die er wél toe doet ligt tussen 3 en 4, en die gaat over kunnen
--- onderbouwen waarom je het zo aanpakt. Bewust niet over zekerheid: een zin
--- als "of het goed was weet je niet" is een uitspraak over iemands twijfel,
--- en die lees je hardop naast je collega.
+-- De grens die er wél toe doet ligt tussen 3 en 4, en hij gaat over wie de
+-- aanpak bepaalt. Bewust niet over zekerheid: een zin als "of het goed was
+-- weet je niet" is een uitspraak over iemands twijfel, en die lees je hardop
+-- naast je collega.
 --
--- Trede 3 is daarmee breed — één keer zelf gedaan en tien keer zelf gedaan
--- zitten er allebei in.
+-- Halverwege verandert de ladder van maatstaf, en dat is opzet. De onderste
+-- helft telt blootstelling: heb je het gedaan, en wie trok het. Die vraag is
+-- op bij trede 3 — daarboven heeft iedereen met een paar jaar ervaring hem
+-- allang beantwoord, en een schaal die daar doortelt loopt vol op 5.
+-- De bovenste helft meet daarom oordeel en overdracht: kies jij de aanpak
+-- als de vraag nog niet vaststaat (4), en kan iemand anders het van je
+-- overnemen (5). Zo blijft er boven een half jaar ervaring nog iets te gaan,
+-- en betekent een 5 iets anders dan "doet het al een tijdje".
+--
+-- Trede 3 is daarmee bewust begrensd: één keer of tien keer zelf gedraaid
+-- zitten er allebei in, maar allebei bij een vraag die al scherp was.
 create or replace function default_scale() returns jsonb
 language sql immutable as $$
   select jsonb_build_array(
     jsonb_build_object('level',1,'label','Nog niet',    'description','Je weet wat het is, maar je hebt het nog niet gedaan.'),
-    jsonb_build_object('level',2,'label','Meegelopen',  'description','Je liep mee; iemand anders trok het.'),
-    jsonb_build_object('level',3,'label','Zelf gedaan', 'description','Je hebt het zelf gedaan, van begin tot eind.'),
-    jsonb_build_object('level',4,'label','Zelfstandig', 'description','Je doet het zelf en kunt onderbouwen waarom je het zo aanpakt.'),
-    jsonb_build_object('level',5,'label','Expert',      'description','Anderen komen bij jou.')
+    jsonb_build_object('level',2,'label','Meegedaan',   'description','Je deed mee; iemand anders bepaalde de aanpak.'),
+    jsonb_build_object('level',3,'label','Zelf gedaan', 'description','Je hebt het zelf gedraaid, bij een vraag die al scherp was.'),
+    jsonb_build_object('level',4,'label','Eigen koers' ,'description','Je kiest de aanpak zelf, ook als de vraag nog open is.'),
+    jsonb_build_object('level',5,'label','Expert',      'description','Anderen komen bij jou, en je maakt het overdraagbaar.')
   );
 $$;
 

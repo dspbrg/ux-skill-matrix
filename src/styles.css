@@ -371,6 +371,36 @@ label.field > span { display: block; font-size: var(--fs-2); color: var(--text-2
   text-transform: var(--micro-transform);
 }
 
+/* ---------------------------------------------------------------- niveaus */
+/* Naslag valt over de pagina heen en niet erin: een <details> duwde de hele
+   lijst assen omlaag, zodat de as waar je net over nadacht wegschoof. */
+.niveaus { position: relative; display: inline-block; margin-bottom: var(--space-2); }
+.niveaus-paneel {
+  position: absolute; z-index: 20; top: calc(100% + var(--space-1)); left: 0;
+  width: min(400px, calc(100vw - var(--space-6)));
+  background: var(--surface-overlay); color: var(--text);
+  border: 1px solid var(--border); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-paneel); padding: var(--space-4);
+}
+.niveaus-paneel dl { margin: 0; display: grid; gap: var(--space-3); }
+.niveaus-paneel dt {
+  display: flex; align-items: baseline; gap: var(--space-2);
+  font-weight: 600; font-size: var(--fs-2);
+}
+/* Het cijfer is de brug naar de schaal zelf: daar staat 4 op de as, hier staat
+   4 voor de naam. */
+.niveaus-paneel .trede {
+  flex: none; min-width: 18px; text-align: center;
+  font-family: var(--micro-family); font-size: var(--fs-1);
+  color: var(--text-3); font-weight: 400;
+}
+.niveaus-paneel dd { margin: 0 0 0 26px; font-size: var(--fs-2); color: var(--text-2); }
+.niveaus-paneel .tussen {
+  margin-top: var(--space-4); padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+  font-size: var(--fs-2); color: var(--text-3);
+}
+
 /* ---------------------------------------------------------------- legenda & tabellen */
 .legend { display: flex; gap: var(--space-4); flex-wrap: wrap; font-size: var(--fs-2); color: var(--text-2); }
 .legend .item { display: inline-flex; align-items: center; gap: 7px; }

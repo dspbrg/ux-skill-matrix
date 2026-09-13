@@ -102,13 +102,18 @@
   --lh-h3: 24px;
   --lh-body: 20px;
 
-  /* ---- vorm: radius 6 controls, 8 vlakken, lijnen 1px ---------------- */
-  --radius: 6px;
-  --radius-lg: 8px;
+  /* ---- vorm: 8 voor knoppen en velden, 12 voor kaarten en panelen ---- */
+  --radius: 8px;
+  --radius-lg: 12px;
 
-  /* Elevatie is teal-getint. Kaarten in een grid: alleen rand, geen schaduw. */
-  --shadow: 0 1px 2px rgba(0, 45, 54, .06);
-  --shadow-licht: 0 1px 2px rgba(0, 45, 54, .12);
+  /* Elevatie in twee lagen, zoals daglicht: een brede zachte omgevings-
+     schaduw plus een smalle contactschaduw. xs voor een kaart, md voor een
+     popover — wie meer schaduw nodig heeft om gezien te worden staat op de
+     verkeerde plek. */
+  --shadow: 0 1px 2px 0 rgba(43, 42, 39, .05);
+  --shadow-licht: 0 1px 3px 0 rgba(43, 42, 39, .07), 0 1px 2px -1px rgba(43, 42, 39, .05);
+  --shadow-paneel: 0 8px 24px -4px rgba(43, 42, 39, .10), 0 2px 6px -2px rgba(43, 42, 39, .06);
+  --surface-overlay: #ffffff;
 
   /* Motion: 100ms hover, 150ms focus, easing uit het contract. */
   --spring: cubic-bezier(.2, 0, 0, 1);
@@ -160,6 +165,8 @@
   --on-chrome-muted: #b0bdc1;  /* 9,3:1 */
   --on-chrome-accent: #d9a730; /* 8,2:1 */
   --shadow: 0 1px 2px rgba(0, 0, 0, .4);
+  --shadow-paneel: 0 8px 24px -4px rgba(0, 0, 0, .5), 0 2px 6px -2px rgba(0, 0, 0, .4);
+  --surface-overlay: #064855;  /* surface-overlay@dark · primary-800 */
 }
 
 /* ---------------------------------------------------------------------

@@ -13,10 +13,10 @@ import './coa-theme.css'
 
 const scale = [
   { level: 1, label: 'Nog niet', description: 'Je weet wat het is, maar je hebt het nog niet gedaan.' },
-  { level: 2, label: 'Meegelopen', description: 'Je liep mee; iemand anders trok het.' },
-  { level: 3, label: 'Zelf gedaan', description: 'Je hebt het zelf gedaan, van begin tot eind.' },
-  { level: 4, label: 'Zelfstandig', description: 'Je doet het zelf en kunt onderbouwen waarom je het zo aanpakt.' },
-  { level: 5, label: 'Expert', description: 'Anderen komen bij jou.' },
+  { level: 2, label: 'Meegedaan', description: 'Je deed mee; iemand anders bepaalde de aanpak.' },
+  { level: 3, label: 'Zelf gedaan', description: 'Je hebt het zelf gedraaid, bij een vraag die al scherp was.' },
+  { level: 4, label: 'Eigen koers', description: 'Je kiest de aanpak zelf, ook als de vraag nog open is.' },
+  { level: 5, label: 'Expert', description: 'Anderen komen bij jou, en je maakt het overdraagbaar.' },
 ]
 
 const assen: [string, string, string][] = [

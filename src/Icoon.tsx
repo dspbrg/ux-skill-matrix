@@ -15,6 +15,8 @@ const PADEN = {
   kruis: ['M18 6 6 18', 'm6 6 12 12'],
   plus: ['M5 12h14', 'M12 5v14'],
   download: ['M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4', 'm7 10 5 5 5-5', 'M12 15V3'],
+  // De cirkel van lucide-info als pad, want dit bestand tekent alleen paden.
+  info: ['M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0', 'M12 16v-4', 'M12 8h.01'],
 } as const
 
 export type IcoonNaam = keyof typeof PADEN

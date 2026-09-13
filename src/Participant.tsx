@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import Niveaus from './Niveaus'
 import Radar from './Radar'
 import { rpc } from './supabase'
 import type { ParticipantPayload, Rating, ScaleLevel, Skill, State } from './types'
@@ -263,19 +264,7 @@ export default function Participant({ token }: { token: string }) {
               </div>
             </div>
 
-            <details style={{ marginBottom: 'var(--space-2)' }}>
-              <summary className="small muted" style={{ cursor: 'pointer' }}>Wat betekenen de niveaus?</summary>
-              <ol className="small muted" style={{ paddingLeft: 'var(--space-5)', marginTop: 'var(--space-2)', display: 'grid', gap: 'var(--space-1)' }}>
-                {scale.map((lv) => (
-                  <li key={lv.level} value={lv.level}>
-                    <strong style={{ color: 'var(--text)' }}>{lv.label}</strong> — {lv.description}
-                  </li>
-                ))}
-              </ol>
-              <p className="small muted" style={{ marginTop: 'var(--space-2)' }}>
-                Tussen elke twee treden zit een extra positie, voor als je er precies tussenin zit.
-              </p>
-            </details>
+            <Niveaus scale={scale} />
 
             {skills.map((skill) => {
               const value = values[skill.id]?.[state]
