@@ -607,6 +607,20 @@ button.groot { justify-content: center; padding: 11px 18px; }
   * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
 
+/* Wie is waar: één regel per persoon, zodat je tijdens de sessie kunt zien
+   waar je op wacht. */
+.wachtrij-rij {
+  flex-wrap: nowrap; gap: var(--space-3);
+  padding: var(--space-3) 0; border-top: 1px solid var(--border);
+}
+.wachtrij-rij:first-child { border-top: none; padding-top: 0; }
+.wachtrij-rij .naam { font-weight: 600; }
+/* De balken moeten onder elkaar uitkomen, anders verspringen ze met de lengte
+   van iemands naam en rol. */
+.wachtrij-rij .spacer { flex: 1; }
+.wachtrij-rij .voortgang,
+.wachtrij-rij .pill { flex: none; }
+
 /* ---------------------------------------------------------------- voortgang */
 /* Voortgang hoort bij het profiel, niet in een eigen kaart met een grote ring
    naast een korte zin — dat stond uit balans in deze kolom. */

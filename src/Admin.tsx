@@ -247,8 +247,60 @@ function Overview({ data, onAddPeople }: { data: AdminPayload; onAddPeople: () =
     )
   }
 
+  // Hoeveel assen iemand heeft aangeraakt. Alleen 'nu' telt: het doel vult
+  // zich deels vanzelf als je een score omhoog zet.
+  const gevuldPer = new Map<string, number>()
+  for (const r of ratings) {
+    if (r.state !== 'current') continue
+    gevuldPer.set(r.participant_id, (gevuldPer.get(r.participant_id) ?? 0) + 1)
+  }
+
+  const wachtrij = (
+    <div className="card">
+      <div className="card-head">
+        <div>
+          <h2>{ratings.length === 0 ? 'Nog niemand begonnen' : 'Wie is waar'}</h2>
+        </div>
+        <span className="spacer" />
+        <button className={ratings.length === 0 ? 'primary' : ''} onClick={onAddPeople}>
+          Links delen
+        </button>
+      </div>
+      <div className="stack">
+        {participants.map((p) => {
+          const gevuld = gevuldPer.get(p.id) ?? 0
+          return (
+            <div key={p.id} className="row wachtrij-rij">
+              <span className="naam">{p.name}</span>
+              {p.role && <span className="muted small">{p.role}</span>}
+              <span className="spacer" />
+              {p.submitted_at ? (
+                <span className="pill">Ingediend</span>
+              ) : (
+                <span className="voortgang">
+                  <span className="balk">
+                    <span style={{ width: `${Math.round((gevuld / Math.max(skills.length, 1)) * 100)}%` }} />
+                  </span>
+                  <span className="telling">{gevuld}/{skills.length}</span>
+                </span>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+
+  // Een radar zonder scores is een leeg web, een groeitabel zonder scores is
+  // een kolom streepjes, en het rooster ernaast is dat drie keer. Die drie
+  // blokken zeggen pas iets zodra er één score in staat.
+  if (ratings.length === 0) return wachtrij
+
   return (
     <>
+      {submittedCount < participants.length && (
+        <div style={{ marginBottom: 'var(--space-5)' }}>{wachtrij}</div>
+      )}
       <div className="grid-2 wide-right" style={{ alignItems: 'start' }}>
         <div className="card">
           <div className="card-head">
