@@ -587,8 +587,8 @@ function People({
               const scores = data.ratings.filter((r) => r.participant_id === p.id).length
               const total = data.skills.length * 2
               return (
-                <div key={p.id} className="row" style={{ flexWrap: 'nowrap', gap: 'var(--space-4)', padding: 'var(--space-3) 0', borderTop: '1px solid var(--border)' }}>
-                  <div style={{ minWidth: 170 }}>
+                <div key={p.id} className="row deelnemer-rij">
+                  <div className="wie">
                     <div style={{ fontWeight: 600 }}>{p.name}</div>
                     {p.role && <div className="small muted">{p.role}</div>}
                   </div>
@@ -598,9 +598,11 @@ function People({
                       {copied === p.token ? 'Gekopieerd' : 'Kopiëren'}
                     </button>
                   </div>
+                  {/* Vaste kolom: zonder dat eindigt elk linkvak op een andere
+                      x omdat 'Ingediend · 12/22' breder is dan '0/22'. */}
                   <span
-                    className={`pill ${p.submitted_at && scores === total ? 'ok' : ''}`}
-                    style={{ whiteSpace: 'nowrap', ...(p.submitted_at && scores !== total ? { color: 'var(--future)' } : {}) }}
+                    className={`pill stand ${p.submitted_at && scores === total ? 'ok' : ''}`}
+                    style={p.submitted_at && scores !== total ? { color: 'var(--future)' } : undefined}
                   >
                     {p.submitted_at
                       ? scores === total ? 'Ingediend' : `Ingediend · ${scores}/${total}`
@@ -739,7 +741,9 @@ function Terms({
           </button>
         </div>
 
-        <div className="stack">
+        {/* Acht pixels binnen een skill en acht ertussen maakte van elf assen
+            één onafgebroken ritme van drieëndertig velden. */}
+        <div className="stack" style={{ gap: 'var(--space-5)' }}>
           {skills.map((s, i) => (
             <div key={s.id} className="row" style={{ flexWrap: 'nowrap', alignItems: 'flex-start', gap: 'var(--space-2)' }}>
               <div className="stack" style={{ gap: 'var(--space-1)', paddingTop: 'var(--space-1)' }}>
