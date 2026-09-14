@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Niveaus from './Niveaus'
+import { pasSessieThemaToe } from './thema'
 import Radar from './Radar'
 import { rpc } from './supabase'
 import type { ParticipantPayload, Rating, ScaleLevel, Skill, State } from './types'
@@ -46,6 +47,8 @@ export default function Participant({ token }: { token: string }) {
       .then((d) => {
         if (!alive) return
         setData(d)
+        // Het thema hoort bij de sessie, niet bij deze browser.
+        pasSessieThemaToe(`p:${token}`, d.session.theme)
         setValues(toValues(d.ratings))
         setSubmitted(Boolean(d.participant.submitted_at))
         setKlaar(Boolean(d.participant.submitted_at))

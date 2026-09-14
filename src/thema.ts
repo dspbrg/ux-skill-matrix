@@ -71,7 +71,47 @@ function zetDonker(aan: boolean) {
   else wortel.removeAttribute('data-donker')
 }
 
-export function pasThemaToe(thema: Thema = huidigThema()) {
+/**
+ * Het thema dat bij een sessie hoort. Een deelnemer krijgt wat de facilitator
+ * voor die sessie heeft ingesteld — niet wat er toevallig in zijn browser staat
+ * van een vorige keer, want dan zie je bij het COA het thema van een andere
+ * opdrachtgever. Alleen ?thema= in de adresbalk gaat er nog overheen, zodat
+ * testen mogelijk blijft.
+ *
+ * We onthouden het per sessie, zodat een tweede bezoek meteen goed opent in
+ * plaats van een tel het standaardthema te laten zien.
+ */
+export function pasSessieThemaToe(sleutel: string, uitSessie?: string | null) {
+  const bewaard = `${SLEUTEL}:sessie:${sleutel}`
+  const geldig = (w: unknown): w is Thema => w === 'coa' || w === 'eigen'
+  let thema: Thema | null = themaUitAdres()
+  if (!thema && geldig(uitSessie)) {
+    thema = uitSessie
+    try { localStorage.setItem(bewaard, uitSessie) } catch { /* privémodus */ }
+  }
+  if (!thema) {
+    try {
+      const w = localStorage.getItem(bewaard)
+      if (geldig(w)) thema = w
+    } catch { /* privémodus */ }
+  }
+  pasThemaToe(thema ?? 'eigen', false)
+}
+
+/** Het thema dat bij deze sessie hoort, als we het al eerder zagen. */
+export function onthoudenVoor(sleutel: string): Thema {
+  try {
+    const w = localStorage.getItem(`${SLEUTEL}:sessie:${sleutel}`)
+    if (w === 'coa' || w === 'eigen') return w
+  } catch { /* privémodus */ }
+  return 'eigen'
+}
+
+/**
+ * @param onthoud  false voor een thema dat van een sessie komt: dat is niet
+ *   jouw keuze en moet dus ook niet jouw standaard worden.
+ */
+export function pasThemaToe(thema: Thema = huidigThema(), onthoud = true) {
   const wortel = document.documentElement
   if (thema === 'coa') {
     wortel.setAttribute('data-thema', 'coa')
@@ -90,10 +130,12 @@ export function pasThemaToe(thema: Thema = huidigThema()) {
     donkerVoorkeur.addEventListener('change', (e) => zetDonker(e.matches))
   }
 
-  try {
-    localStorage.setItem(SLEUTEL, thema)
-  } catch {
-    // privémodus: dan geldt de keuze alleen voor deze pagina
+  if (onthoud) {
+    try {
+      localStorage.setItem(SLEUTEL, thema)
+    } catch {
+      // privémodus: dan geldt de keuze alleen voor deze pagina
+    }
   }
 }
 

@@ -58,7 +58,7 @@ nu.forEach((rij, pi) => rij.forEach((v, si) => {
   ratings.push({ participant_id: `p${pi}`, skill_id: `s${si}`, state: 'future', value: Math.min(9, v + (si % 3) + 1) })
 }))
 
-const session = { id: 'x', code: 'DEMO', name: 'COA · UX-team najaar 2026', scale }
+const session = { id: 'x', code: 'DEMO', name: 'COA · UX-team najaar 2026', scale, theme: 'eigen' as const }
 
 function antwoord(fn: string, a: Record<string, unknown>): unknown {
   const wie = (token: string) => deelnemers.find((p) => p.token === token)!
@@ -66,7 +66,8 @@ function antwoord(fn: string, a: Record<string, unknown>): unknown {
     case 'get_participant': {
       const p = wie(a.p_token as string)
       return {
-        session: { name: session.name, code: session.code, scale },
+        // De schakelaar rechtsonder bepaalt hier het thema, niet de sessie.
+        session: { name: session.name, code: session.code, scale, theme: null as unknown as 'eigen' },
         participant: { id: p.id, name: p.name, role: p.role, submitted_at: p.submitted_at },
         skills,
         ratings: ratings.filter((r) => r.participant_id === p.id).map(({ skill_id, state, value }) => ({ skill_id, state, value })),

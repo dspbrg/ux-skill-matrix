@@ -2,7 +2,8 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import Radar from './Radar'
 import { Icoon } from './Icoon'
 import { rpc, uitloggen } from './supabase'
-import type { AdminPayload, ScaleLevel, Skill, State } from './types'
+import { pasSessieThemaToe } from './thema'
+import type { AdminPayload, ScaleLevel, Skill, State, Thema } from './types'
 
 type Tab = 'overview' | 'people' | 'terms'
 
@@ -23,7 +24,9 @@ export default function Admin({ initialCode }: { initialCode: string }) {
   const load = useCallback(async () => {
     setError('')
     try {
-      setData(await rpc<AdminPayload>('admin_get', { p_code: code, }))
+      const d = await rpc<AdminPayload>('admin_get', { p_code: code })
+      setData(d)
+      pasSessieThemaToe(`s:${code}`, d.session.theme)
     } catch (e) {
       setData(null)
       setError((e as Error).message)
@@ -573,6 +576,7 @@ function Terms({
   const [skills, setSkills] = useState<Skill[]>(data.skills)
   const [scale, setScale] = useState<ScaleLevel[]>(data.session.scale)
   const [sessionName, setSessionName] = useState(data.session.name)
+  const [theme, setTheme] = useState<Thema>(data.session.theme)
   const [busy, setBusy] = useState(false)
   const [ok, setOk] = useState('')
   const [confirmCode, setConfirmCode] = useState('')
@@ -585,7 +589,8 @@ function Terms({
 
   const dirtySkills = JSON.stringify(skills) !== JSON.stringify(data.skills)
   const dirtyScale =
-    JSON.stringify(scale) !== JSON.stringify(data.session.scale) || sessionName !== data.session.name
+    JSON.stringify(scale) !== JSON.stringify(data.session.scale) || sessionName !== data.session.name ||
+    theme !== data.session.theme
 
   useEffect(() => { meldOnbewaard(dirtySkills || dirtyScale) }, [dirtySkills, dirtyScale, meldOnbewaard])
 
@@ -633,6 +638,7 @@ function Terms({
       await rpc('admin_update_session', {
         p_code: code, p_name: sessionName,
         p_scale: scale.map((lv, i) => ({ ...lv, level: i + 1 })),
+        p_theme: theme,
       })
       await reload()
       flash('Schaal bijgewerkt')
@@ -752,6 +758,21 @@ function Terms({
           <input type="text" value={sessionName} onChange={(e) => setSessionName(e.target.value)} />
         </label>
 
+        {/* Het thema hoort bij de sessie: één team, één opdrachtgever. Wie zijn
+            link opent krijgt dit te zien, ongeacht wat er in zijn browser staat
+            van een sessie voor iemand anders. */}
+        <fieldset className="field thema-keuze" style={{ marginBottom: 'var(--space-4)' }}>
+          <legend>Huisstijl</legend>
+          {([['eigen', 'dspbrg'], ['coa', 'COA']] as const).map(([waarde, label]) => (
+            <label key={waarde}>
+              <input type="radio" name="thema" value={waarde}
+                checked={theme === waarde}
+                onChange={() => setTheme(waarde)} />
+              <span>{label}</span>
+            </label>
+          ))}
+        </fieldset>
+
         <div className="stack">
           {scale.map((lv, i) => (
             <div key={i} className="row" style={{ flexWrap: 'nowrap', alignItems: 'flex-start', gap: 'var(--space-3)' }}>
@@ -775,7 +796,8 @@ function Terms({
             aankan. Meer liet de deelnemer op een databasefout lopen. */}
         <button className="sm" style={{ marginTop: 'var(--space-4)' }} disabled={scale.length >= 5}
           onClick={() => setScale((s) => [...s, { level: s.length + 1, label: '', description: '' }])}>
-          + Niveau toevoegen
+          <Icoon naam="plus" />
+          Niveau toevoegen
         </button>
         <p className="small muted" style={{ marginTop: 'var(--space-3)' }}>
           Let op: een niveau weghalen verandert de betekenis van scores die al zijn gegeven. Doe dat bij

@@ -36,15 +36,18 @@ export interface Participant {
   created_at: string
 }
 
+export type Thema = 'eigen' | 'coa'
+
 export interface SessionInfo {
   id?: string
   code: string
   name: string
   scale: ScaleLevel[]
+  theme: Thema
 }
 
 export interface ParticipantPayload {
-  session: { name: string; code: string; scale: ScaleLevel[] }
+  session: { name: string; code: string; scale: ScaleLevel[]; theme: Thema }
   participant: { id: string; name: string; role: string; submitted_at: string | null }
   skills: Skill[]
   ratings: Rating[]

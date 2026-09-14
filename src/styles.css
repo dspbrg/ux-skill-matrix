@@ -375,6 +375,23 @@ label.field > span { display: block; font-size: var(--fs-2); color: var(--text-2
   text-transform: var(--micro-transform);
 }
 
+/* De huisstijlkeuze: twee radio's die als één keuze lezen. */
+.thema-keuze { border: none; padding: 0; margin: 0; }
+.thema-keuze legend { display: block; font-size: var(--fs-2); color: var(--text-2); margin-bottom: 5px; padding: 0; }
+.thema-keuze { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.thema-keuze legend { flex-basis: 100%; }
+.thema-keuze label {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  min-height: 40px; padding: 0 var(--space-3);
+  border: 1px solid var(--border-strong); border-radius: var(--radius);
+  background: var(--surface); cursor: pointer;
+}
+.thema-keuze label:has(input:checked) {
+  border-color: var(--accent); background: var(--accent-soft); color: var(--text);
+}
+.thema-keuze label:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
+.thema-keuze input { accent-color: var(--accent); margin: 0; }
+
 /* ---------------------------------------------------------------- niveaus */
 /* Naslag valt over de pagina heen en niet erin: een <details> duwde de hele
    lijst assen omlaag, zodat de as waar je net over nadacht wegschoof. */

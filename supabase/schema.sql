@@ -40,6 +40,12 @@ create table if not exists sessions (
   name           text not null,
   owner          uuid references auth.users(id) on delete cascade,
   scale          jsonb not null,
+  -- Welk thema de deelnemers van deze sessie te zien krijgen. Een sessie is
+  -- één team bij één opdrachtgever, dus daar hoort het thuis: niet per persoon
+  -- (dan zet je het vier keer) en niet per browser (dan hangt het ervan af wie
+  -- er toevallig eerder op dat apparaat heeft ingevuld).
+  theme          text not null default 'eigen'
+                 constraint sessions_theme_check check (theme in ('eigen', 'coa')),
   created_at     timestamptz not null default now()
 );
 
@@ -47,6 +53,10 @@ create table if not exists sessions (
 -- doen deze twee regels niets.
 alter table sessions drop column if exists admin_key_hash;
 alter table sessions add  column if not exists owner uuid references auth.users(id) on delete cascade;
+alter table sessions add  column if not exists theme text not null default 'eigen';
+do $$ begin
+  alter table sessions add constraint sessions_theme_check check (theme in ('eigen', 'coa'));
+exception when duplicate_object then null; end $$;
 create index if not exists sessions_owner_idx on sessions(owner);
 
 create table if not exists skills (
@@ -202,6 +212,7 @@ drop function if exists _session_by_admin(text,text);
 drop function if exists create_session(text,text);
 drop function if exists admin_get(text,text);
 drop function if exists admin_update_session(text,text,text,jsonb);
+drop function if exists admin_update_session(text,text,jsonb);
 drop function if exists admin_set_skills(text,text,jsonb);
 drop function if exists admin_add_participant(text,text,text,text);
 drop function if exists admin_delete_participant(text,text,uuid);
@@ -294,7 +305,7 @@ begin
   select * into s from sessions where id = p.session_id;
 
   return jsonb_build_object(
-    'session', jsonb_build_object('name', s.name, 'code', s.code, 'scale', s.scale),
+    'session', jsonb_build_object('name', s.name, 'code', s.code, 'scale', s.scale, 'theme', s.theme),
     'participant', jsonb_build_object(
       'id', p.id, 'name', p.name, 'role', p.role, 'submitted_at', p.submitted_at),
     'skills', _skills_json(s.id),
@@ -371,7 +382,7 @@ declare s sessions;
 begin
   s := _session_owned(p_code);
   return jsonb_build_object(
-    'session', jsonb_build_object('id', s.id, 'code', s.code, 'name', s.name, 'scale', s.scale),
+    'session', jsonb_build_object('id', s.id, 'code', s.code, 'name', s.name, 'scale', s.scale, 'theme', s.theme),
     'skills', _skills_json(s.id),
     'participants', coalesce((
       select jsonb_agg(jsonb_build_object(
@@ -390,7 +401,7 @@ begin
 end;
 $$;
 
-create or replace function admin_update_session(p_code text, p_name text, p_scale jsonb)
+create or replace function admin_update_session(p_code text, p_name text, p_scale jsonb, p_theme text default null)
 returns void
 language plpgsql security definer set search_path = public, extensions as $$
 declare s sessions;
@@ -417,9 +428,14 @@ begin
     end if;
   end if;
 
+  if p_theme is not null and p_theme not in ('eigen', 'coa') then
+    raise exception 'unknown_theme' using errcode = '22000';
+  end if;
+
   update sessions
      set name  = coalesce(nullif(trim(p_name), ''), name),
-         scale = coalesce(p_scale, scale)
+         scale = coalesce(p_scale, scale),
+         theme = coalesce(p_theme, theme)
    where id = s.id;
 end;
 $$;
@@ -569,7 +585,7 @@ begin
   foreach fn in array array[
     'create_session(text)',
     'admin_get(text)',
-    'admin_update_session(text,text,jsonb)',
+    'admin_update_session(text,text,jsonb,text)',
     'admin_set_skills(text,jsonb)',
     'admin_add_participant(text,text,text)',
     'admin_delete_participant(text,uuid)',
