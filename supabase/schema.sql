@@ -108,13 +108,21 @@ alter table ratings      enable row level security;
 
 -- ---------------------------------------------------------------- defaults
 
--- De tien assen. Elke as heeft twee ankers: waar je instapt en waar het heen
+-- De elf assen. Elke as heeft twee ankers: waar je instapt en waar het heen
 -- groeit. Die tweede is per as iets anders -- onderzoek groeit langs
 -- repertoire, toegankelijkheid langs diepte, faciliteren langs schaal,
 -- presenteren langs publiek.
 create or replace function default_skills() returns jsonb
 language sql immutable as $$
   select jsonb_build_array(
+    -- Strategie staat vooraan omdat het in het werk ook vooraan staat: de
+    -- vraag scherp krijgen gaat aan het onderzoek vooraf. Deze as ontbrak en
+    -- dat was het enige echte gat tegenover de achttien van Daniel Birch —
+    -- wij maten wat iemand maakt en onderzoekt, niet of iemand de vraag achter
+    -- de vraag boven tafel krijgt. Voor een lead is dat de belangrijkste.
+    jsonb_build_object('label','Strategie & planning',      'description','',
+      'anchor','inschatten wat een vraag aan UX-werk kost en wat je daarvoor nodig hebt',
+      'anchor_senior','de vraag achter de vraag boven tafel krijgen, en de UX-agenda voor een half jaar uitzetten'),
     jsonb_build_object('label','Kwalitatief onderzoek',     'description','',
       'anchor','een usability test draaien die iemand anders bedacht',
       'anchor_senior','de methode kiezen die bij de vraag past, en de hypothese scherpstellen'),

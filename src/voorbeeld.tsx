@@ -20,6 +20,7 @@ const scale = [
 ]
 
 const assen: [string, string, string][] = [
+  ['Strategie & planning', 'inschatten wat een vraag aan UX-werk kost en wat je daarvoor nodig hebt', 'de vraag achter de vraag boven tafel krijgen, en de UX-agenda voor een half jaar uitzetten'],
   ['Kwalitatief onderzoek', 'een usability test draaien die iemand anders bedacht', 'de methode kiezen die bij de vraag past, en de hypothese scherpstellen'],
   ['Kwantitatief onderzoek', 'een vragenlijst uitzetten en de uitkomsten samenvatten', 'een hypothese toetsbaar maken, en zien wanneer een cijfer niets zegt'],
   ['Informatiearchitectuur', 'een menu of paginastructuur voorstellen', 'een structuur ontwerpen én toetsen met een card sort of tree test'],
@@ -48,12 +49,12 @@ const ratings: R[] = []
 // Drie ingevulde profielen; Maud (de deelnemer die je bekijkt) heeft er één open
 // gelaten, zodat de voet van de lijst iets te zeggen heeft.
 const nu = [
-  [5, 3, 7, 6, 9, 7, 4, 3, 5, 6],
-  [9, 7, 5, 3, 1, 3, 5, 4, 7, 8],
-  [3, 2, 6, 5, 4, 4, 9, 6, 5, 7],
+  [3, 5, 3, 7, 6, 9, 7, 4, 3, 5, 6],
+  [5, 9, 7, 5, 3, 1, 3, 5, 4, 7, 8],
+  [2, 3, 2, 6, 5, 4, 4, 9, 6, 5, 7],
 ]
 nu.forEach((rij, pi) => rij.forEach((v, si) => {
-  if (pi === 0 && si === 5) return // Maud heeft Prototyping nog niet ingevuld
+  if (pi === 0 && si === 6) return // Maud heeft Prototyping nog niet ingevuld
   ratings.push({ participant_id: `p${pi}`, skill_id: `s${si}`, state: 'current', value: v })
   ratings.push({ participant_id: `p${pi}`, skill_id: `s${si}`, state: 'future', value: Math.min(9, v + (si % 3) + 1) })
 }))
