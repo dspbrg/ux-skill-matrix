@@ -29,7 +29,7 @@ html = html.replace(/<script type="module" crossorigin src="[^"]*"><\/script>/, 
 const SCHERMEN = [
   ['Invullen', '#/p/demo'],
   ['Ingediend', '#/p/t1'],
-  ['Facilitator', '#/admin?s=DEMO&k=demo'],
+  ['Facilitator', '#/admin?s=DEMO'],
 ]
 
 const balk = `

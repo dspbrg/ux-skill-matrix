@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { navigate } from './App'
-import { isConfigured, rpc } from './supabase'
+import { Icoon } from './Icoon'
+import { inloggen, isConfigured, rpc, supabase, uitloggen } from './supabase'
 
 interface SessionRow {
   code: string
@@ -12,36 +13,51 @@ interface SessionRow {
 
 /**
  * Startscherm. Deelnemers komen binnen via hun eigen link (#/p/<token>) en zien
- * dit scherm nooit — het is dus alleen de facilitator-login. Eén veld: de
- * adminsleutel bepaalt welke sessies je ziet.
+ * dit scherm nooit — het is dus alleen de facilitator-ingang.
+ *
+ * Hier stond eerst één veld voor een adminsleutel. Die sleutel was acht tekens,
+ * door een mens verzonnen, en het enige wat het zelfbeeld van een heel team
+ * afschermde. Een gedeeld geheim is het verkeerde gereedschap als er maar één
+ * facilitator is — dus is het nu een account, en hoeft er niets onthouden te
+ * worden.
  */
 export default function Home() {
-  const [key, setKey] = useState('')
+  const [ingelogd, setIngelogd] = useState<boolean | null>(null)
   const [sessions, setSessions] = useState<SessionRow[] | null>(null)
   const [naming, setNaming] = useState(false)
   const [name, setName] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
-  const open = (code: string) => navigate(`/admin?s=${code}&k=${encodeURIComponent(key)}`)
+  const open = (code: string) => navigate(`/admin?s=${code}`)
 
-  async function unlock() {
-    if (busy) return
-    if (key.trim().length === 0) return setError('Vul je adminsleutel in.')
-    if (key.length < 8) return setError(`Een adminsleutel is minstens 8 tekens — deze heeft er ${key.length}.`)
-    setBusy(true)
-    setError('')
-    try {
-      const rows = await rpc<SessionRow[]>('admin_list_sessions', { p_admin_key: key })
-      if (rows.length === 1) return open(rows[0].code)
-      setSessions(rows)
-      if (rows.length === 0) setNaming(true)
-    } catch (e) {
-      setError((e as Error).message)
-    } finally {
-      setBusy(false)
-    }
-  }
+  // Wie terugkomt van GitHub heeft ?code=… in de adresbalk staan; de client
+  // wisselt die zelf in en meldt dat via onAuthStateChange. Daarom niet één
+  // keer kijken maar luisteren.
+  useEffect(() => {
+    let levend = true
+    supabase.auth.getSession().then(({ data }) => { if (levend) setIngelogd(!!data.session) })
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, sessie) => {
+      if (levend) setIngelogd(!!sessie)
+    })
+    return () => { levend = false; sub.subscription.unsubscribe() }
+  }, [])
+
+  // Zodra we weten wie je bent: je sessies ophalen. Heb je er één, dan ga je
+  // er meteen heen — dat is bijna altijd het geval.
+  useEffect(() => {
+    if (!ingelogd) return
+    let levend = true
+    rpc<SessionRow[]>('admin_list_sessions', {})
+      .then((rows) => {
+        if (!levend) return
+        if (rows.length === 1) return open(rows[0].code)
+        setSessions(rows)
+        if (rows.length === 0) setNaming(true)
+      })
+      .catch((e) => levend && setError((e as Error).message))
+    return () => { levend = false }
+  }, [ingelogd])
 
   async function create() {
     if (busy) return
@@ -49,7 +65,7 @@ export default function Home() {
     setBusy(true)
     setError('')
     try {
-      const s = await rpc<{ code: string }>('create_session', { p_name: name, p_admin_key: key })
+      const s = await rpc<{ code: string }>('create_session', { p_name: name })
       open(s.code)
     } catch (e) {
       setError((e as Error).message)
@@ -57,8 +73,12 @@ export default function Home() {
     }
   }
 
-  // ---------------------------------------------------------------- sleutel
-  if (sessions === null) {
+  // ---------------------------------------------------------------- inloggen
+  if (ingelogd === null) {
+    return <Frame kop={<>Eerst jij, dan het <em>team</em>.</>}><p className="muted">Even kijken wie je bent…</p></Frame>
+  }
+
+  if (!ingelogd) {
     return (
       <Frame kop={<>Eerst jij, dan het <em>team</em>.</>}>
         {!isConfigured && (
@@ -67,20 +87,11 @@ export default function Home() {
             <code>VITE_SUPABASE_ANON_KEY</code> in <code>.env.local</code>.
           </div>
         )}
-        <label className="field">
-          <span className="micro">Sleutel</span>
-          <input
-            type="password"
-            autoFocus
-            autoComplete="current-password"
-            value={key}
-            onChange={(e) => { setKey(e.target.value); if (error) setError('') }}
-            onKeyDown={(e) => e.key === 'Enter' && unlock()}
-          />
-        </label>
         {error && <div className="banner error">{error}</div>}
-        <button className="primary groot" onClick={unlock} disabled={busy}>
-          {busy ? 'Bezig…' : 'Openen'}
+        <button className="primary groot" disabled={busy}
+          onClick={() => { setBusy(true); inloggen().catch((e) => { setError((e as Error).message); setBusy(false) }) }}>
+          <Icoon naam="github" maat={20} />
+          Inloggen met GitHub
         </button>
       </Frame>
     )
@@ -100,15 +111,20 @@ export default function Home() {
         <button className="primary groot" onClick={create} disabled={busy}>
           {busy ? 'Bezig…' : 'Aanmaken'}
         </button>
-        <button className="ghost sm voet-knop"
-          onClick={() => {
-            setError(''); setNaming(false)
-            if (sessions.length === 0) { setSessions(null); setKey('') }
-          }}>
-          {sessions.length === 0 ? 'Andere sleutel proberen' : 'Terug'}
-        </button>
+        {(sessions?.length ?? 0) > 0 && (
+          <button className="ghost sm voet-knop" onClick={() => { setError(''); setNaming(false) }}>
+            Terug
+          </button>
+        )}
+        {(sessions?.length ?? 0) === 0 && (
+          <button className="ghost sm voet-knop" onClick={uitloggen}>Uitloggen</button>
+        )}
       </Frame>
     )
+  }
+
+  if (sessions === null) {
+    return <Frame kop={<>Eerst jij, dan het <em>team</em>.</>}><p className="muted">Je sessies ophalen…</p></Frame>
   }
 
   // ---------------------------------------------------------------- sessiekeuze
@@ -126,10 +142,14 @@ export default function Home() {
           </button>
         ))}
       </div>
-      <button className="ghost sm voet-knop"
-        onClick={() => { setNaming(true); setName(''); setError('') }}>
-        + Nieuwe sessie
-      </button>
+      <div className="row" style={{ marginTop: 'var(--space-4)' }}>
+        <button className="ghost sm" onClick={() => { setNaming(true); setName(''); setError('') }}>
+          <Icoon naam="plus" />
+          Nieuwe sessie
+        </button>
+        <span className="spacer" />
+        <button className="ghost sm" onClick={uitloggen}>Uitloggen</button>
+      </div>
     </Frame>
   )
 }

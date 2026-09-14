@@ -5,7 +5,33 @@ const key = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
 
 export const isConfigured = Boolean(url && key)
 
-export const supabase = createClient(url ?? 'https://placeholder.supabase.co', key ?? 'placeholder')
+export const supabase = createClient(url ?? 'https://placeholder.supabase.co', key ?? 'placeholder', {
+  auth: {
+    // PKCE en niet de impliciete stroom: die zet de tokens ín de hash, en deze
+    // app gebruikt de hash zelf als router. Dan komt de deelnemer na een
+    // inlog op #access_token=… terecht in plaats van op zijn profiel. Met
+    // PKCE staat er ?code=… in de zoekreeks en blijft de hash van ons.
+    flowType: 'pkce',
+    detectSessionInUrl: true,
+    persistSession: true,
+    autoRefreshToken: true,
+  },
+})
+
+/** Inloggen als facilitator. Terugkomen doen we op precies deze pagina. */
+export async function inloggen() {
+  const terug = window.location.origin + window.location.pathname
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'github',
+    options: { redirectTo: terug },
+  })
+  if (error) throw new Error(error.message)
+}
+
+export async function uitloggen() {
+  await supabase.auth.signOut()
+  window.location.hash = '/'
+}
 
 /** Roept een Postgres-functie aan en gooit een leesbare fout bij falen. */
 export async function rpc<T>(fn: string, args: Record<string, unknown>): Promise<T> {
@@ -21,9 +47,9 @@ export async function rpc<T>(fn: string, args: Record<string, unknown>): Promise
 
 const messages: Record<string, string> = {
   invalid_token: 'Deze link is niet (meer) geldig. Vraag de facilitator om een nieuwe link.',
-  invalid_credentials: 'Sessiecode of adminsleutel klopt niet.',
+  not_signed_in: 'Je bent uitgelogd. Log opnieuw in om verder te gaan.',
+  no_access: 'Deze sessie is niet van jou.',
   name_required: 'Vul een naam in.',
-  admin_key_too_short: 'De adminsleutel moet minstens 8 tekens zijn.',
   at_least_one_skill: 'Er moet minstens één skill overblijven.',
   label_required: 'Elke skill heeft een naam nodig.',
   unknown_skill: 'Deze skill bestaat niet meer — herlaad de pagina.',

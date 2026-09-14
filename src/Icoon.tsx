@@ -17,6 +17,10 @@ const PADEN = {
   download: ['M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4', 'm7 10 5 5 5-5', 'M12 15V3'],
   // De cirkel van lucide-info als pad, want dit bestand tekent alleen paden.
   info: ['M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0', 'M12 16v-4', 'M12 8h.01'],
+  // Het GitHub-merkteken; geen Lucide, maar wel hetzelfde raster en
+  // dezelfde maat. Dit is een vulling en geen lijn, dus hij wordt apart
+  // getekend.
+  github: ['M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22'],
 } as const
 
 export type IcoonNaam = keyof typeof PADEN

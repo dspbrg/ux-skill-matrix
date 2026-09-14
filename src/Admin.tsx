@@ -1,14 +1,13 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import Radar from './Radar'
 import { Icoon } from './Icoon'
-import { rpc } from './supabase'
+import { rpc, uitloggen } from './supabase'
 import type { AdminPayload, ScaleLevel, Skill, State } from './types'
 
 type Tab = 'overview' | 'people' | 'terms'
 
-export default function Admin({ initialCode, initialKey }: { initialCode: string; initialKey: string }) {
+export default function Admin({ initialCode }: { initialCode: string }) {
   const code = initialCode
-  const key = initialKey
   const [data, setData] = useState<AdminPayload | null>(null)
   const [error, setError] = useState('')
   const [tab, setTab] = useState<Tab>('overview')
@@ -24,20 +23,20 @@ export default function Admin({ initialCode, initialKey }: { initialCode: string
   const load = useCallback(async () => {
     setError('')
     try {
-      setData(await rpc<AdminPayload>('admin_get', { p_code: code, p_admin_key: key }))
+      setData(await rpc<AdminPayload>('admin_get', { p_code: code, }))
     } catch (e) {
       setData(null)
       setError((e as Error).message)
     }
-  }, [code, key])
+  }, [code])
 
   useEffect(() => {
     // Zonder code en sleutel in de URL valt er niets te laden: terug naar het
     // startscherm, waar de sleutel alleen wordt gevraagd.
-    if (!initialCode || !initialKey) window.location.hash = '/'
+    if (!initialCode) window.location.hash = '/'
     else void load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialCode, initialKey])
+  }, [initialCode])
 
   if (!data) {
     return (
@@ -72,14 +71,17 @@ export default function Admin({ initialCode, initialKey }: { initialCode: string
             <button aria-current={tab === 'terms' ? 'page' : undefined} onClick={() => wissel('terms')}>Instellingen</button>
           </div>
         </nav>
+        {/* Op een gedeelde laptop op locatie moet je hier weg kunnen zonder
+            de browser te sluiten. */}
+        <button className="ghost sm uitloggen" onClick={uitloggen}>Uitloggen</button>
       </header>
 
       <main id="hoofd" tabIndex={-1} className="shell">
         {error && <div className="banner error" role="alert" style={{ marginBottom: 'var(--space-4)' }}>{error}</div>}
         {tab === 'overview' && <Overview data={data} onAddPeople={() => setTab('people')} />}
-        {tab === 'people' && <People data={data} code={code} adminKey={key} reload={load} setError={setError} />}
+        {tab === 'people' && <People data={data} code={code} reload={load} setError={setError} />}
         {tab === 'terms' && (
-          <Terms data={data} code={code} adminKey={key} reload={load} setError={setError}
+          <Terms data={data} code={code} reload={load} setError={setError}
             meldOnbewaard={setOnbewaard} />
         )}
       </main>
@@ -440,9 +442,9 @@ function Schaalsleutel({ scale }: { scale: ScaleLevel[] }) {
 /* ------------------------------------------------------------------ deelnemers */
 
 function People({
-  data, code, adminKey, reload, setError,
+  data, code, reload, setError,
 }: {
-  data: AdminPayload; code: string; adminKey: string; reload: () => Promise<void>; setError: (s: string) => void
+  data: AdminPayload; code: string; reload: () => Promise<void>; setError: (s: string) => void
 }) {
   const [name, setName] = useState('')
   const [role, setRole] = useState('')
@@ -455,7 +457,7 @@ function People({
   async function add() {
     setBusy(true)
     try {
-      await rpc('admin_add_participant', { p_code: code, p_admin_key: adminKey, p_name: name, p_role: role })
+      await rpc('admin_add_participant', { p_code: code, p_name: name, p_role: role })
       setName('')
       setRole('')
       await reload()
@@ -469,7 +471,7 @@ function People({
   async function remove(id: string, who: string) {
     if (!confirm(`${who} en al hun scores verwijderen?`)) return
     try {
-      await rpc('admin_delete_participant', { p_code: code, p_admin_key: adminKey, p_id: id })
+      await rpc('admin_delete_participant', { p_code: code, p_id: id })
       await reload()
     } catch (e) {
       setError((e as Error).message)
@@ -563,9 +565,9 @@ function People({
 /* ------------------------------------------------------------------ terminologie */
 
 function Terms({
-  data, code, adminKey, reload, setError, meldOnbewaard,
+  data, code, reload, setError, meldOnbewaard,
 }: {
-  data: AdminPayload; code: string; adminKey: string; reload: () => Promise<void>
+  data: AdminPayload; code: string; reload: () => Promise<void>
   setError: (s: string) => void; meldOnbewaard: (v: boolean) => void
 }) {
   const [skills, setSkills] = useState<Skill[]>(data.skills)
@@ -609,7 +611,7 @@ function Terms({
     setBusy(true)
     try {
       await rpc('admin_set_skills', {
-        p_code: code, p_admin_key: adminKey,
+        p_code: code,
         p_skills: skills.map((s, i) => ({
           id: s.id.startsWith('new-') ? null : s.id,
           label: s.label, description: s.description,
@@ -629,7 +631,7 @@ function Terms({
     setBusy(true)
     try {
       await rpc('admin_update_session', {
-        p_code: code, p_admin_key: adminKey, p_name: sessionName,
+        p_code: code, p_name: sessionName,
         p_scale: scale.map((lv, i) => ({ ...lv, level: i + 1 })),
       })
       await reload()
@@ -645,7 +647,7 @@ function Terms({
     if (confirmCode.trim().toUpperCase() !== data.session.code) return
     setBusy(true)
     try {
-      await rpc('admin_delete_session', { p_code: code, p_admin_key: adminKey })
+      await rpc('admin_delete_session', { p_code: code })
       window.location.hash = '/'
       window.location.reload()
     } catch (e) {

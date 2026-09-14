@@ -5,8 +5,19 @@
 -- Beveiligingsmodel
 --   RLS staat aan op alle tabellen en er zijn GEEN policies: de anon-key
 --   kan dus niets rechtstreeks lezen of schrijven. Alle toegang loopt via
---   de SECURITY DEFINER functies onderaan dit bestand, die eerst een
---   deelnemers-token of de admin-sleutel van de sessie verifiëren.
+--   de SECURITY DEFINER functies onderaan dit bestand.
+--
+--   Twee soorten toegang, en ze lijken niet op elkaar:
+--     · De deelnemer heeft een token in zijn link en verder niets. Geen
+--       account, geen inlog — iemand die op locatie staat in te vullen moet
+--       niet eerst een wachtwoord hoeven bedenken.
+--     · De facilitator is een ingelogd account. De sessie heeft een eigenaar
+--       (sessions.owner) en de adminfuncties kijken naar auth.uid().
+--
+--   Dat was eerst een adminsleutel: acht tekens, door een mens verzonnen,
+--   ingetypt op een publieke pagina, en daarmee het enige wat het zelfbeeld
+--   van een heel team afschermde. Een gedeeld geheim is het verkeerde
+--   gereedschap als er maar één facilitator is.
 --
 -- Draai dit bestand één keer in de Supabase SQL Editor.
 -- =====================================================================
@@ -27,10 +38,16 @@ create table if not exists sessions (
   id             uuid primary key default gen_random_uuid(),
   code           text not null unique,
   name           text not null,
-  admin_key_hash text not null,
+  owner          uuid references auth.users(id) on delete cascade,
   scale          jsonb not null,
   created_at     timestamptz not null default now()
 );
+
+-- Voor een database die de sleutelversie al draaide. Op een verse database
+-- doen deze twee regels niets.
+alter table sessions drop column if exists admin_key_hash;
+alter table sessions add  column if not exists owner uuid references auth.users(id) on delete cascade;
+create index if not exists sessions_owner_idx on sessions(owner);
 
 create table if not exists skills (
   id          uuid primary key default gen_random_uuid(),
@@ -177,17 +194,33 @@ $$;
 
 -- ---------------------------------------------------------------- helpers
 
-create or replace function _session_by_admin(p_code text, p_admin_key text)
+-- Oude signaturen van vóór het inloggen met een account. Postgres vervangt een
+-- functie alleen als de parameterlijst gelijk is; anders komt de nieuwe naast
+-- de oude te staan en blijft de sleutelversie gewoon aanroepbaar. Op een verse
+-- database doet dit blok niets.
+drop function if exists _session_by_admin(text,text);
+drop function if exists create_session(text,text);
+drop function if exists admin_get(text,text);
+drop function if exists admin_update_session(text,text,text,jsonb);
+drop function if exists admin_set_skills(text,text,jsonb);
+drop function if exists admin_add_participant(text,text,text,text);
+drop function if exists admin_delete_participant(text,text,uuid);
+drop function if exists admin_list_sessions(text);
+drop function if exists admin_delete_session(text,text);
+
+create or replace function _session_owned(p_code text)
 returns sessions
 language plpgsql security definer set search_path = public, extensions as $$
 declare s sessions;
 begin
-  select * into s from sessions where code = upper(trim(p_code));
-  if s.id is null then
-    raise exception 'invalid_credentials' using errcode = '42501';
+  if auth.uid() is null then
+    raise exception 'not_signed_in' using errcode = '42501';
   end if;
-  if s.admin_key_hash <> crypt(p_admin_key, s.admin_key_hash) then
-    raise exception 'invalid_credentials' using errcode = '42501';
+  select * into s from sessions where code = upper(trim(p_code));
+  -- Bestaat niet en niet van jou geven hetzelfde antwoord. Verschil maken zou
+  -- van dit scherm een manier maken om te ontdekken wélke codes bestaan.
+  if s.id is null or s.owner is distinct from auth.uid() then
+    raise exception 'no_access' using errcode = '42501';
   end if;
   return s;
 end;
@@ -204,7 +237,7 @@ $$;
 
 -- ---------------------------------------------------------------- sessie aanmaken
 
-create or replace function create_session(p_name text, p_admin_key text)
+create or replace function create_session(p_name text)
 returns jsonb
 language plpgsql security definer set search_path = public, extensions as $$
 declare
@@ -213,11 +246,11 @@ declare
   sk    jsonb;
   i     int;
 begin
+  if auth.uid() is null then
+    raise exception 'not_signed_in' using errcode = '42501';
+  end if;
   if coalesce(trim(p_name), '') = '' then
     raise exception 'name_required' using errcode = '22000';
-  end if;
-  if length(coalesce(p_admin_key, '')) < 8 then
-    raise exception 'admin_key_too_short' using errcode = '22000';
   end if;
 
   -- korte, leesbare sessiecode (zonder makkelijk te verwarren tekens)
@@ -230,8 +263,8 @@ begin
     exit when not exists (select 1 from sessions where code = s_code);
   end loop;
 
-  insert into sessions (code, name, admin_key_hash, scale)
-  values (s_code, trim(p_name), crypt(p_admin_key, gen_salt('bf')), default_scale())
+  insert into sessions (code, name, owner, scale)
+  values (s_code, trim(p_name), auth.uid(), default_scale())
   returning id into s_id;
 
   sk := default_skills();
@@ -331,12 +364,12 @@ $$;
 
 -- ---------------------------------------------------------------- admin
 
-create or replace function admin_get(p_code text, p_admin_key text)
+create or replace function admin_get(p_code text)
 returns jsonb
 language plpgsql security definer set search_path = public, extensions as $$
 declare s sessions;
 begin
-  s := _session_by_admin(p_code, p_admin_key);
+  s := _session_owned(p_code);
   return jsonb_build_object(
     'session', jsonb_build_object('id', s.id, 'code', s.code, 'name', s.name, 'scale', s.scale),
     'skills', _skills_json(s.id),
@@ -357,12 +390,12 @@ begin
 end;
 $$;
 
-create or replace function admin_update_session(p_code text, p_admin_key text, p_name text, p_scale jsonb)
+create or replace function admin_update_session(p_code text, p_name text, p_scale jsonb)
 returns void
 language plpgsql security definer set search_path = public, extensions as $$
 declare s sessions;
 begin
-  s := _session_by_admin(p_code, p_admin_key);
+  s := _session_owned(p_code);
 
   -- Vijf benoemde treden worden negen posities, en negen is wat de
   -- waardecontrole op ratings aankan. Meer treden liet de interface toe en
@@ -394,7 +427,7 @@ $$;
 -- Vervangt de volledige skill-lijst van de sessie in één transactie.
 -- p_skills: [{id?, label, description, sort_order}]  — id weglaten = nieuwe skill.
 -- Skills die niet in de lijst voorkomen worden verwijderd (inclusief hun scores).
-create or replace function admin_set_skills(p_code text, p_admin_key text, p_skills jsonb)
+create or replace function admin_set_skills(p_code text, p_skills jsonb)
 returns jsonb
 language plpgsql security definer set search_path = public, extensions as $$
 declare
@@ -404,7 +437,7 @@ declare
   new_id uuid;
   i      int := 0;
 begin
-  s := _session_by_admin(p_code, p_admin_key);
+  s := _session_owned(p_code);
   if jsonb_typeof(p_skills) <> 'array' or jsonb_array_length(p_skills) = 0 then
     raise exception 'at_least_one_skill' using errcode = '22000';
   end if;
@@ -440,12 +473,12 @@ begin
 end;
 $$;
 
-create or replace function admin_add_participant(p_code text, p_admin_key text, p_name text, p_role text)
+create or replace function admin_add_participant(p_code text, p_name text, p_role text)
 returns jsonb
 language plpgsql security definer set search_path = public, extensions as $$
 declare s sessions; p participants;
 begin
-  s := _session_by_admin(p_code, p_admin_key);
+  s := _session_owned(p_code);
   if coalesce(trim(p_name), '') = '' then
     raise exception 'name_required' using errcode = '22000';
   end if;
@@ -458,26 +491,26 @@ begin
 end;
 $$;
 
-create or replace function admin_delete_participant(p_code text, p_admin_key text, p_id uuid)
+create or replace function admin_delete_participant(p_code text, p_id uuid)
 returns void
 language plpgsql security definer set search_path = public, extensions as $$
 declare s sessions;
 begin
-  s := _session_by_admin(p_code, p_admin_key);
+  s := _session_owned(p_code);
   delete from participants where id = p_id and session_id = s.id;
 end;
 $$;
 
--- Alle sessies die bij deze adminsleutel horen. Eén sleutel kan meerdere
--- sessies beheren; dat is bewust, zodat een facilitator één credential heeft
--- in plaats van een code-plus-sleutel per sessie.
-create or replace function admin_list_sessions(p_admin_key text)
+-- Alle sessies van de ingelogde facilitator. Eén account kan meerdere sessies
+-- beheren — najaar 2026, voorjaar 2027 — zonder dat er per sessie iets te
+-- onthouden valt.
+create or replace function admin_list_sessions()
 returns jsonb
 language plpgsql security definer set search_path = public, extensions as $$
 declare result jsonb;
 begin
-  if length(coalesce(p_admin_key, '')) < 8 then
-    raise exception 'invalid_credentials' using errcode = '42501';
+  if auth.uid() is null then
+    raise exception 'not_signed_in' using errcode = '42501';
   end if;
 
   select coalesce(jsonb_agg(x order by x->>'created_at' desc), '[]'::jsonb)
@@ -492,19 +525,19 @@ begin
                      where p.session_id = s.id and p.submitted_at is not null)
     ) as x
     from sessions s
-    where s.admin_key_hash = crypt(p_admin_key, s.admin_key_hash)
+    where s.owner = auth.uid()
   ) t;
 
   return result;
 end;
 $$;
 
-create or replace function admin_delete_session(p_code text, p_admin_key text)
+create or replace function admin_delete_session(p_code text)
 returns void
 language plpgsql security definer set search_path = public, extensions as $$
 declare s sessions;
 begin
-  s := _session_by_admin(p_code, p_admin_key);
+  s := _session_owned(p_code);
   delete from sessions where id = s.id;
 end;
 $$;
@@ -513,23 +546,38 @@ $$;
 
 revoke all on all tables in schema public from anon, authenticated;
 
+-- De deelnemer heeft geen account: zijn drie functies staan open voor anon.
+-- Ze controleren zelf het token uit de link.
 do $$
 declare fn text;
 begin
   foreach fn in array array[
-    'create_session(text,text)',
     'get_participant(text)',
     'set_rating(text,uuid,text,int)',
-    'set_submitted(text,boolean)',
-    'admin_get(text,text)',
-    'admin_update_session(text,text,text,jsonb)',
-    'admin_set_skills(text,text,jsonb)',
-    'admin_add_participant(text,text,text,text)',
-    'admin_delete_participant(text,text,uuid)',
-    'admin_delete_session(text,text)',
-    'admin_list_sessions(text)'
+    'set_submitted(text,boolean)'
   ] loop
     execute format('grant execute on function public.%s to anon, authenticated', fn);
+  end loop;
+end $$;
+
+-- De facilitator is ingelogd, dus deze horen niet bij anon thuis. Ze kijken
+-- allemaal zelf naar auth.uid(), maar een functie die zonder account niet eens
+-- aanroepbaar is, is één laag minder om je in te vergissen.
+do $$
+declare fn text;
+begin
+  foreach fn in array array[
+    'create_session(text)',
+    'admin_get(text)',
+    'admin_update_session(text,text,jsonb)',
+    'admin_set_skills(text,jsonb)',
+    'admin_add_participant(text,text,text)',
+    'admin_delete_participant(text,uuid)',
+    'admin_delete_session(text)',
+    'admin_list_sessions()'
+  ] loop
+    execute format('revoke execute on function public.%s from public, anon', fn);
+    execute format('grant  execute on function public.%s to authenticated', fn);
   end loop;
 end $$;
 
@@ -542,10 +590,10 @@ end $$;
 -- revoke zelf zonder klagen slaagde.
 --
 -- Wat er lekte: _skills_json(uuid) gaf de assen van elke sessie terug zonder
--- enige controle, en _session_by_admin gaf bij een kloppende sleutel de hele
--- sessierij inclusief de bcrypt-hash van die sleutel. Allebei buiten de
--- credentiaalcontrole om die de hele opzet nu juist moet afdwingen.
-revoke execute on function public._session_by_admin(text,text) from public, anon, authenticated;
+-- enige controle, en de toenmalige _session_by_admin gaf bij een kloppende
+-- sleutel de hele sessierij inclusief de bcrypt-hash van die sleutel. Allebei
+-- buiten de controle om die de hele opzet nu juist moet afdwingen.
+revoke execute on function public._session_owned(text)         from public, anon, authenticated;
 revoke execute on function public._skills_json(uuid)           from public, anon, authenticated;
 revoke execute on function public.new_token()                  from public, anon, authenticated;
 revoke execute on function public.default_skills()             from public, anon, authenticated;
