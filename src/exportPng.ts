@@ -12,6 +12,8 @@
  * in een rapport of een slide.
  */
 interface ExportOptions {
+  /** 'png' voor een plaatje in een slide, 'pdf' voor iets om uit te delen. */
+  formaat?: 'png' | 'pdf'
   title?: string
   legend?: { label: string; color: string; dashed?: boolean }[]
   /** De namen bij de cijfers op de ringen, als één regel. */
@@ -33,11 +35,12 @@ function svgText(text: string, x: number, y: number, size: number, fill: string,
 }
 
 import { ingebakkenLetters } from './lettersInline'
+import { canvasAlsPdf } from './pdf'
 
 export async function exportSvgAsPng(
   svg: SVGSVGElement,
   filename: string,
-  { title, legend = [], scaleKey, scale = 2 }: ExportOptions = {},
+  { formaat = 'png', title, legend = [], scaleKey, scale = 2 }: ExportOptions = {},
 ) {
   const holder = document.createElement('div')
   holder.className = 'force-light'
@@ -179,13 +182,16 @@ export async function exportSvgAsPng(
       ctx.fillRect(0, 0, canvas.width, canvas.height)
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
 
-      const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, 'image/png'))
-      if (!blob) throw new Error('De PNG kon niet worden opgeslagen.')
+      const blob =
+        formaat === 'pdf'
+          ? await canvasAlsPdf(canvas, title ?? filename)
+          : await new Promise<Blob | null>((r) => canvas.toBlob(r, 'image/png'))
+      if (!blob) throw new Error('Het bestand kon niet worden opgebouwd.')
 
       const href = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = href
-      a.download = `${slug(filename)}.png`
+      a.download = `${slug(filename)}.${formaat}`
       a.click()
       setTimeout(() => URL.revokeObjectURL(href), 1000)
     } finally {

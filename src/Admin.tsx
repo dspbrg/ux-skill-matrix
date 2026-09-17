@@ -1,6 +1,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import Radar from './Radar'
 import { Icoon } from './Icoon'
+import { Skip } from './Skip'
 import { rpc, uitloggen } from './supabase'
 import { pasSessieThemaToe } from './thema'
 import type { AdminPayload, ScaleLevel, Skill, State, Thema } from './types'
@@ -62,6 +63,7 @@ export default function Admin({ initialCode }: { initialCode: string }) {
 
   return (
     <>
+      <Skip />
       <header className="topbar">
         <h1 className="brand" style={{ fontSize: 'inherit' }}>{data.session.name}</h1>
         <span className="sep">·</span>

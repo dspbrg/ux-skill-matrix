@@ -1,0 +1,37 @@
+# Houdt het Supabase-project wakker.
+#
+# Een gratis project pauzeert na zeven dagen zonder verkeer, en bij het
+# herstellen kwam de database leeg terug. Deze taak doet elke drie dagen één
+# aanroep — genoeg om de teller terug te zetten.
+#
+# Let op: GitHub zet geplande taken zelf uit in een repository waar zestig dagen
+# niets is gebeurd. Er komt dan een mail. Eén druk op 'Enable workflow' zet hem
+# weer aan; ga je hier maanden niet meer heen, exporteer dan de CSV.
+name: Supabase wakker houden
+
+on:
+  schedule:
+    - cron: '17 6 */3 * *'   # elke drie dagen, 6:17 UTC — niet op het hele uur,
+                             # want daar staat de rij bij GitHub het langst
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Database aantikken
+        env:
+          URL: ${{ vars.VITE_SUPABASE_URL }}
+          KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          antwoord=$(curl -sS --fail-with-body -m 30 \
+            -X POST "$URL/rest/v1/rpc/ping" \
+            -H "apikey: $KEY" -H "Authorization: Bearer $KEY" \
+            -H "Content-Type: application/json" -d '{}')
+          echo "$antwoord"
+          # Komt er geen 'sessies' terug, dan draait de database wel maar staat
+          # het schema er niet meer op. Dat wil je weten.
+          echo "$antwoord" | grep -q '"sessies"' || {
+            echo "::error::Onverwacht antwoord — staat het schema er nog op?"
+            exit 1
+          }

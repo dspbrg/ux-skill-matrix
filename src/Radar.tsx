@@ -112,7 +112,8 @@ function wrap(label: string, limit = 15): string[] {
 
 export default function Radar({ axes, series, max, ringLabels, size = 420, showLegend = true, exportName }: Props) {
   const svgRef = useRef<SVGSVGElement>(null)
-  const [exporting, setExporting] = useState(false)
+  /** Leeg of het formaat dat op dit moment wordt opgebouwd. */
+  const [exporting, setExporting] = useState<'' | 'png' | 'pdf'>('')
   const [failed, setFailed] = useState('')
   const [fitted, setFitted] = useState<string>()
   const tabelId = useId()
@@ -442,33 +443,43 @@ export default function Radar({ axes, series, max, ringLabels, size = 420, showL
 
       {exportName && (
         <div style={{ textAlign: 'center', marginTop: 'var(--space-3)' }}>
-          <button
-            className="sm"
-            disabled={exporting}
-            title="Witte achtergrond, op dubbele resolutie — geschikt voor een rapport of slide"
-            onClick={async () => {
-              if (!svgRef.current) return
-              setExporting(true)
-              setFailed('')
-              try {
-                await exportSvgAsPng(svgRef.current, exportName, {
-                  title: exportName,
-                  legend: series.map((x) => ({ label: x.label, color: x.color, dashed: x.dashed })),
-                  // Zonder de sleutel is de geëxporteerde PNG een plaatje met
-                  // genummerde ringen en geen woord erbij -- en dat is nou net
-                  // het bestand dat in een rapport belandt.
-                  scaleKey: ringLabels?.map((l, i) => `${i + 1} ${l}`).join('   ·   '),
-                })
-              } catch (e) {
-                setFailed((e as Error).message)
-              } finally {
-                setExporting(false)
-              }
-            }}
-          >
-            <Icoon naam="download" />
-            {exporting ? 'Bezig…' : 'PNG downloaden'}
-          </button>
+          {/* Twee bestanden, twee doelen: een PNG plak je in een slide, een PDF
+              deel je of print je. Ze komen uit dezelfde pijplijn. */}
+          <div className="row" style={{ justifyContent: 'center' }}>
+            {(['png', 'pdf'] as const).map((formaat) => (
+              <button
+                key={formaat}
+                className="sm"
+                disabled={exporting !== ''}
+                title={formaat === 'png'
+                  ? 'Witte achtergrond, op dubbele resolutie — voor een slide'
+                  : 'Eén pagina A4, om te delen of af te drukken'}
+                onClick={async () => {
+                  if (!svgRef.current) return
+                  setExporting(formaat)
+                  setFailed('')
+                  try {
+                    await exportSvgAsPng(svgRef.current, exportName, {
+                      formaat,
+                      title: exportName,
+                      legend: series.map((x) => ({ label: x.label, color: x.color, dashed: x.dashed })),
+                      // Zonder de sleutel is het geëxporteerde bestand een
+                      // plaatje met genummerde ringen en geen woord erbij -- en
+                      // dat is nou net het bestand dat in een rapport belandt.
+                      scaleKey: ringLabels?.map((l, i) => `${i + 1} ${l}`).join('   ·   '),
+                    })
+                  } catch (e) {
+                    setFailed((e as Error).message)
+                  } finally {
+                    setExporting('')
+                  }
+                }}
+              >
+                <Icoon naam="download" />
+                {exporting === formaat ? 'Bezig…' : formaat.toUpperCase()}
+              </button>
+            ))}
+          </div>
           {failed && <p className="small" style={{ color: 'var(--danger)', marginTop: 'var(--space-2)' }}>{failed}</p>}
         </div>
       )}

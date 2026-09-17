@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Niveaus from './Niveaus'
+import { Skip } from './Skip'
 import { pasSessieThemaToe } from './thema'
 import Radar from './Radar'
 import { rpc } from './supabase'
@@ -183,6 +184,7 @@ export default function Participant({ token }: { token: string }) {
 
   return (
     <>
+      <Skip />
       <header className="topbar">
         <span className="brand">{data.session.name}</span>
         <span className="sep">·</span>

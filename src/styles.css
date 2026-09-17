@@ -536,11 +536,15 @@ td.num .cell .to { display: inline-flex; align-items: center; font-size: var(--f
   overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
 }
 
-.skip { position: absolute; left: -9999px; }
+/* Buiten beeld tot je erheen tabt. Niet display:none of visibility:hidden —
+   dan slaat de focus hem over en is er niets om heen te tabben. */
+.skip { position: absolute; left: -9999px; top: 0; }
 .skip:focus {
   left: var(--space-5); top: var(--space-3); z-index: 30;
-  background: var(--surface); color: var(--text);
-  padding: 8px 14px; border-radius: var(--radius); outline: 2px solid var(--focus);
+  display: inline-flex; align-items: center; min-height: 40px;
+  padding: 0 var(--space-4); border-radius: var(--radius);
+  background: var(--surface); color: var(--text); text-decoration: none;
+  outline: 2px solid var(--focus); outline-offset: 2px;
 }
 
 /* ---------------------------------------------------------------- overig */

@@ -566,6 +566,23 @@ begin
 end;
 $$;
 
+-- ---------------------------------------------------------------- wakker blijven
+
+-- Een gratis Supabase-project pauzeert na zeven dagen zonder verkeer, en bij
+-- het herstellen bleek de database leeg. Een sessie die in november wordt
+-- ingevuld en in januari nog eens naast elkaar moet, overleeft dat niet.
+--
+-- Dit functietje bestaat om aangeroepen te worden door een taak in GitHub
+-- Actions, elke paar dagen. Het raakt de database (now() alleen zou PostgREST
+-- kunnen afhandelen zonder query) en geeft terug hoeveel sessies er staan, zodat
+-- de taak ook iets zegt als er iets mis is.
+--
+-- Het geeft niets prijs: een aantal, geen namen, geen scores.
+create or replace function ping() returns jsonb
+language sql security definer set search_path = public, extensions as $$
+  select jsonb_build_object('tijd', now(), 'sessies', (select count(*) from sessions));
+$$;
+
 -- ---------------------------------------------------------------- rechten
 
 revoke all on all tables in schema public from anon, authenticated;
@@ -578,7 +595,8 @@ begin
   foreach fn in array array[
     'get_participant(text)',
     'set_rating(text,uuid,text,int)',
-    'set_submitted(text,boolean)'
+    'set_submitted(text,boolean)',
+    'ping()'
   ] loop
     execute format('grant execute on function public.%s to anon, authenticated', fn);
   end loop;
