@@ -126,6 +126,36 @@ a { color: var(--accent); }
    wachtrij erboven wegviel, precies aan het eind van een sessie. */
 .grid-2 > .card + .card { margin-top: 0; }
 .grid-2 + .card { margin-top: var(--space-5); }
+
+/* Het facilitatoroverzicht: één verdeling die van boven tot onder doorloopt,
+   in plaats van drie banden waarvan de middelste anders is opgedeeld dan de
+   rest. De rechterkolom is zo breed als de radar nodig heeft en verder niet;
+   de cijfers krijgen de rest. */
+.overzicht {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 27rem);
+  column-gap: var(--space-6);
+  align-items: start;
+}
+.kolom-cijfers { display: flex; flex-direction: column; gap: var(--space-5); }
+.kolom-cijfers > .card { margin-top: 0; }
+
+/* De tabellen eronder zijn lang; op een scherm dat tijdens de sessie meekijkt
+   is de vorm het ankerpunt en moet die in beeld blijven. Blijft de kaart
+   hoger dan het venster, dan scrollt hij gewoon mee. */
+.kolom-profiel { position: sticky; top: calc(var(--topbar-h) + var(--space-5)); }
+.kolom-profiel > .card { margin-top: 0; }
+/* De vergelijkingstabel loopt onder beide kolommen door. */
+.kolom-breed { grid-column: 1 / -1; margin-top: var(--space-5); }
+
+/* Onder de omslag staan de blokken gewoon onder elkaar, en heeft sticky geen
+   zin meer: het profiel zou dan de halve pagina beslaan. */
+@media (max-width: 1080px) {
+  /* Geen row-gap erbij: de marge van .kolom-breed telt er anders bovenop en
+     dan is het gat onder het profiel twee keer zo groot als de rest. */
+  .overzicht { grid-template-columns: 1fr; }
+  .kolom-profiel { position: static; margin-top: var(--space-5); }
+}
 .stack { display: flex; flex-direction: column; gap: var(--space-3); }
 .row { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
 
@@ -497,10 +527,12 @@ td.num .cell .to { display: inline-flex; align-items: center; font-size: var(--f
 
 /* Alleen voor schermlezers: niet display:none, want dan wordt het ook niet
    voorgelezen. */
+/* Onzichtbaar voor het oog, wel leesbaar voor een schermlezer. */
 .vh {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
 }
+
 .skip { position: absolute; left: -9999px; }
 .skip:focus {
   left: var(--space-5); top: var(--space-3); z-index: 30;

@@ -375,7 +375,11 @@ export default function Radar({ axes, series, max, ringLabels, size = 420, showL
       {/* De radar is het enige resultaat dat een deelnemer overhoudt, en
           role="img" snoeit alle aslabels uit de toegankelijkheidsboom. Deze
           tabel zegt hetzelfde in tekst. */}
-      <table id={tabelId} className="vh">
+      {/* Het omhulsel draagt de verberging, niet de tabel zelf: een tabel
+          krimpt niet onder de breedte van zijn inhoud, dus width:1px deed daar
+          niets en duwde hij de pagina zijwaarts open. */}
+      <div className="vh">
+      <table id={tabelId}>
         <caption>
           {exportName ?? 'Scores per skill'}
           {treden > 0 &&
@@ -405,6 +409,7 @@ export default function Radar({ axes, series, max, ringLabels, size = 420, showL
           ))}
         </tbody>
       </table>
+      </div>
 
       {showLegend && (
         <div className="legend" style={{ justifyContent: 'center', marginTop: 'var(--space-1)' }}>

@@ -296,44 +296,15 @@ function Overview({ data, onAddPeople }: { data: AdminPayload; onAddPeople: () =
   // blokken zeggen pas iets zodra er één score in staat.
   if (ratings.length === 0) return wachtrij
 
+  // De pagina deed breed, dan twee ongelijke kolommen, dan weer breed: drie
+  // banden waarvan je oog telkens opnieuw moest zoeken waar de kantlijn lag.
+  // Nu loopt er één verdeling van boven tot onder — de cijfers links onder
+  // elkaar, het profiel rechts. Dat is ook wat een sessie vraagt: de vorm
+  // blijft in beeld terwijl je door de tabellen scrollt.
   return (
-    <>
-      {submittedCount < participants.length && (
-        <div style={{ marginBottom: 'var(--space-5)' }}>{wachtrij}</div>
-      )}
-      <div className="grid-2 wide-right" style={{ alignItems: 'start' }}>
-        <div className="card">
-          <div className="card-head">
-            <div>
-              <h2>{focus === '__team__' ? 'Teamprofiel' : participants.find((p) => p.id === focus)?.name ?? 'Profiel'}</h2>
-              <p className="muted small" style={{ marginTop: 'var(--space-1)' }}>
-                {focus === '__team__'
-                  ? `${submittedCount} van ${participants.length} ingediend · gemiddelde over ieders ingevulde scores`
-                  : participants.find((p) => p.id === focus)?.role || 'individueel profiel'}
-              </p>
-            </div>
-            <span className="spacer" />
-            <select value={focus} aria-label="Wiens profiel tonen"
-              onChange={(e) => setFocus(e.target.value)} style={{ width: 'auto' }}>
-              <option value="__team__">Hele team</option>
-              {participants.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
-          </div>
-          <Radar
-            axes={skills.map((s) => s.label)}
-            series={series}
-            max={max}
-            ringLabels={session.scale.map((lv) => lv.label)}
-            size={440}
-            exportName={
-              focus === '__team__'
-                ? `${session.name} — team`
-                : `${session.name} — ${participants.find((p) => p.id === focus)?.name ?? ''}`
-            }
-          />
-        </div>
+    <div className="overzicht">
+      <div className="kolom-cijfers">
+        {submittedCount < participants.length && wachtrij}
 
         <div className="card">
           <div className="card-head">
@@ -418,9 +389,48 @@ function Overview({ data, onAddPeople }: { data: AdminPayload; onAddPeople: () =
             Wat niemand kan overdragen, bouw je op of haal je binnen.
           </p>
         </div>
+
       </div>
 
+      <aside className="kolom-profiel">
       <div className="card">
+        <div className="card-head">
+          <div>
+            <h2>{focus === '__team__' ? 'Teamprofiel' : participants.find((p) => p.id === focus)?.name ?? 'Profiel'}</h2>
+            <p className="muted small" style={{ marginTop: 'var(--space-1)' }}>
+              {focus === '__team__'
+                ? `${submittedCount} van ${participants.length} ingediend · gemiddelde over ieders ingevulde scores`
+                : participants.find((p) => p.id === focus)?.role || 'individueel profiel'}
+            </p>
+          </div>
+          <span className="spacer" />
+          <select value={focus} aria-label="Wiens profiel tonen"
+            onChange={(e) => setFocus(e.target.value)} style={{ width: 'auto' }}>
+            <option value="__team__">Hele team</option>
+            {participants.map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+        </div>
+        <Radar
+          axes={skills.map((s) => s.label)}
+          series={series}
+          max={max}
+          ringLabels={session.scale.map((lv) => lv.label)}
+          size={440}
+          exportName={
+            focus === '__team__'
+              ? `${session.name} — team`
+              : `${session.name} — ${participants.find((p) => p.id === focus)?.name ?? ''}`
+          }
+        />
+      </div>
+      </aside>
+
+      {/* Over de volle breedte: deze tabel krijgt een kolom per deelnemer, dus
+          hij groeit met het team mee. In een halve pagina moest je er al bij
+          vier mensen zijwaarts doorheen. */}
+      <div className="card kolom-breed">
         <h2>Iedereen naast elkaar</h2>
         <p className="muted small" style={{ margin: 'var(--space-1) 0 var(--space-4)' }}>
           Waar iedereen nu staat, met het doel erachter als dat afwijkt. In treden.
@@ -471,7 +481,10 @@ function Overview({ data, onAddPeople }: { data: AdminPayload; onAddPeople: () =
         </div>
         <Schaalsleutel scale={session.scale} />
       </div>
-    </>
+
+      {/* Sticky: op een scherm dat tijdens de sessie meekijkt is de vorm het
+          ankerpunt, en de tabellen eronder zijn lang. */}
+    </div>
   )
 }
 
