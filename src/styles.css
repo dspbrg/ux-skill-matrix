@@ -145,8 +145,11 @@ a { color: var(--accent); }
    hoger dan het venster, dan scrollt hij gewoon mee. */
 .kolom-profiel { position: sticky; top: calc(var(--topbar-h) + var(--space-5)); }
 .kolom-profiel > .card { margin-top: 0; }
-/* De vergelijkingstabel loopt onder beide kolommen door. */
-.kolom-breed { grid-column: 1 / -1; margin-top: var(--space-5); }
+/* De vergelijkingstabel staat buiten het raster en loopt over de volle
+   breedte. Binnen het raster schoof de sticky kolom er overheen: die wordt
+   begrensd door zijn eigen rij, en een blok dat daar dwars onderdoor loopt
+   hoort niet bij die rij — dus was er niets wat hem tegenhield. */
+.kolom-breed { margin-top: var(--space-5); }
 
 /* Onder de omslag staan de blokken gewoon onder elkaar, en heeft sticky geen
    zin meer: het profiel zou dan de halve pagina beslaan. */

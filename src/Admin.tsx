@@ -302,7 +302,8 @@ function Overview({ data, onAddPeople }: { data: AdminPayload; onAddPeople: () =
   // elkaar, het profiel rechts. Dat is ook wat een sessie vraagt: de vorm
   // blijft in beeld terwijl je door de tabellen scrollt.
   return (
-    <div className="overzicht">
+    <>
+      <div className="overzicht">
       <div className="kolom-cijfers">
         {submittedCount < participants.length && wachtrij}
 
@@ -426,6 +427,7 @@ function Overview({ data, onAddPeople }: { data: AdminPayload; onAddPeople: () =
         />
       </div>
       </aside>
+      </div>
 
       {/* Over de volle breedte: deze tabel krijgt een kolom per deelnemer, dus
           hij groeit met het team mee. In een halve pagina moest je er al bij
@@ -482,9 +484,7 @@ function Overview({ data, onAddPeople }: { data: AdminPayload; onAddPeople: () =
         <Schaalsleutel scale={session.scale} />
       </div>
 
-      {/* Sticky: op een scherm dat tijdens de sessie meekijkt is de vorm het
-          ankerpunt, en de tabellen eronder zijn lang. */}
-    </div>
+    </>
   )
 }
 
