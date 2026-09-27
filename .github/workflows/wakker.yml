@@ -1,8 +1,18 @@
 # Houdt het Supabase-project wakker.
 #
 # Een gratis project pauzeert na zeven dagen zonder verkeer, en bij het
-# herstellen kwam de database leeg terug. Deze taak doet elke drie dagen één
-# aanroep — genoeg om de teller terug te zetten.
+# herstellen kwam de database een keer leeg terug. Deze taak doet elke drie
+# dagen één aanroep — genoeg om de teller terug te zetten.
+#
+# Hij roept get_participant aan met een token dat niet bestaat, en verwacht
+# 'invalid_token' terug. Dat lijkt omslachtig, maar het is met opzet:
+#
+#   · Het vraagt niets van de database dat er niet toch al moet staan. Een
+#     eigen ping-functie moest handmatig geïnstalleerd worden, en die stap bleef
+#     liggen — waarna deze taak negen dagen lang 404 gaf.
+#   · Het loopt over precies het pad dat een deelnemer ook loopt: de functie
+#     draait, doet een query op participants, en wijst het token af. Gaat dat
+#     stuk, dan is de app stuk, en dan wil je het horen.
 #
 # Let op: GitHub zet geplande taken zelf uit in een repository waar zestig dagen
 # niets is gebeurd. Er komt dan een mail. Eén druk op 'Enable workflow' zet hem
@@ -24,14 +34,30 @@ jobs:
           URL: ${{ vars.VITE_SUPABASE_URL }}
           KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
         run: |
-          antwoord=$(curl -sS --fail-with-body -m 30 \
-            -X POST "$URL/rest/v1/rpc/ping" \
-            -H "apikey: $KEY" -H "Authorization: Bearer $KEY" \
-            -H "Content-Type: application/json" -d '{}')
-          echo "$antwoord"
-          # Komt er geen 'sessies' terug, dan draait de database wel maar staat
-          # het schema er niet meer op. Dat wil je weten.
-          echo "$antwoord" | grep -q '"sessies"' || {
-            echo "::error::Onverwacht antwoord — staat het schema er nog op?"
+          if [ -z "$URL" ] || [ -z "$KEY" ]; then
+            echo "::error::VITE_SUPABASE_URL of VITE_SUPABASE_ANON_KEY ontbreekt in de repository variables"
             exit 1
-          }
+          fi
+
+          # Geen --fail-with-body: een afgewezen token is hier het goede
+          # antwoord, en dat komt terug als HTTP 400.
+          antwoord=$(curl -sS -m 30 \
+            -X POST "$URL/rest/v1/rpc/get_participant" \
+            -H "apikey: $KEY" -H "Authorization: Bearer $KEY" \
+            -H "Content-Type: application/json" \
+            -d '{"p_token":"wakker-houden-geen-echt-token"}')
+          echo "$antwoord"
+
+          case "$antwoord" in
+            *invalid_token*)
+              echo "Database is wakker en wees het token af." ;;
+            *PGRST202*)
+              echo "::error::get_participant bestaat niet — draai supabase/schema.sql opnieuw"
+              exit 1 ;;
+            "")
+              echo "::error::Geen antwoord. Staat het project op pauze?"
+              exit 1 ;;
+            *)
+              echo "::error::Onverwacht antwoord, zie hierboven"
+              exit 1 ;;
+          esac
