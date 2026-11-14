@@ -10,6 +10,6 @@ export default defineConfig({
     target: 'esnext',
     outDir: 'dist-voorbeeld',
     emptyOutDir: true,
-    rollupOptions: { input: 'voorbeeld.html', output: { inlineDynamicImports: true } },
+    rolldownOptions: { input: 'voorbeeld.html', output: { codeSplitting: false } },
   },
 })
